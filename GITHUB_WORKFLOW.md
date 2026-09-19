@@ -5,8 +5,6 @@ on:
   push:
     branches: [main, master]
     tags: ["v*"]
-  pull_request:
-    branches: [main, master]
 
 permissions:
   contents: write
@@ -26,7 +24,7 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Resolve version and build number
+      - name: Resolve version
         id: ver
         run: |
           TAG_VER="${GITHUB_REF_NAME}"
@@ -37,13 +35,10 @@ jobs:
           elif [ -n "$PKG_VER" ] && [ "$PKG_VER" != "0.0.0" ] && [ "$PKG_VER" != "" ]; then
             VER="v${PKG_VER}"
           else
-            BUILD_NUM=${{ github.run_number }}
-            VER="build-${BUILD_NUM}"
+            VER="build-${{ github.run_number }}"
           fi
 
           echo "version=$VER" >> "$GITHUB_OUTPUT"
-          echo "artifact_name=aurabeats-${VER}" >> "$GITHUB_OUTPUT"
-          echo "html_name=aurabeats-${VER}.html" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: npm ci
@@ -54,24 +49,17 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Rename output for release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Prepare release file
         run: cp dist/index.html "aurabeats-${{ steps.ver.outputs.version }}.html"
 
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.ver.outputs.artifact_name }}
-          path: dist/index.html
-          retention-days: 7
-
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Push to Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.ver.outputs.version }}
           name: "AuraBeats ${{ steps.ver.outputs.version }}"
           body_path: LATEST_RELEASE.md
-          files: ${{ steps.ver.outputs.html_name }}
+          files: aurabeats-${{ steps.ver.outputs.version }}.html
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
