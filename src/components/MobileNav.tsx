@@ -28,7 +28,7 @@ export function MobileNav({
             key={key}
             type="button"
             onClick={() => onNavigate(key)}
-            className="focus-ring relative flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold transition-colors"
+            className="focus-ring relative flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-semibold transition-colors"
           >
             <span className="relative">
               <Icon className={cn("h-[18px] w-[18px] transition-all", active ? "text-accent scale-110" : "text-ink3")} />
@@ -38,7 +38,7 @@ export function MobileNav({
                 </span>
               )}
             </span>
-            <span className={cn(active ? "text-accent" : "text-ink3")}>{label}</span>
+            <span className={cn("truncate max-w-full px-1", active ? "text-accent" : "text-ink3")}>{label}</span>
             {active && <span className="absolute top-0 h-[2px] w-8 rounded-full bg-accent" />}
           </button>
         );
@@ -46,11 +46,11 @@ export function MobileNav({
       <button
         type="button"
         onClick={() => onNavigate("settings")}
-        className={cn("focus-ring relative flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-semibold")}
+        className={cn("focus-ring relative flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-semibold")}
         aria-label="Settings"
       >
         <Settings className={cn("h-[18px] w-[18px]", route === "settings" ? "text-accent" : "text-ink3")} />
-        <span className={route === "settings" ? "text-accent" : "text-ink3"}>Theme</span>
+        <span className={cn("truncate max-w-full px-1", route === "settings" ? "text-accent" : "text-ink3")}>Settings</span>
       </button>
     </nav>
   );

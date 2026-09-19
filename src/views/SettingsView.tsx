@@ -22,7 +22,7 @@ import { storage } from "@/utils/storage";
 
 export function SettingsView() {
   const { theme, setTheme, mode, setMode, accent, setAccent } = useTheme();
-  const { volume, setVolume, toast, favorites, history, playlists } = usePlayer();
+  const { volume, setVolume, toast, favorites, history, playlists, settings, updateSettings } = usePlayer();
 
   const bytes = storage.bytes();
 
@@ -191,6 +191,44 @@ export function SettingsView() {
           <div className="flex flex-wrap gap-2 text-[11px] text-ink3">
             <span className="rounded-full border border-line px-2.5 py-1">Engine: HTML5 Audio (direct stream)</span>
             <span className="rounded-full border border-line px-2.5 py-1">Full-length tracks · never 30s previews</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <SectionHeader title="Experimental" subtitle="Beta features and power-user tools" icon={<Shield className="h-4 w-4 text-accent" />} />
+        <div className="blur-panel space-y-4 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-ink">Playback queue</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-ink3">
+                Enable advanced queue management, re-ordering and "up next" visibility.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateSettings({ queueEnabled: !settings.queueEnabled })}
+              className={cn(
+                "relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200",
+                settings.queueEnabled ? "bg-accent" : "bg-ink/15"
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute top-1 left-1 h-4 w-4 transform rounded-full bg-white transition-transform duration-200",
+                  settings.queueEnabled ? "translate-x-5" : "translate-x-0"
+                )}
+              />
+            </button>
+          </div>
+          <div className="border-t border-line pt-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-ink">Direct Downloads</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-ink3">
+                Export any track as an MP3 for offline listening. Subject to source availability.
+              </p>
+            </div>
+            <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-bold text-accent uppercase">Live</span>
           </div>
         </div>
       </section>

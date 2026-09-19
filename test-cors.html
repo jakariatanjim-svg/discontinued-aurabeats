@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+async function test() {
+  try {
+    const url = 'https://corsproxy.io/?' + encodeURIComponent('https://discoveryprovider.audius.co/v1/tracks/YlRbOJ/stream?app_name=AuraBeats');
+    const res = await fetch(url);
+    console.log("OK", res.status, res.headers.get("access-control-allow-origin"));
+  } catch (e) {
+    console.log("FAIL", e.message);
+  }
+}
+test();
+</script>
+</body>
+</html>

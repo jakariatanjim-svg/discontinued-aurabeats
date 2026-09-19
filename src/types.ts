@@ -4,7 +4,11 @@
  * network services (audius.ts / radio.ts) — nothing is authored statically.
  */
 
-export type TrackSource = "archive" | "audius" | "radio";
+export type TrackSource = "archive" | "audius" | "radio" | "jiosaavn" | "jamendo" | "hearthis";
+
+export interface PlayerSettings {
+  queueEnabled: boolean;
+}
 
 export interface Track {
   /** Stable unique id (prefixed by source to avoid collisions) */

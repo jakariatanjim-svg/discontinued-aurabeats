@@ -88,19 +88,40 @@ export function Sidebar({
         collapsed ? "w-[4.75rem]" : "w-[16.5rem]",
       )}
     >
-      <div className={cn("flex items-center gap-2.5 px-4 pt-5 pb-4", collapsed && "justify-center px-0")}>
-        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-[0_0_22px_-4px_var(--c-accent)]">
-          <AudioWaveform className="h-5 w-5" />
-        </div>
-        {!collapsed && (
-          <div className="min-w-0">
-            <p className="truncate text-[15px] leading-tight font-black tracking-tight text-ink">AuraBeats</p>
-            <p className="truncate text-[10px] font-medium tracking-wide text-ink3 uppercase">Open sound engine</p>
+      <div className={cn("flex items-center justify-between gap-2.5 px-4 pt-5 pb-4", collapsed && "justify-center px-2")}>
+        <div className={cn("flex items-center gap-2.5 min-w-0", collapsed && "justify-center") }>
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-[0_0_22px_-4px_var(--c-accent)]">
+            <AudioWaveform className="h-5 w-5" />
           </div>
-        )}
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="truncate text-[15px] leading-tight font-black tracking-tight text-ink">AuraBeats</p>
+              <p className="truncate text-[10px] font-medium tracking-wide text-ink3 uppercase">Pure Sound</p>
+            </div>
+          )}
+        </div>
+        <IconButton
+          size="sm"
+          onClick={onToggleCollapse}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={cn("border border-line", collapsed && "absolute right-2 top-5")}
+        >
+          <ChevronLeft className={cn("h-3.5 w-3.5 transition-transform", collapsed && "rotate-180")} />
+        </IconButton>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto scroll-area px-3 pb-4">
+      {!collapsed && (
+        <div className="mx-3 mb-6 animate-fade-in rounded-2xl border border-line bg-ink/[0.04] p-3.5 shadow-sm">
+          <p className="flex items-center gap-1.5 text-[11px] font-bold text-ink">
+            <ListMusic className="h-3.5 w-3.5 text-accent" /> Mult-Source Engine
+          </p>
+          <p className="mt-1 text-[10px] leading-relaxed text-ink3">
+            Aggregating Jamendo, Audius, JioSaavn and HearThis for fast, unrestricted streaming.
+          </p>
+        </div>
+      )}
+
+      <nav className="flex-1 space-y-6 overflow-y-auto scroll-area px-3 pb-24">
         <div className="space-y-1">
           {MAIN.map((item) => (
             <Item key={item.key} item={item} />
@@ -187,26 +208,6 @@ export function Sidebar({
           ))}
         </div>
       </nav>
-
-      {!collapsed && (
-        <div className="mx-3 mb-3 rounded-xl border border-line p-3">
-          <p className="flex items-center gap-1.5 text-[11px] font-bold text-ink">
-            <ListMusic className="h-3.5 w-3.5 text-accent" /> 100% open sources
-          </p>
-          <p className="mt-1 text-[10px] leading-relaxed text-ink3">
-            Streams are pulled live from open, key-free music networks. Nothing is stored or hardcoded.
-          </p>
-        </div>
-      )}
-
-      <button
-        type="button"
-        onClick={onToggleCollapse}
-        className="focus-ring mx-3 mb-4 flex items-center justify-center gap-2 rounded-xl border border-line py-2 text-[11px] font-semibold text-ink3 transition hover:border-accent hover:text-accent"
-      >
-        <ChevronLeft className={cn("h-3.5 w-3.5 transition-transform", collapsed && "rotate-180")} />
-        {!collapsed && "Collapse"}
-      </button>
     </aside>
   );
 }

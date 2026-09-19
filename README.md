@@ -4,26 +4,34 @@ An ultra-modern, production-ready music web application that streams **live** fr
 public music networks. No API keys, no accounts, no subscriptions, no rate limits, no hardcoded
 song lists.
 
+### 🔗 **Live Demo: [aurabeats.jakariatanjim.workers.dev](https://aurabeats.jakariatanjim.workers.dev/)**
+
+[![Live Hosted](https://img.shields.io/badge/Live-Hosted-7c5cff?style=for-the-badge)](https://aurabeats.jakariatanjim.workers.dev/)
+
 ![stack](https://img.shields.io/badge/Vite-React_19-646cff) ![style](https://img.shields.io/badge/Tailwind_CSS_v4-dual_theme-38bdf8) ![cost](https://img.shields.io/badge/cost-100%25_free-22c55e)
 
 ---
 
 ## ✨ Features
 
-### Free-only source policy
+### Multi-source streaming engine
 **No official / commercial music APIs. No API keys. No accounts. No 30-second previews.**
-Every song AuraBeats plays is a complete, full-length recording streamed from a free, open,
-publicly mirrored archive.
+Every song AuraBeats plays is a complete, full-length recording streamed from free, open
+public music networks with automatic multi-source fallback.
 
 | Source | What it provides | Auth | Length |
 | --- | --- | --- | --- |
-| **Internet Archive** | Creative-Commons & public-domain music: net labels, community uploads, artist-approved live concerts, restored 78rpm classics. Direct MP3 from the Archive's storage nodes. | None | Full tracks |
-| **Audius open network** | Open, decentralised, artist-owned catalogue: popularity charts, fresh releases, genre feeds, track + artist search. Direct MP3 from public content nodes. | None | Full tracks |
-| **Radio Browser** | Community directory of worldwide live radio, tag/country filters, availability-checked direct HTTPS streams. | None | Endless live |
+| **JioSaavn** | Massive music database: Bollywood, regional, international, high-quality streams. Direct MP3 via unofficial API. | None | Full tracks |
+| **Jamendo** | Creative-Commons independent music library: indie artists, CC-licensed, mood & genre filters. | None | Full tracks |
+| **Audius** | Open, decentralised, artist-owned catalogue: popularity charts, fresh releases, genre feeds. | None | Full tracks |
+| **HearThis.at** | Independent artist platform: trending, electronic, hip-hop, experimental uploads. | None | Full tracks |
+| **Internet Archive** | CC & public-domain music: net labels, live concerts, restored classics. | None | Full tracks |
+| **Radio Browser** | Community directory of worldwide live radio, tag/country filters. | None | Endless live |
 
 * Zero hardcoded tracks — every title, artist, artwork and stream URL is fetched at runtime.
 * Feeds *merge and interleave* the archives, so if one network is down the page still fills.
 * Every provider is pooled across multiple public mirrors; requests rotate automatically.
+* **Direct Downloads:** Export any track locally as an MP3 with one click for offline listening.
 * Two-level cache (memory + `localStorage`) makes returning to a section instant and keeps the app
   usable when the network flakes out.
 

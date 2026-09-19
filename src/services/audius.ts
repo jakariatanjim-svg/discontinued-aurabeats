@@ -84,24 +84,38 @@ async function getJson<T>(url: string, signal?: AbortSignal, timeout = 9000): Pr
   }
 }
 
-/** GET an Audius endpoint, transparently failing over across mirrors. */
+/** GET an Audius endpoint — races top two hosts then falls back sequentially. */
 async function audiusGet<T>(
   path: string,
   params?: Record<string, string | number | undefined>,
   signal?: AbortSignal,
 ): Promise<T> {
   const order = hostOrder();
+
+  const tryHost = async (host: string): Promise<T> => {
+    const json = await getJson<{ data: T }>(buildUrl(host, path, params), signal);
+    preferredIndex = Math.max(0, HOSTS.indexOf(host));
+    unhealthy.delete(host);
+    return json.data;
+  };
+
+  // Race the top two for speed
+  const raced = order.slice(0, 2).map((h) => tryHost(h).catch((err) => { unhealthy.add(h); throw err; }));
+  const results = await Promise.allSettled(raced);
+  for (const r of results) {
+    if (r.status === "fulfilled") return r.value as T;
+  }
+
+  // Sequential fallback for remaining
   let lastError: unknown;
-  for (const host of order) {
+  for (const host of order.slice(2)) {
+    if (signal?.aborted) break;
     try {
-      const json = await getJson<{ data: T }>(buildUrl(host, path, params), signal);
-      preferredIndex = Math.max(0, HOSTS.indexOf(host));
-      unhealthy.delete(host);
-      return json.data;
+      return await tryHost(host);
     } catch (err) {
       if (signal?.aborted) throw err;
-      lastError = err;
       unhealthy.add(host);
+      lastError = err;
     }
   }
   throw lastError instanceof Error ? lastError : new Error("All open music mirrors are unreachable");

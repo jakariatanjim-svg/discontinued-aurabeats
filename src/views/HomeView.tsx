@@ -59,32 +59,32 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         hero && <HeroCard track={hero} context={popular.data ?? [hero]} />
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <QuickAction
-          title="Popular mix"
-          hint="Full tracks, no previews"
-          tint="bg-accent/20 text-accent"
+          title="Popular Mix"
+          hint="The hottest open hits"
+          tint="bg-accent/15 text-accent"
           icon={<TrendingUp className="h-5 w-5" />}
           onClick={() => playSection(popular.data, "the open popularity chart")}
         />
         <QuickAction
-          title="Fresh drops"
-          hint="Newest open releases"
-          tint="bg-accent2/20 text-accent2"
+          title="Fresh Drops"
+          hint="Newly released gems"
+          tint="bg-accent2/15 text-accent2"
           icon={<Flame className="h-5 w-5" />}
           onClick={() => playSection(fresh.data, "fresh open releases")}
         />
         <QuickAction
-          title="Live radio"
-          hint="Thousands of stations"
-          tint="bg-rose-500/20 text-rose-400"
+          title="Live Radio"
+          hint="Global stream network"
+          tint="bg-rose-500/15 text-rose-400"
           icon={<Radio className="h-5 w-5" />}
           onClick={() => onNavigate("radio")}
         />
         <QuickAction
-          title="Deep search"
-          hint="Both open archives"
-          tint="bg-violet-500/20 text-violet-300"
+          title="Deep Search"
+          hint="Find anything instantly"
+          tint="bg-violet-500/15 text-violet-300"
           icon={<Sparkles className="h-5 w-5" />}
           onClick={() => onNavigate("search")}
         />
@@ -92,11 +92,11 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
 
       <section>
         <SectionHeader
-          title="Popular on the open archives"
+          title="Popular on AuraBeats"
           subtitle={
             popular.data
-              ? `${popular.data.length} full-length tracks · free & unrestricted`
-              : "Fetching live from open archives…"
+              ? `${popular.data.length} full-length tracks · no limits`
+              : "Connecting to open archives…"
           }
           icon={<TrendingUp className="h-4 w-4 text-accent" />}
           action={
@@ -120,8 +120,8 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
 
       <section>
         <SectionHeader
-          title="Fresh open releases"
-          subtitle="Independent creators · Creative Commons & artist-approved"
+          title="Fresh Releases"
+          subtitle="Independent creators · Artist-approved streams"
           icon={<Flame className="h-4 w-4 text-accent2" />}
           action={
             <IconButton onClick={fresh.refresh} aria-label="Refresh">
@@ -144,20 +144,20 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
 
       <section>
         <SectionHeader
-          title="Browse by genre"
-          subtitle="Live queries across every open archive"
+          title="Browse by Genre"
+          subtitle="Live exploration across the decentralised web"
           icon={<Sparkles className="h-4 w-4 text-accent" />}
           action={
             <button
               type="button"
               onClick={() => playSection(genreFeed.data, `${genre} selection`)}
-              className="rounded-full border border-line px-3 py-1.5 text-[11px] font-bold text-ink3 transition hover:border-accent hover:text-accent"
+              className="rounded-full border border-line px-3.5 py-1.5 text-[11px] font-bold text-ink3 transition hover:border-accent hover:text-accent"
             >
               Play all
             </button>
           }
         />
-        <div className="no-scrollbar -mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1">
+        <div className="no-scrollbar -mx-2 mb-3.5 flex gap-2.5 overflow-x-auto px-2 pb-1.5">
           {GENRE_CHIPS.map((g) => (
             <Chip key={g.value} active={genre === g.value} onClick={() => setGenre(g.value)}>
               {g.label}
@@ -171,7 +171,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         ) : (genreFeed.data ?? []).length === 0 ? (
           <EmptyState title="No open tracks in that genre right now" hint="Pick another genre chip." />
         ) : (
-          <div className="blur-panel p-2">
+          <div className="blur-panel overflow-hidden p-1.5 sm:p-2.5">
             {(genreFeed.data ?? []).slice(0, 10).map((t, i) => (
               <TrackRow key={t.id} track={t} context={genreFeed.data ?? undefined} index={i} />
             ))}
@@ -181,11 +181,11 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
 
       <section>
         <SectionHeader
-          title="Open collections"
-          subtitle="Whole free archives, one tap away"
+          title="Open Collections"
+          subtitle="Infinite free archives, one tap away"
           icon={<Disc3 className="h-4 w-4 text-accent" />}
         />
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
           {ARCHIVE_COLLECTIONS.map((c) => (
             <CollectionRow key={c.slug} slug={c.slug} label={c.label} blurb={c.blurb} />
           ))}

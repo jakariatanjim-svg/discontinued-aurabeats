@@ -33,7 +33,7 @@ function Shell() {
     });
   }, []);
 
-  const { setExpanded, setQueueOpen, queueOpen, next, previous, toggle, current, favorites } = usePlayer();
+  const { setExpanded, setQueueOpen, queueOpen, next, previous, toggle, current, favorites, volume, setVolume, settings } = usePlayer();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -50,13 +50,26 @@ function Shell() {
         setQueueOpen(false);
       } else if (e.key.toLowerCase() === "f" && current) {
         setExpanded(true);
-      } else if (e.key.toLowerCase() === "q") {
+      } else if (e.key.toLowerCase() === "q" && settings.queueEnabled) {
         setQueueOpen(!queueOpen);
       }
     };
+    // Mouse wheel volume control
+    const onWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null;
+      // Only trigger when not scrolling inside a scroll area
+      if (target?.closest(".scroll-area, main, aside, [role=dialog]")) return;
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.05 : -0.05;
+      setVolume(Math.min(1, Math.max(0, volume + delta)));
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [toggle, next, previous, setExpanded, setQueueOpen, queueOpen, current]);
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [toggle, next, previous, setExpanded, setQueueOpen, queueOpen, current, volume, setVolume]);
 
   return (
     <div className="flex h-full w-full overflow-hidden">
@@ -64,8 +77,11 @@ function Shell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar route={route} onNavigate={navigate} onToggleSidebar={toggleCollapse} />
-        <main id="ab-scroll" className="scroll-area min-h-0 flex-1 overflow-y-auto px-3 pt-4 pb-[calc(env(safe-area-inset-bottom)+10.5rem)] sm:px-5 md:pb-[calc(env(safe-area-inset-bottom)+7.5rem)]">
-          <div key={route} className="animate-fade-up mx-auto w-full max-w-[1500px]">
+        <main 
+          id="ab-scroll" 
+          className="scroll-area min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+11rem)] sm:px-6 md:pb-[calc(env(safe-area-inset-bottom)+8rem)]"
+        >
+          <div key={route} className="animate-fade-up mx-auto w-full max-w-[1600px] pb-8">
             {route === "home" && <HomeView onNavigate={navigate} />}
             {route === "search" && <SearchView />}
             {route === "radio" && <RadioView />}
@@ -82,7 +98,7 @@ function Shell() {
 
       <PlayerBar onOpenQueue={() => setQueueOpen(!queueOpen)} />
       <MobileNav route={route} onNavigate={navigate} favoritesCount={favorites.length} />
-      <QueuePanel />
+      {settings.queueEnabled && <QueuePanel />}
       <FullScreenPlayer />
       <Toaster />
     </div>

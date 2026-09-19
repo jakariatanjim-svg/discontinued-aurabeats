@@ -11,6 +11,7 @@ import {
   Radio as RadioIcon,
   Trash2,
   ExternalLink,
+  Download,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatCount, formatTime, gradientFrom, relativeTime } from "@/utils/format";
@@ -55,7 +56,7 @@ function TrackMenu({
   const [pickerOpen, setPickerOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
-  const { addToQueue, playNext, addToPlaylist, playlists, createPlaylist, toast } = usePlayer();
+  const { addToQueue, playNext, addToPlaylist, playlists, createPlaylist, downloadTrack, toast, settings } = usePlayer();
 
   useEffect(() => {
     if (!open) return;
@@ -84,10 +85,15 @@ function TrackMenu({
   }, [open]);
 
   const items: { label: string; icon: ReactNode; run: () => void }[] = [
-    { label: "Play next", icon: <ListEnd className="h-4 w-4" />, run: () => playNext(track) },
-    { label: "Add to queue", icon: <ListPlus className="h-4 w-4" />, run: () => addToQueue(track) },
     { label: "Save to playlist", icon: <Plus className="h-4 w-4" />, run: () => setPickerOpen(true) },
+    { label: "Download MP3", icon: <Download className="h-4 w-4" />, run: () => downloadTrack(track) },
   ];
+  if (settings.queueEnabled) {
+    items.unshift(
+      { label: "Play next", icon: <ListEnd className="h-4 w-4" />, run: () => playNext(track) },
+      { label: "Add to queue", icon: <ListPlus className="h-4 w-4" />, run: () => addToQueue(track) }
+    );
+  }
   if (track.homepage) {
     items.push({
       label: "Open source page",
@@ -300,13 +306,26 @@ export function TrackRow({
             className="hidden shrink-0 rounded px-1 py-px text-[9px] font-bold tracking-wide text-ink3 uppercase opacity-70 ring-1 ring-current sm:inline"
             title={
               track.source === "archive"
-                ? "Internet Archive · free full-length"
+                ? "Internet Archive · CC music"
                 : track.source === "audius"
-                  ? "Audius open network · free full-length"
-                  : "Open radio directory"
+                  ? "Audius network · Indie"
+                  : track.source === "jiosaavn"
+                    ? "Direct music database"
+                    : track.source === "jamendo"
+                      ? "Independent CC library"
+                      : track.source === "hearthis"
+                        ? "HearThis · Indie"
+                        : "Open radio directory"
             }
           >
-            {track.source === "archive" ? "archive" : track.source === "audius" ? "open net" : "radio"}
+            {
+              track.source === "archive" ? "archive" : 
+              track.source === "audius" ? "indie net" : 
+              track.source === "jiosaavn" ? "database" :
+              track.source === "jamendo" ? "CC library" :
+              track.source === "hearthis" ? "hearthis" :
+              "radio"
+            }
           </span>
           {track.genre && !track.isLive && <span className="hidden shrink-0 opacity-60 md:inline">• {track.genre}</span>}
           {meta && <span className="shrink-0 opacity-60">• {meta}</span>}
@@ -346,28 +365,29 @@ export function TrackCard({ track, context }: { track: Track; context?: Track[] 
   const isCurrent = current?.id === track.id;
   const fav = isFavorite(track.id);
   return (
-    <div className="group/card blur-panel relative w-[10.5rem] shrink-0 p-3 transition-transform duration-300 hover:-translate-y-1 sm:w-[11.5rem]">
-      <div className="relative mb-3 aspect-square w-full">
+    <div className="group/card blur-panel relative w-[10rem] shrink-0 p-2.5 transition-transform duration-300 hover:-translate-y-1 sm:w-[11.5rem] sm:p-3">
+      <div className="relative mb-2.5 aspect-square w-full sm:mb-3">
         <Artwork
           src={track.artwork || undefined}
           fallbackSrc={track.artworkFallback}
           alt={track.title}
           className="h-full w-full shadow-lg"
         />
-        <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-black/60 via-transparent to-transparent p-2 opacity-0 transition-opacity duration-200 group-hover/card:opacity-100">
+        <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-black/65 via-transparent to-transparent p-2 opacity-0 transition-opacity duration-200 group-hover/card:opacity-100">
           <IconButton
             size="sm"
             aria-label="Favourite"
-            className={cn("bg-black/40 text-white backdrop-blur hover:bg-black/60", fav && "text-accent")}
+            className={cn("bg-black/40 text-white backdrop-blur-md hover:bg-black/60", fav && "text-accent")}
             onClick={(e) => {
               e.stopPropagation();
               toggleFavorite(track);
             }}
           >
-            <Heart className={cn("h-4 w-4", fav && "fill-current")} />
+            <Heart className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4", fav && "fill-current")} />
           </IconButton>
           <PlayOverlay
             playing={isCurrent && isPlaying}
+            size="sm"
             onClick={(e) => {
               e.stopPropagation();
               playNow(track, context);
@@ -375,14 +395,14 @@ export function TrackCard({ track, context }: { track: Track; context?: Track[] 
           />
         </div>
         {track.isLive && (
-          <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-rose-600 px-2 py-0.5 text-[9px] font-bold tracking-wide text-white uppercase shadow">
-            <RadioIcon className="h-2.5 w-2.5" /> live
+          <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-white uppercase shadow sm:px-2 sm:text-[9px]">
+            <RadioIcon className="h-2 w-2 sm:h-2.5 sm:w-2.5" /> live
           </span>
         )}
       </div>
-      <button type="button" onClick={() => playNow(track, context)} className="block w-full text-left">
-        <p className={cn("truncate text-sm font-bold", isCurrent ? "text-accent" : "text-ink")}>{track.title}</p>
-        <p className="mt-0.5 truncate text-xs text-ink3">{track.artist}</p>
+      <button type="button" onClick={() => playNow(track, context)} className="block w-full min-w-0 text-left">
+        <p className={cn("truncate text-[13px] font-bold sm:text-sm", isCurrent ? "text-accent" : "text-ink")}>{track.title}</p>
+        <p className="mt-0.5 truncate text-[10px] text-ink3 sm:text-xs">{track.artist}</p>
       </button>
     </div>
   );

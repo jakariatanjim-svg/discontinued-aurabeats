@@ -14,6 +14,7 @@ import {
   Volume1,
   Volume2,
   VolumeX,
+  Download,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatTime, gradientFrom } from "@/utils/format";
@@ -49,6 +50,8 @@ export function FullScreenPlayer() {
     toggleFavorite,
     jumpTo,
     playNow,
+    settings,
+    downloadTrack,
   } = usePlayer();
 
   useEffect(() => {
@@ -94,7 +97,17 @@ export function FullScreenPlayer() {
               {current.isLive ? "Live broadcast" : "Now playing"}
             </p>
             <p className="mt-0.5 text-[11px] text-white/50">
-              {current.source === "audius" ? "Open music network" : "Open radio archive"}
+              {current.source === "audius"
+                ? "Audius open network"
+                : current.source === "archive"
+                  ? "Internet Archive"
+                  : current.source === "jiosaavn"
+                    ? "High quality database"
+                    : current.source === "jamendo"
+                      ? "Independent CC"
+                      : current.source === "hearthis"
+                        ? "HearThis artist"
+                        : "Open radio directory"}
             </p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center">
@@ -109,27 +122,42 @@ export function FullScreenPlayer() {
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto scroll-area px-4 pt-4 pb-6 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10">
           {/* left: art + controls */}
           <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-5">
-            <div className="relative w-[min(70vw,17rem)] sm:w-[min(46vh,20rem)]">
+            <div className="relative w-[min(70vw,18rem)] sm:w-[min(46vh,22rem)]">
               <div
                 className={cn(
-                  "absolute -inset-6 -z-10 rounded-full opacity-60 blur-3xl gradient-drift transition-opacity",
-                  isPlaying ? "opacity-70" : "opacity-30",
+                  "absolute -inset-8 -z-10 rounded-full blur-[60px] transition-opacity duration-1000",
+                  isPlaying ? "opacity-60" : "opacity-20",
                 )}
                 style={{ backgroundImage: gradientFrom(current.title) }}
               />
-              <Artwork
-                src={current.artworkLarge || current.artwork || undefined}
-                fallbackSrc={current.artworkFallback}
-                alt={current.title}
-                className={cn(
-                  "aspect-square w-full shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] transition-transform duration-700",
-                  isPlaying && "scale-[1.02]",
-                )}
-                rounded={isPlaying ? "rounded-full" : "rounded-3xl"}
-              />
-              {isPlaying && (
-                <span className="pointer-events-none absolute -inset-3 animate-spin-slow rounded-full border border-dashed border-white/25" />
-              )}
+              {/* CD vinyl ring effect */}
+              <div className={cn(
+                "absolute inset-0 flex items-center justify-center rounded-full transition-all duration-700",
+                isPlaying ? "opacity-100" : "opacity-0",
+              )}>
+                <span className="pointer-events-none absolute inset-[-8px] rounded-full border-[3px] border-white/[0.08]" />
+                <span className="pointer-events-none absolute inset-[-16px] rounded-full border border-white/[0.04]" />
+                <span className={cn(
+                  "pointer-events-none absolute inset-[-12px] rounded-full border border-dashed border-white/15",
+                  isPlaying && "animate-spin-slow",
+                )} />
+              </div>
+              <div className={cn(
+                "transition-all duration-700",
+                isPlaying && "animate-spin-slow",
+              )}>
+                <Artwork
+                  src={current.artworkLarge || current.artwork || undefined}
+                  fallbackSrc={current.artworkFallback}
+                  alt={current.title}
+                  className={cn(
+                    "aspect-square w-full shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] ring-[6px] ring-black/30",
+                  )}
+                  rounded="rounded-full"
+                />
+                {/* CD center hole */}
+                <div className="absolute top-1/2 left-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/20 bg-black/60 shadow-inner sm:h-8 sm:w-8" />
+              </div>
             </div>
 
             <div className="w-full max-w-xl text-center">
@@ -162,7 +190,8 @@ export function FullScreenPlayer() {
                 value={isLive ? 0 : currentTime}
                 max={isLive ? 0 : duration}
                 buffered={bufferedAhead}
-                onChange={seek}
+                onChange={() => {}}
+                onCommit={seek}
                 height="h-1.5"
                 disabled={isLive}
               />
@@ -205,10 +234,10 @@ export function FullScreenPlayer() {
                 <SkipForward className="h-7 w-7 fill-current" />
               </IconButton>
               <IconButton
-                active={repeat !== "off"}
+                active={repeat === "one"}
                 onClick={cycleRepeat}
-                aria-label="Repeat"
-                className="text-white/70 hover:text-white"
+                aria-label={repeat === "one" ? "Repeat is ON" : "Repeat is OFF"}
+                className={cn("transition-colors", repeat === "one" ? "text-accent drop-shadow-[0_0_8px_var(--c-accent)]" : "text-white/40 hover:text-white")}
               >
                 {repeat === "one" ? <Repeat1 className="h-[18px] w-[18px]" /> : <Repeat className="h-[18px] w-[18px]" />}
               </IconButton>
@@ -222,6 +251,13 @@ export function FullScreenPlayer() {
               >
                 <Heart className={cn("h-5 w-5", fav && "fill-current")} />
               </IconButton>
+              <IconButton
+                aria-label="Download"
+                onClick={() => downloadTrack(current)}
+                className="text-white/70 hover:text-white"
+              >
+                <Download className="h-5 w-5" />
+              </IconButton>
               <IconButton onClick={toggleMute} aria-label="Mute" className="text-white/70 hover:text-white">
                 <VolumeIcon className="h-5 w-5" />
               </IconButton>
@@ -232,51 +268,53 @@ export function FullScreenPlayer() {
           </div>
 
           {/* right: up next */}
-          <div className="blur-panel w-full shrink-0 self-start p-3 lg:w-[23rem]">
-            <p className="mb-2 px-1 text-[10px] font-bold tracking-[0.18em] text-white/50 uppercase">
-              Up next · {Math.max(0, queue.length - index - 1)} queued
-            </p>
-            <div className="max-h-[38vh] space-y-0.5 overflow-y-auto scroll-area pr-1 lg:max-h-[calc(100vh-14rem)]">
-              {queue.slice(index + 1, index + 40).map((t, i) => (
+          {settings.queueEnabled && (
+            <div className="blur-panel w-full shrink-0 self-start p-3 lg:w-[23rem]">
+              <p className="mb-2 px-1 text-[10px] font-bold tracking-[0.18em] text-white/50 uppercase">
+                Up next · {Math.max(0, queue.length - index - 1)} queued
+              </p>
+              <div className="max-h-[38vh] space-y-0.5 overflow-y-auto scroll-area pr-1 lg:max-h-[calc(100vh-14rem)]">
+                {queue.slice(index + 1, index + 40).map((t, i) => (
+                  <button
+                    key={`${t.id}-${i}`}
+                    type="button"
+                    onClick={() => jumpTo(index + 1 + i)}
+                    className="flex w-full items-center gap-3 rounded-xl p-1.5 text-left transition hover:bg-white/10"
+                  >
+                    <span className="w-5 shrink-0 text-center text-[11px] tabular-nums text-white/40">{i + 1}</span>
+                    <Artwork
+                      src={t.artwork || undefined}
+                      fallbackSrc={t.artworkFallback}
+                      alt={t.title}
+                      className="h-9 w-9 shrink-0"
+                      rounded="rounded-lg"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-semibold text-white/90">{t.title}</span>
+                      <span className="block truncate text-[11px] text-white/45">{t.artist}</span>
+                    </span>
+                    <span className="shrink-0 text-[11px] tabular-nums text-white/40">
+                      {t.isLive ? "∞" : formatTime(t.duration)}
+                    </span>
+                  </button>
+                ))}
+                {queue.length - index - 1 <= 0 && (
+                  <div className="p-4 text-center text-xs text-white/50">
+                    Queue is empty — play something else to keep the vibe going.
+                  </div>
+                )}
+              </div>
+              {queue.length > 1 && (
                 <button
-                  key={`${t.id}-${i}`}
                   type="button"
-                  onClick={() => jumpTo(index + 1 + i)}
-                  className="flex w-full items-center gap-3 rounded-xl p-1.5 text-left transition hover:bg-white/10"
+                  onClick={() => playNow(queue[(index + 1) % queue.length], queue)}
+                  className="mt-2 w-full rounded-xl border border-white/20 py-2 text-xs font-bold text-white/80 transition hover:border-accent hover:text-accent"
                 >
-                  <span className="w-5 shrink-0 text-center text-[11px] tabular-nums text-white/40">{i + 1}</span>
-                  <Artwork
-                    src={t.artwork || undefined}
-                    fallbackSrc={t.artworkFallback}
-                    alt={t.title}
-                    className="h-9 w-9 shrink-0"
-                    rounded="rounded-lg"
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-xs font-semibold text-white/90">{t.title}</span>
-                    <span className="block truncate text-[11px] text-white/45">{t.artist}</span>
-                  </span>
-                  <span className="shrink-0 text-[11px] tabular-nums text-white/40">
-                    {t.isLive ? "∞" : formatTime(t.duration)}
-                  </span>
+                  Jump to next track
                 </button>
-              ))}
-              {queue.length - index - 1 <= 0 && (
-                <div className="p-4 text-center text-xs text-white/50">
-                  Queue is empty — play something else to keep the vibe going.
-                </div>
               )}
             </div>
-            {queue.length > 1 && (
-              <button
-                type="button"
-                onClick={() => playNow(queue[(index + 1) % queue.length], queue)}
-                className="mt-2 w-full rounded-xl border border-white/20 py-2 text-xs font-bold text-white/80 transition hover:border-accent hover:text-accent"
-              >
-                Jump to next track
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>

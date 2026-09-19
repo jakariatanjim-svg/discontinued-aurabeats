@@ -77,15 +77,15 @@
 /* ------------------------------- GLASSY -------------------------------- */
 [data-theme="glassy"][data-mode="dark"] {
   --c-base: #0a0616;
-  --c-elev: rgb(255 255 255 / 0.055);
-  --c-elev2: rgb(255 255 255 / 0.1);
+  --c-elev: rgb(20 16 34 / 0.72); /* Much more opaque dark base for glassy */
+  --c-elev2: rgb(255 255 255 / 0.12);
   --c-line: rgb(255 255 255 / 0.14);
   --c-ink: #f7f4ff;
   --c-ink2: #bdb4dd;
   --c-ink3: #8b82ad;
   --panel-alpha: 1;
-  --panel-blur: 22px;
-  --panel-border: 1px solid rgb(255 255 255 / 0.13);
+  --panel-blur: 28px;
+  --panel-border: 1px solid rgb(255 255 255 / 0.12);
   --panel-radius: 22px;
   --glow-strength: 1;
   --app-bg-image: radial-gradient(
@@ -98,16 +98,16 @@
 }
 
 [data-theme="glassy"][data-mode="light"] {
-  --c-base: #f2eefb;
-  --c-elev: rgb(255 255 255 / 0.55);
-  --c-elev2: rgb(255 255 255 / 0.75);
-  --c-line: rgb(255 255 255 / 0.75);
+  --c-base: #f4f1ff;
+  --c-elev: rgb(255 255 255 / 0.82); /* More opaque light base */
+  --c-elev2: rgb(255 255 255 / 0.85);
+  --c-line: rgb(255 255 255 / 0.9);
   --c-ink: #150f28;
   --c-ink2: #4b4363;
   --c-ink3: #7b7492;
   --panel-alpha: 1;
-  --panel-blur: 24px;
-  --panel-border: 1px solid rgb(255 255 255 / 0.8);
+  --panel-blur: 28px;
+  --panel-border: 1px solid rgb(255 255 255 / 0.95);
   --panel-radius: 22px;
   --glow-strength: 0.6;
   --app-bg-image: radial-gradient(

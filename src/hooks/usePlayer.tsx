@@ -19,7 +19,7 @@ import { useAudioEngine, type AudioEngine } from "@/hooks/useAudioEngine";
 import { reportListen } from "@/services/radio";
 import { storage } from "@/utils/storage";
 import { shuffleArray, uid } from "@/utils/format";
-import type { RepeatMode, ToastMessage, Track, UserPlaylist } from "@/types";
+import type { RepeatMode, ToastMessage, Track, UserPlaylist, PlayerSettings } from "@/types";
 
 const HISTORY_LIMIT = 80;
 
@@ -92,6 +92,9 @@ interface PlayerContextValue {
   renamePlaylist: (id: string, name: string) => void;
   addToPlaylist: (playlistId: string, track: Track | Track[]) => void;
   removeFromPlaylist: (playlistId: string, trackId: string) => void;
+  downloadTrack: (track: Track) => void;
+  settings: PlayerSettings;
+  updateSettings: (s: Partial<PlayerSettings>) => void;
   toast: (text: string, tone?: ToastMessage["tone"]) => void;
   dismissToast: (id: number) => void;
 }
@@ -100,6 +103,18 @@ const PlayerContext = createContext<PlayerContextValue | null>(null);
 
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const engine = useAudioEngine();
+
+  const [settings, setSettings] = useState<PlayerSettings>(() => 
+    storage.get("settings", { queueEnabled: false })
+  );
+
+  const updateSettings = useCallback((next: Partial<PlayerSettings>) => {
+    setSettings((prev) => {
+      const updated = { ...prev, ...next };
+      storage.set("settings", updated);
+      return updated;
+    });
+  }, []);
 
   const [queue, setQueue] = useState<Track[]>([]);
   const [index, setIndex] = useState(0);
@@ -144,6 +159,66 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const downloadTrack = useCallback(async (track: Track) => {
+    const ext = track.codec?.toLowerCase().includes("mp4") || track.streamUrl.includes(".mp4") ? "m4a" : "mp3";
+    const filename = `${track.artist} - ${track.title}.${ext}`.replace(/[<>:"/\\|?*]/g, "");
+
+    try {
+      toast(`Fetching audio for download...`, "info");
+      
+      // 1. Try a direct fetch. Works for JioSaavn, Archive which allow CORS.
+      const controller = new AbortController();
+      let timeoutId = setTimeout(() => controller.abort(), 15000);
+      
+      let response = await fetch(track.streamUrl, { mode: "cors", signal: controller.signal }).catch(() => null);
+      
+      // 2. If direct fetch fails (CORS error from Audius/Jamendo), use a proxy
+      if (!response || !response.ok) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => controller.abort(), 20000);
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(track.streamUrl)}`;
+        response = await fetch(proxyUrl, { mode: "cors", signal: controller.signal });
+      }
+      clearTimeout(timeoutId);
+      
+      if (!response || !response.ok) throw new Error(`HTTP ${response?.status}`);
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      
+      // Delay cleanup so the browser has time to start the download
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 10000);
+      
+      toast(`Download complete: ${track.title}`, "success");
+    } catch (error) {
+      console.warn("Direct fetch failed, falling back to window.open", error);
+      
+      // 3. Absolute Fallback: force the browser to open it if even the proxy fails.
+      const link = document.createElement("a");
+      link.href = track.streamUrl;
+      link.setAttribute("download", filename);
+      link.setAttribute("target", "_blank");
+      link.setAttribute("rel", "noopener noreferrer");
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 5000);
+      
+      toast(`Download opened in a new tab for: ${track.title}`, "info");
+    }
+  }, [toast]);
   /* ---------------------------- persistence ------------------------------ */
   useEffect(() => storage.set("shuffle", shuffle), [shuffle]);
   useEffect(() => storage.set("repeat", repeat), [repeat]);
@@ -167,9 +242,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       engine.pause();
       return;
     }
-    const url = current.fallbackUrls[Math.min(attempt, current.fallbackUrls.length - 1)] ?? current.streamUrl;
-    setFailoverNote(attempt > 0 ? `Retrying via open mirror #${attempt + 1}` : null);
     recordedRef.current = "";
+    setFailoverNote(attempt > 0 ? `Retrying via mirror #${attempt + 1}` : null);
+
+    const urls = [current.streamUrl, ...(current.fallbackUrls || [])];
+    const url = urls[Math.min(attempt, urls.length - 1)] || current.streamUrl;
+    
     engine.load(url, { autoplay: true, live: current.isLive });
     if (current.source === "radio") reportListen(current.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -182,21 +260,22 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
    * --------------------------------------------------------------------- */
   useEffect(() => {
     if (!current) return;
+    const timeoutMs = 12000;
     const timer = window.setTimeout(() => {
       const el = engineRef.current;
-      // healthy (playing / has audio) or intentionally idle -> nothing to do
       if (el.currentTime > 0.2 || el.isPlaying || !el.isBuffering) return;
       const track = queueRef.current[indexRef.current];
       if (!track) return;
       const nextAttempt = attemptRef.current + 1;
-      if (nextAttempt < Math.max(1, track.fallbackUrls.length)) {
-        setFailoverNote(`Mirror timed out — switching to #${nextAttempt + 1}`);
+      const maxAttempts = Math.max(2, track.fallbackUrls?.length || 0);
+      if (nextAttempt < maxAttempts) {
+        setFailoverNote(`Stream timed out — trying mirror #${nextAttempt + 1}`);
         setAttempt(nextAttempt);
       } else if (queueRef.current.length > 1) {
         toast(`"${track.title}" timed out — skipping`, "error");
         goToRef.current?.(indexRef.current + 1);
       }
-    }, 11000);
+    }, timeoutMs);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id, attempt]);
@@ -224,6 +303,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const q = queueRef.current;
       if (q.length === 0) return;
       const clamped = ((nextIndex % q.length) + q.length) % q.length;
+
       setIndex(clamped);
       setAttempt(0);
     },
@@ -276,19 +356,21 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const track = queueRef.current[indexRef.current];
     if (!track) return;
     const nextAttempt = attemptRef.current + 1;
-    if (nextAttempt < Math.max(1, track.fallbackUrls.length)) {
-      setFailoverNote(`Switching to alternate open stream (${nextAttempt + 1})`);
+    const maxAttempts = Math.max(2, track.fallbackUrls?.length || 0);
+    if (nextAttempt < maxAttempts) {
+      setFailoverNote(`Stream failed — trying mirror #${nextAttempt + 1}`);
       setAttempt(nextAttempt);
       return;
     }
+
     consecutiveFailuresRef.current += 1;
-    if (consecutiveFailuresRef.current >= 4) {
-      toast("Too many open streams failed — playback paused.", "error");
+    if (consecutiveFailuresRef.current >= 5) {
+      toast("Multiple streams failed — playback paused. Try a different track.", "error");
       engine.pause();
       consecutiveFailuresRef.current = 0;
       return;
     }
-    toast(`"${track.title}" is unreachable — hopping to the next track`, "error");
+    toast(`"${track.title}" is unreachable — skipping to next`, "error");
     next();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [engine.errorTick]);
@@ -414,8 +496,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const cycleRepeat = useCallback(() => {
     setRepeat((r) => {
-      const nextMode: RepeatMode = r === "off" ? "all" : r === "all" ? "one" : "off";
-      toast(nextMode === "off" ? "Repeat off" : nextMode === "all" ? "Repeat queue" : "Repeat one", "info");
+      const nextMode: RepeatMode = r === "off" ? "one" : "off";
+      toast(nextMode === "off" ? "Repeat off" : "Repeat one ∞", "info");
       return nextMode;
     });
   }, [toast]);
@@ -547,6 +629,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       renamePlaylist,
       addToPlaylist,
       removeFromPlaylist,
+      downloadTrack,
+      settings,
+      updateSettings,
       toast,
       dismissToast,
     }),
@@ -588,6 +673,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       renamePlaylist,
       addToPlaylist,
       removeFromPlaylist,
+      downloadTrack,
+      settings,
+      updateSettings,
       toast,
       dismissToast,
     ],
