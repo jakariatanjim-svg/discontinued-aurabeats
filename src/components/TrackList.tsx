@@ -315,7 +315,9 @@ export function TrackRow({
                       ? "Independent CC library"
                       : track.source === "hearthis"
                         ? "HearThis · Indie"
-                        : "Open radio directory"
+                        : track.source === "youtube"
+                          ? "YouTube Music mirror · 320kbps"
+                          : "Open radio directory"
             }
           >
             {
@@ -324,6 +326,7 @@ export function TrackRow({
               track.source === "jiosaavn" ? "database" :
               track.source === "jamendo" ? "CC library" :
               track.source === "hearthis" ? "hearthis" :
+              track.source === "youtube" ? "yt mirror" :
               "radio"
             }
           </span>

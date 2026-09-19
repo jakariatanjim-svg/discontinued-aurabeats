@@ -19,6 +19,7 @@ import * as audius from "@/services/audius";
 import * as jiosaavn from "@/services/jiosaavn";
 import * as jamendo from "@/services/jamendo";
 import * as hearthis from "@/services/hearthis";
+import * as youtube from "@/services/youtube";
 import { shuffleArray } from "@/utils/format";
 import type { Track } from "@/types";
 
@@ -173,22 +174,25 @@ export async function fetchGenre(genre: string, opts: CatalogQuery = {}): Promis
   return dedupe(interleaveMany([au, ia])).slice(0, limit);
 }
 
-/** Full-text search across all open databases, ranked for relevance. */
+/** Full-text search across all active databases, including YouTube Music mirrors. */
 export async function searchEverything(query: string, opts: CatalogQuery = {}): Promise<Track[]> {
-  const { limit = 40, signal } = opts;
+  const { limit = 50, signal } = opts;
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  // Fire all sources in parallel — fast sources return first, slow ones fill in
-  const [js, jam, au, ht, ia] = await Promise.all([
-    settle(jiosaavn.searchTracks(trimmed, 16), [] as Track[]),
-    settle(jamendo.searchTracks(trimmed, 10), [] as Track[]),
-    settle(audius.searchTracks(trimmed, { limit: 12, signal }), [] as Track[]),
-    settle(hearthis.searchTracks(trimmed, 8), [] as Track[]),
-    settle(archive.searchTracks(trimmed, { limit: 6, signal }), [] as Track[]),
+  // Increased limits and added YouTube
+  const [js, yt, jam, au, ht, ia] = await Promise.all([
+    settle(jiosaavn.searchTracks(trimmed, 25), [] as Track[]),
+    settle(youtube.searchTracks(trimmed, 20), [] as Track[]),
+    settle(jamendo.searchTracks(trimmed, 15), [] as Track[]),
+    settle(audius.searchTracks(trimmed, { limit: 15, signal }), [] as Track[]),
+    settle(hearthis.searchTracks(trimmed, 10), [] as Track[]),
+    settle(archive.searchTracks(trimmed, { limit: 10, signal }), [] as Track[]),
   ]);
 
-  return dedupe([...js, ...au, ...jam, ...ht, ...ia])
+  const all = [...js, ...yt, ...au, ...jam, ...ht, ...ia];
+  
+  return dedupe(all)
     .sort((a, b) => scoreTrack(trimmed, b) - scoreTrack(trimmed, a))
     .slice(0, limit);
 }

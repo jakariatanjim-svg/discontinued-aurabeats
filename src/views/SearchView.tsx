@@ -56,7 +56,7 @@ export function SearchView() {
   const { playAll } = usePlayer();
 
   const trimmed = query.trim();
-  const debounced = useDebouncedValue(trimmed, 180);
+  const debounced = useDebouncedValue(trimmed, 120); // Faster reaction
   const enabled = debounced.length >= 2;
 
   useEffect(() => {
