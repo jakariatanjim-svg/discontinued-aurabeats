@@ -7,4 +7,7 @@
 - Added trust-focused hero copy and legal/source clarity blocks so the product explains what “open music” actually means.
 - Added crawlable internal links / CTA anchors for listening, search, radio, genres, and collections.
 - Removed broken HearThis references from code and docs.
+- Created a dedicated "About AuraBeats" page (accessible from the sidebar) containing all source descriptions, rights explainers, principles, and open-source info.
+- Cleared all documentation and licensing copy from the home screen so the main UI stays focused on music discovery.
+- Home hero is now clean: just a headline, one-line description, and three action buttons.
 - Kept the premium glass UI while making the homepage more search-friendly and conversion-ready.

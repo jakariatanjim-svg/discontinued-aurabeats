@@ -17,6 +17,11 @@ song lists.
 
 ## ✨ Features
 
+### Crawlability & sharing ready
+- Canonical URL, Open Graph tags, Twitter card, JSON-LD, `robots.txt`, and `sitemap.xml`
+- Raw HTML fallback hero content for crawlers and rich link preview tools
+- Social preview image included for consistent sharing across apps
+
 ### Multi-source streaming engine
 
 Every song is a complete, full-length recording streamed from free, open

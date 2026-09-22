@@ -7,6 +7,7 @@ export type RouteKey =
   | "favorites"
   | "history"
   | "settings"
+  | "about"
   | `playlist:${string}`;
 
 export interface RouteMeta {
@@ -31,6 +32,8 @@ export function routeLabel(route: RouteKey): string {
       return "Recently Played";
     case "settings":
       return "Settings";
+    case "about":
+      return "About AuraBeats";
     default:
       return "AuraBeats";
   }

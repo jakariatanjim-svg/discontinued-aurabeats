@@ -4,6 +4,7 @@ import {
   Clock,
   Heart,
   Home,
+  Info,
   Library,
   ListMusic,
   Plus,
@@ -34,6 +35,7 @@ const COLLECTION: NavItem[] = [
   { key: "favorites", label: "Favourites", icon: Heart },
   { key: "history", label: "Recently Played", icon: Clock },
   { key: "settings", label: "Settings", icon: Settings },
+  { key: "about", label: "About", icon: Info },
 ];
 
 export function Sidebar({

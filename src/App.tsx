@@ -1,19 +1,25 @@
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { PlayerProvider, usePlayer } from "@/hooks/usePlayer";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { Sidebar } from "@/components/Sidebar";
 import { MobileNav } from "@/components/MobileNav";
 import { TopBar } from "@/components/TopBar";
 import { PlayerBar } from "@/components/PlayerBar";
-import { FullScreenPlayer, QueuePanel } from "@/components/FullScreenPlayer";
 import { Toaster } from "@/components/ui";
-import { HomeView } from "@/views/HomeView";
-import { SearchView } from "@/views/SearchView";
-import { RadioView } from "@/views/RadioView";
-import { FavoritesView, HistoryView, LibraryView, PlaylistDetailView } from "@/views/LibraryViews";
-import { SettingsView } from "@/views/SettingsView";
 import { storage } from "@/utils/storage";
 import type { RouteKey } from "@/routes";
+
+const HomeView = lazy(() => import("@/views/HomeView").then((m) => ({ default: m.HomeView })));
+const SearchView = lazy(() => import("@/views/SearchView").then((m) => ({ default: m.SearchView })));
+const RadioView = lazy(() => import("@/views/RadioView").then((m) => ({ default: m.RadioView })));
+const SettingsView = lazy(() => import("@/views/SettingsView").then((m) => ({ default: m.SettingsView })));
+const AboutView = lazy(() => import("@/views/AboutView").then((m) => ({ default: m.AboutView })));
+const FavoritesView = lazy(() => import("@/views/LibraryViews").then((m) => ({ default: m.FavoritesView })));
+const HistoryView = lazy(() => import("@/views/LibraryViews").then((m) => ({ default: m.HistoryView })));
+const LibraryView = lazy(() => import("@/views/LibraryViews").then((m) => ({ default: m.LibraryView })));
+const PlaylistDetailView = lazy(() => import("@/views/LibraryViews").then((m) => ({ default: m.PlaylistDetailView })));
+const FullScreenPlayer = lazy(() => import("@/components/FullScreenPlayer").then((m) => ({ default: m.FullScreenPlayer })));
+const QueuePanel = lazy(() => import("@/components/FullScreenPlayer").then((m) => ({ default: m.QueuePanel })));
 
 function Shell() {
   const [route, setRoute] = useState<RouteKey>(() => storage.get<RouteKey>("route", "home"));
@@ -86,25 +92,41 @@ function Shell() {
           id="ab-scroll" 
           className="scroll-area min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+12rem)] sm:px-8 md:pb-[calc(env(safe-area-inset-bottom)+9rem)]"
         >
-          <div key={route} className="animate-fade-up mx-auto w-full max-w-[1600px] pb-8">
-            {route === "home" && <HomeView onNavigate={navigate} />}
-            {route === "search" && <SearchView />}
-            {route === "radio" && <RadioView />}
-            {route === "library" && <LibraryView onNavigate={navigate} />}
-            {route === "favorites" && <FavoritesView />}
-            {route === "history" && <HistoryView />}
-            {route === "settings" && <SettingsView />}
-            {route.startsWith("playlist:") && (
-              <PlaylistDetailView playlistId={route.slice("playlist:".length)} onBack={() => navigate("library")} />
-            )}
-          </div>
+          <Suspense
+            fallback={
+              <div className="blur-panel p-6 animate-fade-in">
+                <div className="skeleton h-4 w-32 rounded-full" />
+                <div className="mt-4 space-y-3">
+                  <div className="skeleton h-10 w-full rounded-2xl" />
+                  <div className="skeleton h-10 w-full rounded-2xl" />
+                  <div className="skeleton h-10 w-full rounded-2xl" />
+                </div>
+              </div>
+            }
+          >
+            <div key={route} className="animate-fade-up mx-auto w-full max-w-[1600px] pb-8">
+              {route === "home" && <HomeView onNavigate={navigate} />}
+              {route === "search" && <SearchView />}
+              {route === "radio" && <RadioView />}
+              {route === "library" && <LibraryView onNavigate={navigate} />}
+              {route === "favorites" && <FavoritesView />}
+              {route === "history" && <HistoryView />}
+              {route === "settings" && <SettingsView />}
+              {route === "about" && <AboutView />}
+              {route.startsWith("playlist:") && (
+                <PlaylistDetailView playlistId={route.slice("playlist:".length)} onBack={() => navigate("library")} />
+              )}
+            </div>
+          </Suspense>
         </main>
       </div>
 
       <PlayerBar onOpenQueue={() => setQueueOpen(!queueOpen)} />
       <MobileNav route={route} onNavigate={navigate} favoritesCount={favorites.length} />
-      {settings.queueEnabled && <QueuePanel />}
-      <FullScreenPlayer />
+      <Suspense fallback={null}>
+        {settings.queueEnabled && <QueuePanel />}
+        <FullScreenPlayer />
+      </Suspense>
       <Toaster />
     </div>
   );
