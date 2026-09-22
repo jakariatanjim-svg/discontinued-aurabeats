@@ -41,6 +41,69 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
 
   return (
     <div className="space-y-8 pb-4">
+      <section className="blur-panel glass-inset overflow-hidden rounded-[2rem] p-6 sm:p-8" id="home-hero">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+          <div className="space-y-5">
+            <p className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-accent uppercase">
+              <Sparkles className="h-3.5 w-3.5" /> Pure open streaming
+            </p>
+            <h1 className="max-w-4xl text-balance text-4xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">
+              Stream open music and live radio in one player.
+            </h1>
+            <p className="max-w-3xl text-sm leading-7 text-ink2 sm:text-base">
+              AuraBeats brings together JioSaavn, Audius, Jamendo, Internet Archive and live radio into a premium browser player.
+              Explore artist-approved releases, Creative Commons libraries, public-domain recordings and nonstop radio — without sign-up friction.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="#home-popular"
+                className="focus-ring rounded-full bg-accent px-5 py-3 text-sm font-bold text-white shadow-[0_14px_34px_-16px_var(--c-accent)] transition hover:brightness-110"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("home-popular")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+              >
+                Start listening
+              </a>
+              <a
+                href="#home-search"
+                className="focus-ring rounded-full border border-line bg-white/[0.03] px-5 py-3 text-sm font-bold text-ink transition hover:border-accent hover:text-accent"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate("search");
+                }}
+              >
+                Search tracks
+              </a>
+              <a
+                href="#home-radio"
+                className="focus-ring rounded-full border border-line bg-white/[0.03] px-5 py-3 text-sm font-bold text-ink transition hover:border-accent hover:text-accent"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigate("radio");
+                }}
+              >
+                Open live radio
+              </a>
+            </div>
+          </div>
+          <div className="rounded-[1.8rem] border border-white/10 bg-white/[0.04] p-5 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.45)]" id="home-trust">
+            <p className="text-[11px] font-bold tracking-[0.18em] text-accent uppercase">How it works</p>
+            <div className="mt-4 space-y-4 text-sm leading-6 text-ink2">
+              <p>
+                <strong className="text-ink">Open catalogs:</strong> discover music from public archives, open artist networks and free music libraries.
+              </p>
+              <p>
+                <strong className="text-ink">Clear source scope:</strong> includes Creative Commons tracks, public-domain recordings, artist-approved uploads and live radio streams.
+              </p>
+              <p>
+                <strong className="text-ink">Zero lock-in:</strong> your favorites, playlists and history stay locally in your browser.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {popular.loading && !popular.data ? (
         <div className="blur-panel p-5 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -90,7 +153,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         />
       </div>
 
-      <section>
+      <section id="home-popular">
         <SectionHeader
           title="Popular on AuraBeats"
           subtitle={
@@ -142,7 +205,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         )}
       </section>
 
-      <section>
+      <section id="home-genres">
         <SectionHeader
           title="Browse by Genre"
           subtitle="Live exploration across the decentralised web"
@@ -179,7 +242,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         )}
       </section>
 
-      <section>
+      <section id="home-collections">
         <SectionHeader
           title="Open Collections"
           subtitle="Infinite free archives, one tap away"

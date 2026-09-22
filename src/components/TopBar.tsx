@@ -133,7 +133,7 @@ export function TopBar({
       </button>
 
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-lg font-black tracking-tight text-ink sm:text-xl drop-shadow-sm">{routeLabel(route)}</h1>
+        <p className="truncate text-lg font-black tracking-tight text-ink sm:text-xl drop-shadow-sm">{routeLabel(route)}</p>
         <p className="flex items-center gap-1.5 text-[11px] font-medium text-ink3 sm:text-xs">
           <Wifi className="h-3.5 w-3.5 text-accent drop-shadow-[0_0_8px_var(--c-accent)]" />
           {failoverNote ? (

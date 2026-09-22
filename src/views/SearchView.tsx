@@ -106,7 +106,7 @@ export function SearchView() {
   }, [view, tracks.data]);
 
   return (
-    <div className="space-y-6 pb-4">
+    <div className="space-y-6 pb-4" id="home-search">
       <section className="space-y-4">
         {/* Sticky Search Input like Spotify */}
         <div className="sticky top-0 z-20 -mx-4 px-4 py-2 sm:-mx-8 sm:px-8 bg-[var(--c-base)]/80 backdrop-blur-xl border-b border-white/5">

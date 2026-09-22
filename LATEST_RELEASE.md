@@ -1,12 +1,10 @@
-### Pending Patch Bundle
+### Audit-Driven SEO & Homepage Patch
 
-- Release workflow patched for hosting: GitHub Release now ships plain `index.html` instead of a custom-renamed HTML file, so Cloudflare/static hosting works without manual renaming.
-- Removed the broken HearThis source completely.
-- Removed unreliable YouTube mirror logic from the app instead of keeping a broken source.
-- Search result hard-cap removed in the UI. Results are no longer stuck at 12 items.
-- Search coverage expanded with stronger query-variant matching across reliable sources.
-- Search suggestion dropdown redesigned with a more solid glass background, deeper shadow, cleaner layering, and better readability.
-- Search results header now shows live result count.
-- Full-screen mouse-wheel volume fix kept.
-- Big glassmorphism UI refresh applied across the app: stronger glass panels, softer borders, better depth, improved text wrapping, richer chrome, and a more premium visual system.
-- Dead code and broken-source logic cleaned up.
+- Added canonical URL, Open Graph tags, Twitter card tags, and WebSite/WebApplication JSON-LD metadata.
+- Added crawl support files: `robots.txt`, `sitemap.xml`, and a dedicated social preview image (`og-card.svg`).
+- Added meaningful raw HTML fallback content inside `index.html` so crawlers and preview bots can understand the homepage even before JavaScript runs.
+- Replaced the homepage's generic top-level H1 behavior by moving the real product promise into the hero section: “Stream open music and live radio in one player.”
+- Added trust-focused hero copy and legal/source clarity blocks so the product explains what “open music” actually means.
+- Added crawlable internal links / CTA anchors for listening, search, radio, genres, and collections.
+- Removed broken HearThis references from code and docs.
+- Kept the premium glass UI while making the homepage more search-friendly and conversion-ready.

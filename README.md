@@ -11,7 +11,7 @@ song lists.
 ![stack](https://img.shields.io/badge/Vite_7-React_19-646cff)
 ![style](https://img.shields.io/badge/Tailwind_CSS_v4-dual_theme-38bdf8)
 ![cost](https://img.shields.io/badge/cost-100%25_free-22c55e)
-![sources](https://img.shields.io/badge/sources-6_databases-ff6b6b)
+![sources](https://img.shields.io/badge/sources-5_databases-ff6b6b)
 
 ---
 
@@ -27,7 +27,6 @@ music networks with automatic multi-source racing and failover.
 | **JioSaavn** | Massive database: Bollywood, regional, international. Direct MP3. | None | 320 kbps |
 | **Jamendo** | Creative-Commons indie library: mood & genre filters. | None | Full |
 | **Audius** | Decentralised artist catalogue: charts, releases, genre feeds. | None | 320 kbps |
-| **HearThis.at** | Indie artist platform: trending, electronic, experimental. | None | Full |
 | **Internet Archive** | CC & public-domain: net labels, live concerts, restored classics. | None | Full |
 | **Radio Browser** | Worldwide live radio directory: tag/country filters. | None | Endless |
 
@@ -143,7 +142,6 @@ src/
     archive.ts             Internet Archive client
     audius.ts              Audius network client (racing mirrors)
     catalog.ts             Merges + interleaves + ranks all sources
-    hearthis.ts            HearThis.at client
     jamendo.ts             Jamendo CC library client
     jiosaavn.ts            JioSaavn database client (racing mirrors)
     radio.ts               Live radio directory client

@@ -8,8 +8,35 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta
       name="description"
-      content="AuraBeats — an ultra-modern, key-free music player streaming live from open music networks and public radio archives. Dual theme engine, full player, zero sign-ups."
+      content="Stream open music, artist-approved releases, and live radio in a sleek browser player — no sign-up required."
     />
+    <link rel="canonical" href="https://aurabeats.jakariatanjim.workers.dev/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aurabeats.jakariatanjim.workers.dev/" />
+    <meta property="og:title" content="AuraBeats — Pure Open Streaming" />
+    <meta property="og:description" content="Stream open music, artist-approved releases, and live radio in a sleek browser player — no sign-up required." />
+    <meta property="og:image" content="https://aurabeats.jakariatanjim.workers.dev/og-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AuraBeats — Pure Open Streaming" />
+    <meta name="twitter:description" content="Stream open music, artist-approved releases, and live radio in a sleek browser player — no sign-up required." />
+    <meta name="twitter:image" content="https://aurabeats.jakariatanjim.workers.dev/og-card.svg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": ["WebSite", "WebApplication"],
+        "name": "AuraBeats",
+        "url": "https://aurabeats.jakariatanjim.workers.dev/",
+        "description": "Stream open music, artist-approved releases, and live radio in a sleek browser player — no sign-up required.",
+        "applicationCategory": "MusicApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
     <title>AuraBeats — Pure Open Streaming</title>
     <!-- DNS prefetch & preconnect for all music sources -->
     <link rel="dns-prefetch" href="https://archive.org" />
@@ -35,7 +62,26 @@
     />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main style="max-width:1100px;margin:0 auto;padding:32px 20px;color:#fff;font-family:Outfit,system-ui,sans-serif;line-height:1.6;">
+        <h1 style="font-size:clamp(2rem,5vw,4rem);line-height:1.05;margin:0 0 12px;font-weight:900;letter-spacing:-0.04em;">Stream open music and live radio in one player</h1>
+        <p style="max-width:760px;margin:0 0 18px;color:#c9bfe6;font-size:1rem;">
+          AuraBeats is a multi-source music player that aggregates JioSaavn, Audius, Jamendo, Internet Archive and live radio into one premium browser experience. It focuses on open streaming, artist-approved releases, Creative Commons music, archive recordings and instant search.
+        </p>
+        <nav style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:22px;">
+          <a href="#home-popular" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;background:#7c5cff;font-weight:700;">Start listening</a>
+          <a href="#home-search" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.18);">Search tracks</a>
+          <a href="#home-radio" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.18);">Live radio</a>
+          <a href="#home-collections" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.18);">Open collections</a>
+        </nav>
+        <section style="max-width:820px;margin-bottom:20px;">
+          <strong style="display:block;margin-bottom:8px;">Why trust AuraBeats?</strong>
+          <p style="margin:0;color:#c9bfe6;">
+            AuraBeats pulls music from open catalogs and public radio networks. Sources include artist-approved uploads, Creative Commons libraries, public-domain archives and live radio streams. Nothing requires an account, and the app keeps your playlists, favourites and listening history in your own browser.
+          </p>
+        </section>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

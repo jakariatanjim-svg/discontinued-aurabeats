@@ -1,0 +1,45 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="60" x2="1040" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#13071F"/>
+      <stop offset="1" stop-color="#06020D"/>
+    </linearGradient>
+    <radialGradient id="g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(226 136) rotate(41.8) scale(350 257)">
+      <stop stop-color="#7C5CFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#7C5CFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g2" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1010 150) rotate(137.6) scale(304 222)">
+      <stop stop-color="#22D3EE" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="g3" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(684 528) rotate(180) scale(410 180)">
+      <stop stop-color="#FF3F9E" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#FF3F9E" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="panel" x1="370" y1="132" x2="956" y2="466" gradientUnits="userSpaceOnUse">
+      <stop stop-color="rgba(255,255,255,0.12)"/>
+      <stop offset="1" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+    <filter id="blur" x="0" y="0" width="1200" height="630" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="40"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" rx="0" fill="url(#bg)"/>
+  <g filter="url(#blur)">
+    <ellipse cx="220" cy="130" rx="220" ry="170" fill="url(#g1)"/>
+    <ellipse cx="1000" cy="140" rx="180" ry="150" fill="url(#g2)"/>
+    <ellipse cx="690" cy="540" rx="290" ry="120" fill="url(#g3)"/>
+  </g>
+  <rect x="56" y="56" width="1088" height="518" rx="40" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)"/>
+  <rect x="96" y="110" width="1008" height="410" rx="34" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)"/>
+  <circle cx="250" cy="315" r="116" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.12)"/>
+  <circle cx="250" cy="315" r="26" fill="rgba(0,0,0,0.45)" stroke="rgba(255,255,255,0.18)"/>
+  <rect x="412" y="214" width="420" height="28" rx="14" fill="rgba(255,255,255,0.88)"/>
+  <rect x="412" y="256" width="292" height="18" rx="9" fill="rgba(255,255,255,0.30)"/>
+  <rect x="412" y="308" width="560" height="12" rx="6" fill="rgba(255,255,255,0.16)"/>
+  <rect x="412" y="356" width="660" height="16" rx="8" fill="rgba(255,255,255,0.08)"/>
+  <rect x="412" y="403" width="160" height="52" rx="26" fill="#7C5CFF"/>
+  <text x="412" y="176" fill="white" font-family="Outfit, system-ui, sans-serif" font-size="64" font-weight="900" letter-spacing="-0.04em">AuraBeats</text>
+  <text x="412" y="286" fill="#D7CFFF" font-family="Outfit, system-ui, sans-serif" font-size="28" font-weight="600">Open music streaming and live radio in one player</text>
+  <text x="602" y="438" text-anchor="middle" fill="white" font-family="Outfit, system-ui, sans-serif" font-size="22" font-weight="800">Start Listening</text>
+</svg>
