@@ -252,13 +252,14 @@ export function TrackRow({
     <div
       role="button"
       tabIndex={0}
-      onDoubleClick={() => playNow(track, context)}
+      // whole row is tappable — artwork, gaps, duration, everything plays the track
+      onClick={() => playNow(track, context)}
       onKeyDown={(e) => {
         if (e.key === "Enter") playNow(track, context);
       }}
       className={cn(
-        "group/row flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors duration-200",
-        isCurrent ? "bg-accent/10" : "hover:bg-ink/[0.07]",
+        "group/row flex w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-left select-none transition-colors duration-200 focus-ring",
+        isCurrent ? "bg-accent/10" : "hover:bg-ink/[0.07] active:bg-ink/10",
       )}
     >
       {index !== undefined && (
@@ -289,7 +290,8 @@ export function TrackRow({
         </div>
       )}
 
-      <button type="button" onClick={() => playNow(track, context)} className="min-w-0 flex-1 text-left">
+      {/* plain div — the row itself carries the play action (no nested buttons) */}
+      <div className="min-w-0 flex-1 text-left">
         <div className="flex items-center gap-2">
           <span className={cn("truncate text-sm font-semibold", isCurrent ? "text-accent" : "text-ink")}>
             {track.title}
@@ -330,7 +332,7 @@ export function TrackRow({
           {track.genre && !track.isLive && <span className="hidden shrink-0 opacity-60 md:inline">• {track.genre}</span>}
           {meta && <span className="shrink-0 opacity-60">• {meta}</span>}
         </div>
-      </button>
+      </div>
 
       <div className="hidden items-center gap-3 pr-1 text-[11px] text-ink3 md:flex">
         {track.playCount !== undefined && track.playCount > 0 && <span>{formatCount(track.playCount)} plays</span>}
@@ -365,7 +367,16 @@ export function TrackCard({ track, context }: { track: Track; context?: Track[] 
   const isCurrent = current?.id === track.id;
   const fav = isFavorite(track.id);
   return (
-    <div className="group/card blur-panel relative w-[10rem] shrink-0 p-2.5 transition-transform duration-300 hover:-translate-y-1 sm:w-[11.5rem] sm:p-3">
+    <div
+      role="button"
+      tabIndex={0}
+      // whole card is tappable — artwork and text both start playback
+      onClick={() => playNow(track, context)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") playNow(track, context);
+      }}
+      className="group/card blur-panel relative w-[10rem] shrink-0 cursor-pointer select-none p-2.5 transition-transform duration-300 hover:-translate-y-1 active:scale-[0.97] sm:w-[11.5rem] sm:p-3 focus-ring"
+    >
       <div className="relative mb-2.5 aspect-square w-full sm:mb-3">
         <Artwork
           src={track.artwork || undefined}
@@ -400,10 +411,11 @@ export function TrackCard({ track, context }: { track: Track; context?: Track[] 
           </span>
         )}
       </div>
-      <button type="button" onClick={() => playNow(track, context)} className="block w-full min-w-0 text-left">
+      {/* plain div — the card itself carries the play action */}
+      <div className="block w-full min-w-0 text-left">
         <p className={cn("truncate text-[13px] font-bold sm:text-sm", isCurrent ? "text-accent" : "text-ink")}>{track.title}</p>
         <p className="mt-0.5 truncate text-[10px] text-ink3 sm:text-xs">{track.artist}</p>
-      </button>
+      </div>
     </div>
   );
 }
@@ -452,7 +464,16 @@ export function HeroCard({ track, context }: { track: Track; context?: Track[] }
         style={{ backgroundImage: gradientFrom(track.title) }}
       />
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
-        <div className="relative mx-auto w-40 shrink-0 sm:mx-0 sm:w-44">
+        <div
+          className="relative mx-auto w-40 shrink-0 cursor-pointer select-none transition-transform duration-300 hover:scale-[1.02] active:scale-95 sm:mx-0 sm:w-44"
+          role="button"
+          tabIndex={0}
+          aria-label={`Play ${track.title}`}
+          onClick={() => playNow(track, context)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") playNow(track, context);
+          }}
+        >
           <Artwork
             src={track.artworkLarge || track.artwork || undefined}
             fallbackSrc={track.artworkFallback}

@@ -1,31 +1,26 @@
-### Clean Player Bar + Deep-Linkable URLs
+### Clean Slash URLs + Cloudflare-Native SEO + Tap-Anywhere
 
-**1. Player Bar — Invisible Until You Actually Play**
-- The player bar no longer sits at the bottom saying "Nothing playing yet" on launch. It is completely hidden and reserves **zero layout space** until the first track plays.
-- Once something plays, the bar appears and stays — including while paused.
-- Page refresh (F5) brings the exact queue back (paused, no surprise autoplay) because the queue now lives in **sessionStorage**.
-- Closing the tab/browser wipes the session, so every fresh visit starts clean again.
+**1. Clean Slash URLs — Real Paths, Zero Hardcoding**
+- Sections moved from hash fragments (`#/search`) to genuine paths: `/home`, `/search`, `/radio`, `/library`, `/favorites`, `/history`, `/settings`, `/about`, `/playlist/<id>`. Audit tools, link previews and crawlers now see each section as a first-class page.
+- Browser Back/Forward, deep-link refresh and pasted links all work. Landing at bare `/` opens Discover (Home).
+- Static fallback content (for JS-off crawlers) now uses the same clean `/home`, `/search`, `/radio`, `/library` links.
+- `sitemap.xml` lists the real section paths for indexing.
+- Everything still ships as ONE self-contained `index.html` — the History API router rehydrates each path client-side.
 
-**2. Layout Space Reclaimed**
-- The main content area no longer keeps ~12rem of dead bottom padding when no track is loaded — pages end naturally, and padding only appears alongside the player bar (with a smooth transition).
-- On mobile, spacing below content now exactly matches the bottom nav when the player is hidden.
+**2. Native Cloudflare SPA Support (2 new deploy files)**
+- **`_redirects`**: declares the section paths + catch-all (`/* /index.html 200`) so visiting any section directly never 404s. It is **auto-generated at build time** from the route list in `src/config/routes.ts` (single source of truth) — add a route there and it is covered on the next build; no manual edits, no divergence.
+- **`_headers`**: adds nosniff, frame and referrer hardening for the static host.
+- Both live in `public/` and flow into `dist/` automatically. **Upload the whole `dist/` folder as-is (now 6 files instead of 4) — no extra steps.** The single-file `index.html` release asset still works offline by double-click (it gracefully opens Discover).
 
-**3. Hash-Based Deep Links (URL routing)**
-- Every section now has its own URL fragment:
-  - `#/` — Discover
-  - `#/search` — Search
-  - `#/radio` — Live Radio
-  - `#/library` — Your Library
-  - `#/favorites` — Favourites
-  - `#/history` — Recently Played
-  - `#/settings` — Settings
-  - `#/about` — About AuraBeats
-  - `#/playlist/<id>` — individual playlists
-- Browser Back / Forward buttons work, sections can be bookmarked, and links can be shared straight to any section.
-- Everything remains one single `index.html` — fragments never touch the server, so no extra files or host configuration are required.
+**3. Tap-Anywhere Playback (mobile usability)**
+- Track rows and cards now start playback when tapped **anywhere** — artwork, gaps, duration, the whole surface. Previously only the tiny title text triggered playback (and rows needed a double-click), which was painful on phones.
+- Rows and carousel/grid cards also gained keyboard play (Enter), visible focus rings, cursor pointers, and touch press feedback.
+- Favourite / menu / download buttons keep their own isolated actions — tapping them never accidentally starts the track.
+- Applies everywhere automatically: Home, Search results, Radio stations, Library, Favourites and History all share the same row/card components.
 
 **4. Still Includes the Previous Release**
+- Player bar hidden until first play; hidden = zero reserved layout space; session queue restore on refresh (paused); wiped on tab close.
 - 4.5s feed deadlines + per-service timeouts (10s+ → ~1-2s typical).
 - Lucide SVG icons everywhere — zero emojis.
-- Mobile brand header ("AuraBeats — Open music player"), hero eyebrow badge, stronger hero subtitle contrast.
+- Mobile brand header, hero eyebrow badge, stronger hero subtitle contrast.
 - `aurabeats-dist.zip` release asset for one-step Cloudflare deployment.

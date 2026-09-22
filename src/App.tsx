@@ -7,7 +7,7 @@ import { TopBar } from "@/components/TopBar";
 import { PlayerBar } from "@/components/PlayerBar";
 import { Toaster } from "@/components/ui";
 import { storage } from "@/utils/storage";
-import { hashToRoute, routeToHash, type RouteKey } from "@/routes";
+import { pathToRoute, routeToPath, type RouteKey } from "@/routes";
 import { cn } from "@/utils/cn";
 
 const HomeView = lazy(() => import("@/views/HomeView").then((m) => ({ default: m.HomeView })));
@@ -23,8 +23,8 @@ const FullScreenPlayer = lazy(() => import("@/components/FullScreenPlayer").then
 const QueuePanel = lazy(() => import("@/components/FullScreenPlayer").then((m) => ({ default: m.QueuePanel })));
 
 function Shell() {
-  // URL is the source of truth: #/ #/search #/radio … deep-linkable sections.
-  const [route, setRoute] = useState<RouteKey>(() => hashToRoute(window.location.hash));
+  // URL is the source of truth — real clean paths: /home /search /radio …
+  const [route, setRoute] = useState<RouteKey>(() => pathToRoute(window.location.pathname));
   const [collapsed, setCollapsed] = useState<boolean>(() => storage.get("sidebarCollapsed", false));
 
   const scrollTop = useCallback(() => {
@@ -33,22 +33,41 @@ function Shell() {
   }, []);
 
   const navigate = useCallback((next: RouteKey) => {
-    const hash = routeToHash(next);
-    if (window.location.hash === hash) {
+    const path = routeToPath(next);
+    if (window.location.pathname === path) {
       scrollTop();
       return;
     }
-    window.location.hash = hash;
+    // Replace the bare "/" entry with "/home" so back-navigation stays inside the app.
+    if (window.location.pathname === "/") window.history.replaceState(null, "", "/home");
+    window.history.pushState(null, "", path);
+    setRoute(next);
+    scrollTop();
   }, [scrollTop]);
 
   // keep state in sync with the address bar (back / forward / pasted links)
   useEffect(() => {
-    const onHash = () => {
-      setRoute(hashToRoute(window.location.hash));
+    const onPop = () => {
+      setRoute(pathToRoute(window.location.pathname));
       scrollTop();
     };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [scrollTop]);
+
+  // Intercept plain app links (href="/search" with data-nav) for SPA navigation.
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const anchor = (e.target as HTMLElement | null)?.closest?.("a[data-nav='true']") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      e.preventDefault();
+      window.history.pushState(null, "", anchor.pathname + anchor.search);
+      setRoute(pathToRoute(window.location.pathname));
+      scrollTop();
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
   }, [scrollTop]);
 
   const toggleCollapse = useCallback(() => {

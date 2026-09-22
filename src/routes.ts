@@ -15,28 +15,32 @@ export interface RouteMeta {
   label: string;
 }
 
-/* ------------------------- hash-based deep links ------------------------- *
- * The whole app is one self-contained index.html, so section URLs live in the
- * fragment: #/  #/search  #/radio  #/library  #/favorites  #/history
- * #/settings  #/about  #/playlist/<id>
- * Fragments never hit the network — one file serves everything, and audit /
- * sharing tools can still deep-link any section directly.
+/* -------------------- clean slash URLs (History API) -------------------- *
+ * Sections live on real paths — /home /search /radio /library /favorites
+ * /history /settings /about /playlist/<id> — served by ONE index.html thanks
+ * to public/_redirects (Cloudflare SPA fallback). Static assets keep working
+ * (Cloudflare serves the real file first; the fallback only catches routes
+ * that have no matching asset). On file:// (double-click offline) it degrades
+ * gracefully to the Discover section without any URL mangling.
+ * Deep-linkable, back/forward friendly, and every section can be audited
+ * directly as a real path — no hash fragment weirdness.
  * ------------------------------------------------------------------------ */
 
-export function routeToHash(route: RouteKey): string {
-  if (route.startsWith("playlist:")) return `#/playlist/${route.slice("playlist:".length)}`;
-  return route === "home" ? "#/" : `#/${route}`;
+export function routeToPath(route: RouteKey): string {
+  if (route.startsWith("playlist:")) return `/playlist/${route.slice("playlist:".length)}`;
+  return route === "home" ? "/home" : `/${route}`;
 }
 
-export function hashToRoute(hash: string): RouteKey {
-  const clean = hash.replace(/^#\/?/, "").replace(/\/+$/, "");
-  if (!clean) return "home";
-  if (clean.startsWith("playlist/")) {
-    const id = clean.slice("playlist/".length);
+export function pathToRoute(pathname: string): RouteKey {
+  const clean = (pathname || "/").replace(/\/+$/, "") || "/";
+  if (clean === "/") return "home";
+  if (clean.startsWith("/playlist/")) {
+    const id = clean.slice("/playlist/".length);
     return id ? (`playlist:${id}` as RouteKey) : "library";
   }
-  const valid = ["home", "search", "radio", "library", "favorites", "history", "settings", "about"] as const;
-  return (valid as readonly string[]).includes(clean) ? (clean as RouteKey) : "home";
+  const key = clean.slice(1);
+  const valid: RouteKey[] = ["home", "search", "radio", "library", "favorites", "history", "settings", "about"];
+  return valid.includes(key as RouteKey) ? (key as RouteKey) : "home";
 }
 
 export function routeLabel(route: RouteKey): string {

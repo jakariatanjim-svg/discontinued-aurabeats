@@ -67,14 +67,16 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
             Start listening
           </a>
           <a
-            href="#home-search"
+            href="/search"
+            data-nav="true"
             className="focus-ring rounded-full border border-line bg-white/[0.03] px-6 py-3 text-sm font-bold text-ink transition hover:border-accent hover:text-accent active:scale-95"
             onClick={(e) => { e.preventDefault(); onNavigate("search"); }}
           >
             Search tracks
           </a>
           <a
-            href="#home-radio"
+            href="/radio"
+            data-nav="true"
             className="focus-ring rounded-full border border-line bg-white/[0.03] px-6 py-3 text-sm font-bold text-ink transition hover:border-accent hover:text-accent active:scale-95"
             onClick={(e) => { e.preventDefault(); onNavigate("radio"); }}
           >
