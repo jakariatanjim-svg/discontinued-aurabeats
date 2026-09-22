@@ -5,9 +5,15 @@ const BASE = "https://api.jamendo.com/v3.0";
 
 async function fetchJamendo(path: string): Promise<any> {
   const url = `${BASE}${path}${path.includes("?") ? "&" : "?"}client_id=${CLIENT_ID}&format=json`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Jamendo failed");
-  return res.json();
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 6000);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) throw new Error("Jamendo failed");
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function normalize(raw: any): Track {

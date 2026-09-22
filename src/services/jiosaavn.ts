@@ -6,11 +6,13 @@ const HOSTS = [
   "https://jiosaavn-api-sumit.vercel.app",
 ];
 
+const REQUEST_TIMEOUT = 6000;
+
 async function raceFetch<T>(path: string): Promise<T> {
   const controllers = HOSTS.map(() => new AbortController());
   const promises = HOSTS.map(async (host, i) => {
     const url = `${host}${path}`;
-    const res = await fetch(url, { 
+    const res = await fetch(url, {
       signal: controllers[i].signal,
       headers: { "Accept": "application/json" }
     });
@@ -21,13 +23,30 @@ async function raceFetch<T>(path: string): Promise<T> {
     return data;
   });
 
-  // Custom race to avoid ES2021 dependency
+  // Custom race to avoid ES2021 dependency — plus a hard timeout so a hung
+  // mirror never freezes the whole feed.
   return new Promise((resolve, reject) => {
     let rejected = 0;
+    let done = false;
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      controllers.forEach((c) => c.abort());
+      reject(new Error("All mirrors timed out"));
+    }, REQUEST_TIMEOUT);
     promises.forEach((p) => {
-      p.then(resolve).catch(() => {
+      p.then((v) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(v);
+      }).catch(() => {
         rejected++;
-        if (rejected === promises.length) reject(new Error("All mirrors failed"));
+        if (rejected === promises.length && !done) {
+          done = true;
+          clearTimeout(timer);
+          reject(new Error("All mirrors failed"));
+        }
       });
     });
   });

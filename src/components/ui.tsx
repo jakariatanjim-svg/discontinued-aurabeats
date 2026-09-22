@@ -7,7 +7,7 @@ import {
   type Ref,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Music2 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { gradientFrom, initials } from "@/utils/format";
 import { usePlayer } from "@/hooks/usePlayer";
@@ -20,6 +20,7 @@ export function Artwork({
   alt,
   className,
   rounded = "rounded-xl",
+  eager = false,
 }: {
   src?: string;
   /** tried automatically if `src` 404s / 500s before falling back to the gradient */
@@ -27,6 +28,8 @@ export function Artwork({
   alt: string;
   className?: string;
   rounded?: string;
+  /** above-the-fold images (hero) — prioritize fetch instead of lazy loading */
+  eager?: boolean;
 }) {
   const [stage, setStage] = useState(0);
   useEffect(() => setStage(0), [src, fallbackSrc]);
@@ -44,7 +47,9 @@ export function Artwork({
           key={active}
           src={active}
           alt={alt}
-          loading="lazy"
+          loading={eager ? "eager" : "lazy"}
+          fetchPriority={eager ? "high" : "auto"}
+          decoding={eager ? "sync" : "async"}
           onError={() => setStage((s) => s + 1)}
           className="h-full w-full object-cover"
           draggable={false}
@@ -54,9 +59,13 @@ export function Artwork({
           className="flex h-full w-full items-center justify-center text-ink/80"
           style={{ backgroundImage: gradientFrom(alt) }}
         >
-          <span className="text-[clamp(0.7rem,22cqw,2.4rem)] font-bold tracking-tight text-white/90 drop-shadow">
-            {initials(alt) || "♪"}
-          </span>
+          {initials(alt) ? (
+            <span className="text-[clamp(0.7rem,22cqw,2.4rem)] font-bold tracking-tight text-white/90 drop-shadow">
+              {initials(alt)}
+            </span>
+          ) : (
+            <Music2 className="h-[38%] w-[38%] text-white/85 drop-shadow" strokeWidth={1.75} />
+          )}
         </div>
       )}
     </div>

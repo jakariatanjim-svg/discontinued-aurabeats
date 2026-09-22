@@ -43,10 +43,27 @@ async function racePiped<T>(path: string, params: Record<string, string>): Promi
 
   return new Promise((resolve, reject) => {
     let errors = 0;
+    let done = false;
+    // Hard timeout — hung Piped mirrors must never freeze the feed.
+    const timer = setTimeout(() => {
+      if (done) return;
+      done = true;
+      controllers.forEach((c) => c.abort());
+      reject(new Error("All Piped mirrors timed out"));
+    }, 6000);
     promises.forEach(p => {
-      p.then(resolve).catch(() => {
+      p.then((v) => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(v);
+      }).catch(() => {
         errors++;
-        if (errors === promises.length) reject(new Error("All Piped mirrors failed"));
+        if (errors === promises.length && !done) {
+          done = true;
+          clearTimeout(timer);
+          reject(new Error("All Piped mirrors failed"));
+        }
       });
     });
   });
@@ -57,8 +74,10 @@ export async function resolveStreamUrls(videoId: string): Promise<{ urls: string
   const instances = [...PIPED_INSTANCES.slice(preferredIndex), ...PIPED_INSTANCES.slice(0, preferredIndex)];
   
   for (const host of instances) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 5000);
     try {
-      const res = await fetch(`${host}/streams/${videoId}`);
+      const res = await fetch(`${host}/streams/${videoId}`, { signal: ctrl.signal });
       if (!res.ok) continue;
       const data = await res.json();
       
@@ -75,6 +94,7 @@ export async function resolveStreamUrls(videoId: string): Promise<{ urls: string
         };
       }
     } catch { continue; }
+    finally { clearTimeout(timer); }
   }
   throw new Error("Could not resolve Piped stream");
 }

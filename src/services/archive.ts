@@ -36,7 +36,7 @@ function formatRank(format: string): number {
   return -1;
 }
 
-async function getJson<T>(url: string, signal?: AbortSignal, timeout = 14000): Promise<T> {
+async function getJson<T>(url: string, signal?: AbortSignal, timeout = 7000): Promise<T> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   const relay = () => ctrl.abort();

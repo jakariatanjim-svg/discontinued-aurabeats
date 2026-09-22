@@ -43,10 +43,16 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
     <div className="space-y-8 pb-4">
       {/* Clean hero — no clutter, just CTA */}
       <section className="blur-panel glass-inset overflow-hidden rounded-[2rem] px-6 py-8 sm:px-10 sm:py-12" id="home-hero">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.05] px-3.5 py-1.5 shadow-sm">
+          <Sparkles className="h-3.5 w-3.5 text-accent" />
+          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink2">
+            Free open music player
+          </span>
+        </div>
         <h1 className="mb-3 max-w-3xl text-balance text-4xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">
           Stream open music and live radio.
         </h1>
-        <p className="mb-7 max-w-2xl text-sm leading-7 text-ink2 sm:text-base">
+        <p className="mb-7 max-w-2xl text-sm font-medium leading-7 text-ink2 sm:text-base">
           Five live sources. No accounts. No previews. Full tracks, instantly.
         </p>
         <div className="flex flex-wrap gap-3">

@@ -7,7 +7,8 @@ import { TopBar } from "@/components/TopBar";
 import { PlayerBar } from "@/components/PlayerBar";
 import { Toaster } from "@/components/ui";
 import { storage } from "@/utils/storage";
-import type { RouteKey } from "@/routes";
+import { hashToRoute, routeToHash, type RouteKey } from "@/routes";
+import { cn } from "@/utils/cn";
 
 const HomeView = lazy(() => import("@/views/HomeView").then((m) => ({ default: m.HomeView })));
 const SearchView = lazy(() => import("@/views/SearchView").then((m) => ({ default: m.SearchView })));
@@ -22,19 +23,33 @@ const FullScreenPlayer = lazy(() => import("@/components/FullScreenPlayer").then
 const QueuePanel = lazy(() => import("@/components/FullScreenPlayer").then((m) => ({ default: m.QueuePanel })));
 
 function Shell() {
-  // Always start at "home" — don't restore search/settings from last session
-  const [route, setRoute] = useState<RouteKey>(() => {
-    const saved = storage.get<RouteKey>("route", "home");
-    return (saved === "search" || saved === "settings" || saved === "history") ? "home" : saved;
-  });
+  // URL is the source of truth: #/ #/search #/radio … deep-linkable sections.
+  const [route, setRoute] = useState<RouteKey>(() => hashToRoute(window.location.hash));
   const [collapsed, setCollapsed] = useState<boolean>(() => storage.get("sidebarCollapsed", false));
 
-  const navigate = useCallback((next: RouteKey) => {
-    setRoute(next);
-    storage.set("route", next);
+  const scrollTop = useCallback(() => {
     const main = document.getElementById("ab-scroll");
     if (main) main.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
+
+  const navigate = useCallback((next: RouteKey) => {
+    const hash = routeToHash(next);
+    if (window.location.hash === hash) {
+      scrollTop();
+      return;
+    }
+    window.location.hash = hash;
+  }, [scrollTop]);
+
+  // keep state in sync with the address bar (back / forward / pasted links)
+  useEffect(() => {
+    const onHash = () => {
+      setRoute(hashToRoute(window.location.hash));
+      scrollTop();
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [scrollTop]);
 
   const toggleCollapse = useCallback(() => {
     setCollapsed((c) => {
@@ -91,10 +106,16 @@ function Shell() {
       <Sidebar route={route} onNavigate={navigate} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
 
       <div className="flex min-w-0 flex-1 flex-col relative z-10 h-full rounded-[2rem] blur-panel overflow-hidden border border-white/5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)]">
-        <TopBar route={route} onNavigate={navigate} onToggleSidebar={toggleCollapse} />
-        <main 
-          id="ab-scroll" 
-          className="scroll-area min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+12rem)] sm:px-8 md:pb-[calc(env(safe-area-inset-bottom)+9rem)]"
+        <TopBar route={route} onNavigate={navigate} />
+        <main
+          id="ab-scroll"
+          className={cn(
+            "scroll-area min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-8 transition-[padding] duration-300",
+            // reserve room for the floating player bar only once it actually exists
+            current
+              ? "pb-[calc(env(safe-area-inset-bottom)+12rem)] md:pb-[calc(env(safe-area-inset-bottom)+9rem)]"
+              : "pb-[calc(env(safe-area-inset-bottom)+6.5rem)] md:pb-10",
+          )}
         >
           <Suspense
             fallback={

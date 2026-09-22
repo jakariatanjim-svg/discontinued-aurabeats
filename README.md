@@ -93,6 +93,8 @@ To enable automated builds and releases:
 
 Every push to `main` will now build the project, and every version tag (e.g., `v1.0.0`) will create a GitHub Release with the ready-to-host ZIP.
 
+Deep-linkable sections: the app uses hash routing, so `#/search`, `#/radio`, `#/library`, `#/favorites`, `#/history`, `#/settings`, `#/about` and `#/playlist/<id>` open that section directly — handy for sharing links and running audits per section. No server config needed; everything is still one `index.html`.
+
 ---
 
 ## ☁️ Hosting
@@ -106,7 +108,9 @@ Every push to `main` will now build the project, and every version tag (e.g., `v
 | Node version | 20 |
 
 ### Any static host
-Upload the contents of `dist/` (just `index.html` + `_headers`) to Netlify, Vercel, GitHub Pages, nginx, S3, or any CDN. No server needed.
+Upload the contents of `dist/` to Netlify, Vercel, GitHub Pages, nginx, S3, or any CDN. No server needed.
+
+> **Zero-build option:** every [GitHub Release](../../releases) ships `aurabeats-dist.zip` — the complete `dist/` folder (`index.html` + `robots.txt` + `sitemap.xml` + `og-card.svg`). Extract it and upload as-is to any static host. The separate `index.html` release file is a fully self-contained single-file build that even runs locally by double-click.
 
 ---
 

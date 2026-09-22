@@ -110,34 +110,38 @@ function AccentPicker() {
 export function TopBar({
   route,
   onNavigate,
-  onToggleSidebar,
 }: {
   route: RouteKey;
   onNavigate: (r: RouteKey) => void;
-  onToggleSidebar: () => void;
 }) {
   const { failoverNote } = usePlayer();
   const live = route === "radio";
 
   return (
-    <header className="blur-panel glass-inset sticky top-0 z-40 flex items-center gap-4 rounded-none! border-x-0! border-t-0! px-4 py-3 sm:px-6">
+    <header className="blur-panel glass-inset sticky top-0 z-40 flex items-center gap-3 rounded-none! border-x-0! border-t-0! px-4 py-3 sm:gap-4 sm:px-6">
+      {/* Mobile brand — the app name is otherwise invisible without the sidebar */}
       <button
         type="button"
-        onClick={onToggleSidebar}
-        className="focus-ring flex items-center gap-2 md:hidden"
-        aria-label="Toggle navigation"
+        onClick={() => onNavigate("home")}
+        className="focus-ring flex shrink-0 items-center gap-2.5 rounded-2xl md:hidden"
+        aria-label="AuraBeats — go to home"
       >
         <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 text-white shadow-lg">
           <AudioWaveform className="h-5 w-5 drop-shadow" />
         </span>
+        <span className="flex flex-col items-start leading-tight">
+          <span className="text-[15px] font-black tracking-tight text-ink">AuraBeats</span>
+          <span className="text-[10px] font-semibold text-ink3">Open music player</span>
+        </span>
       </button>
 
+      {/* Route title — text hidden on phones; the brand + bottom nav carry context there */}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-lg font-black tracking-tight text-ink sm:text-xl drop-shadow-sm">{routeLabel(route)}</p>
-        <p className="flex items-center gap-1.5 text-[11px] font-medium text-ink3 sm:text-xs">
-          <Wifi className="h-3.5 w-3.5 text-accent drop-shadow-[0_0_8px_var(--c-accent)]" />
+        <p className="hidden truncate text-lg font-black tracking-tight text-ink sm:block sm:text-xl drop-shadow-sm">{routeLabel(route)}</p>
+        <p className="hidden items-center gap-1.5 text-[11px] font-medium text-ink3 sm:flex sm:text-xs">
+          <Wifi className="h-3.5 w-3.5 shrink-0 text-accent drop-shadow-[0_0_8px_var(--c-accent)]" />
           {failoverNote ? (
-            <span className="text-accent">{failoverNote}</span>
+            <span className="truncate text-accent">{failoverNote}</span>
           ) : live ? (
             "Open radio archive · live streams"
           ) : (

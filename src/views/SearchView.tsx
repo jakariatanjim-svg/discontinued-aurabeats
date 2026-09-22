@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic2, Music2, Search as SearchIcon, X, History, ChevronLeft } from "lucide-react";
+import {
+  Mic2, Music2, Search as SearchIcon, X, History, ChevronLeft,
+  Flame, Headphones, SlidersHorizontal, Piano, Dumbbell, Clapperboard,
+} from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useDebouncedValue, useFeed } from "@/hooks/useFeed";
 import { fetchArtistTracks, searchArtists } from "@/services/audius";
@@ -13,13 +16,13 @@ import { storage } from "@/utils/storage";
 import type { Artist, Track } from "@/types";
 
 const RECENT_KEY = "searchRecent";
-const DISCOVER: { label: string; emoji: string; query: string; gradient: string }[] = [
-  { label: "Trending Now",   emoji: "🔥", query: "trending hits 2025",    gradient: "from-orange-500/70 to-red-600/70" },
-  { label: "Lofi Chill",    emoji: "🎧", query: "lofi chill beats",       gradient: "from-indigo-500/70 to-violet-700/70" },
-  { label: "Deep House",    emoji: "🎛️", query: "deep house music",       gradient: "from-cyan-500/70 to-blue-700/70" },
-  { label: "Piano Solo",    emoji: "🎹", query: "piano solo instrumental", gradient: "from-slate-500/70 to-zinc-700/70" },
-  { label: "Workout Mix",   emoji: "💪", query: "workout motivation mix",  gradient: "from-green-500/70 to-emerald-700/70" },
-  { label: "Bollywood",     emoji: "🎬", query: "bollywood hits",          gradient: "from-pink-500/70 to-rose-700/70" },
+const DISCOVER: { label: string; icon: typeof Flame; query: string; gradient: string }[] = [
+  { label: "Trending Now", icon: Flame,             query: "trending hits 2025",     gradient: "from-orange-500/70 to-red-600/70" },
+  { label: "Lofi Chill",   icon: Headphones,        query: "lofi chill beats",       gradient: "from-indigo-500/70 to-violet-700/70" },
+  { label: "Deep House",   icon: SlidersHorizontal, query: "deep house music",       gradient: "from-cyan-500/70 to-blue-700/70" },
+  { label: "Piano Solo",   icon: Piano,             query: "piano solo instrumental", gradient: "from-slate-500/70 to-zinc-700/70" },
+  { label: "Workout Mix",  icon: Dumbbell,          query: "workout motivation mix",  gradient: "from-green-500/70 to-emerald-700/70" },
+  { label: "Bollywood",    icon: Clapperboard,      query: "bollywood hits",          gradient: "from-pink-500/70 to-rose-700/70" },
 ];
 
 function uniqueStrings(items: string[]): string[] {
@@ -185,7 +188,7 @@ export function SearchView() {
           <section>
             <SectionHeader title="Browse all" />
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {DISCOVER.map(({ label, emoji, query, gradient }) => (
+              {DISCOVER.map(({ label, icon: Icon, query, gradient }) => (
                 <button
                   key={label}
                   onClick={() => setQuery(query)}
@@ -198,7 +201,9 @@ export function SearchView() {
                 >
                   <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors rounded-[20px]" />
                   <div className="relative z-10 flex h-full flex-col justify-between">
-                    <span className="text-3xl drop-shadow-lg">{emoji}</span>
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 shadow-lg ring-1 ring-white/25 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110">
+                      <Icon className="h-5 w-5 text-white drop-shadow" strokeWidth={2.25} />
+                    </span>
                     <span className="text-base font-black tracking-tight text-white drop-shadow-md leading-tight">
                       {label}
                     </span>

@@ -24,7 +24,7 @@ function mirrorOrder(): string[] {
   return [...MIRRORS.slice(mirrorOffset), ...MIRRORS.slice(0, mirrorOffset)];
 }
 
-async function getJson<T>(url: string, signal?: AbortSignal, timeout = 9000): Promise<T> {
+async function getJson<T>(url: string, signal?: AbortSignal, timeout = 7000): Promise<T> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   const relay = () => ctrl.abort();

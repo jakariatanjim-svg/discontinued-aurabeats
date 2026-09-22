@@ -73,7 +73,7 @@ function withTimeout(signal: AbortSignal | undefined, ms: number): { signal: Abo
   };
 }
 
-async function getJson<T>(url: string, signal?: AbortSignal, timeout = 9000): Promise<T> {
+async function getJson<T>(url: string, signal?: AbortSignal, timeout = 6000): Promise<T> {
   const t = withTimeout(signal, timeout);
   try {
     const res = await fetch(url, { signal: t.signal, headers: { Accept: "application/json" } });

@@ -457,6 +457,7 @@ export function HeroCard({ track, context }: { track: Track; context?: Track[] }
             src={track.artworkLarge || track.artwork || undefined}
             fallbackSrc={track.artworkFallback}
             alt={track.title}
+            eager
             className={cn(
               "aspect-square w-full shadow-2xl",
               isCurrent && isPlaying && "animate-spin-slow glow-ring rounded-full",

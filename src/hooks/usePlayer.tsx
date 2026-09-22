@@ -18,7 +18,7 @@ import {
 import { useAudioEngine, type AudioEngine } from "@/hooks/useAudioEngine";
 import { reportListen } from "@/services/radio";
 import { resolveStreamUrls } from "@/services/youtube";
-import { storage } from "@/utils/storage";
+import { storage, session } from "@/utils/storage";
 import { shuffleArray, uid } from "@/utils/format";
 import type { RepeatMode, ToastMessage, Track, UserPlaylist, PlayerSettings } from "@/types";
 
@@ -131,8 +131,15 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const [queue, setQueue] = useState<Track[]>([]);
-  const [index, setIndex] = useState(0);
+  // Queue + playhead live in sessionStorage: they survive an in-tab refresh
+  // (so the player bar comes back after F5) but are wiped on a brand-new visit
+  // (tab / browser closed) — a fresh launch always starts clean and hidden.
+  const [queue, setQueue] = useState<Track[]>(() => session.get<Track[]>("queue", []));
+  const [index, setIndex] = useState<number>(() => {
+    const q = session.get<Track[]>("queue", []);
+    const i = session.get<number>("index", 0);
+    return q.length > 0 ? Math.min(Math.max(0, i), q.length - 1) : 0;
+  });
   const [attempt, setAttempt] = useState(0);
   const [shuffle, setShuffle] = useState<boolean>(() => storage.get("shuffle", false));
   const [repeat, setRepeat] = useState<RepeatMode>(() => storage.get<RepeatMode>("repeat", "off"));
@@ -148,6 +155,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const queueRef = useRef(queue);
   const indexRef = useRef(index);
+  /** Only true on the first mount following a refresh with a restored queue —
+   *  we then load that track PAUSED instead of blasting audio unprompted. */
+  const restorePauseRef = useRef<boolean>(queue.length > 0);
   const attemptRef = useRef(attempt);
   const repeatRef = useRef(repeat);
   const unshuffledRef = useRef<Track[] | null>(null);
@@ -240,6 +250,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => storage.set("favorites", favorites.slice(0, 400)), [favorites]);
   useEffect(() => storage.set("history", history.slice(0, HISTORY_LIMIT)), [history]);
   useEffect(() => storage.set("playlists", playlists), [playlists]);
+  useEffect(() => session.set("queue", queue.slice(0, 200)), [queue]);
+  useEffect(() => session.set("index", index), [index]);
   useEffect(() => {
     engine.setVolume(volume);
     storage.set("volume", volume);
@@ -272,7 +284,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         const urls = resolvedUrlsRef.current;
         const url = urls[Math.min(attempt, urls.length - 1)] ?? current.streamUrl;
         if (!alive) return;
-        engine.load(url, { autoplay: true, live: current.isLive });
+        // Refresh-restore loads PAUSED (no surprise autoplay); every play that
+        // follows a real user action autoplays as usual.
+        engine.load(url, { autoplay: !restorePauseRef.current, live: current.isLive });
+        restorePauseRef.current = false;
         if (current.source === "radio") reportListen(current.id);
       } catch {
         if (!alive) return;

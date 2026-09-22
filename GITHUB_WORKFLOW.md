@@ -1,4 +1,3 @@
-```yaml
 name: Build & Release
 
 on:
@@ -49,8 +48,17 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Prepare release file
-        run: cp dist/index.html "index.html"
+      - name: Prepare release files
+        run: |
+          # Standalone single-file build — double-click opens the full app locally
+          cp dist/index.html "index.html"
+
+          # Whole dist folder (index.html + robots.txt + sitemap.xml + og-card.svg)
+          # packed as a zip: extract and drop it straight onto Cloudflare Pages /
+          # any static host — no extra steps needed.
+          cd dist
+          zip -r "../aurabeats-dist.zip" .
+          cd ..
 
       - name: Push to Release
         uses: softprops/action-gh-release@v2
@@ -58,8 +66,9 @@ jobs:
           tag_name: ${{ steps.ver.outputs.version }}
           name: "AuraBeats ${{ steps.ver.outputs.version }}"
           body_path: LATEST_RELEASE.md
-          files: index.html
+          files: |
+            index.html
+            aurabeats-dist.zip
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-```

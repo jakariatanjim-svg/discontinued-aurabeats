@@ -101,12 +101,15 @@ function uniqueStrings(items: string[]): string[] {
   });
 }
 
-async function settle<T>(p: Promise<T>, fallback: T): Promise<T> {
-  try {
-    return await p;
-  } catch {
-    return fallback;
-  }
+/** Hard wall-clock cap per provider — a slow or hung mirror can never stall
+ *  the whole feed. Whatever resolved within the window is what we render. */
+const PROVIDER_DEADLINE = 4500;
+
+function deadline<T>(p: Promise<T>, fallback: T): Promise<T> {
+  return Promise.race<T>([
+    p.catch(() => fallback),
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), PROVIDER_DEADLINE)),
+  ]);
 }
 
 export interface CatalogQuery {
@@ -118,11 +121,11 @@ export interface CatalogQuery {
 export async function fetchPopular(opts: CatalogQuery = {}): Promise<Track[]> {
   const { limit = 34, signal } = opts;
   const [js, yt, jam, au, ia] = await Promise.all([
-    settle(jiosaavn.fetchTrending(Math.ceil(limit / 2)), [] as Track[]),
-    settle(youtube.searchTracks("popular", 10), [] as Track[]),
-    settle(jamendo.fetchPopular(Math.ceil(limit / 3)), [] as Track[]),
-    settle(audius.fetchTrending({ limit: 10, signal }), [] as Track[]),
-    settle(
+    deadline(jiosaavn.fetchTrending(Math.ceil(limit / 2)), [] as Track[]),
+    deadline(youtube.searchTracks("popular", 10), [] as Track[]),
+    deadline(jamendo.fetchPopular(Math.ceil(limit / 3)), [] as Track[]),
+    deadline(audius.fetchTrending({ limit: 10, signal }), [] as Track[]),
+    deadline(
       archive
         .searchAlbums({ collection: "netlabels", rows: 12, sort: "downloads desc", signal })
         .then((albums) => archive.tracksFromAlbums(shuffleArray(albums), { perAlbum: 2, max: 10, signal })),
@@ -137,9 +140,9 @@ export async function fetchPopular(opts: CatalogQuery = {}): Promise<Track[]> {
 export async function fetchFresh(opts: CatalogQuery = {}): Promise<Track[]> {
   const { limit = 28, signal } = opts;
   const [au, jam, ia] = await Promise.all([
-    settle(audius.fetchUnderground({ limit: 12, signal }), [] as Track[]),
-    settle(jamendo.searchTracks("new", 10), [] as Track[]),
-    settle(
+    deadline(audius.fetchUnderground({ limit: 12, signal }), [] as Track[]),
+    deadline(jamendo.searchTracks("new", 10), [] as Track[]),
+    deadline(
       archive
         .searchAlbums({ collection: "netlabels", rows: 10, sort: "addeddate desc", signal })
         .then((albums) => archive.tracksFromAlbums(albums, { perAlbum: 2, max: 10, signal })),
@@ -152,8 +155,8 @@ export async function fetchFresh(opts: CatalogQuery = {}): Promise<Track[]> {
 /** A whole open collection (net labels, live concerts, 78rpm…). */
 export async function fetchCollection(slug: string, opts: CatalogQuery = {}): Promise<Track[]> {
   const { limit = 30, signal } = opts;
-  const albums = await archive.searchAlbums({ collection: slug, rows: 26, sort: "downloads desc", signal });
-  return dedupe(await archive.tracksFromAlbums(shuffleArray(albums), { perAlbum: 3, max: limit, signal }));
+  const albums = await deadline(archive.searchAlbums({ collection: slug, rows: 26, sort: "downloads desc", signal }), []);
+  return dedupe(await deadline(archive.tracksFromAlbums(shuffleArray(albums), { perAlbum: 3, max: limit, signal }), []));
 }
 
 /** Genre feed — archive subject search merged with the open artist network. */
@@ -161,13 +164,13 @@ export async function fetchGenre(genre: string, opts: CatalogQuery = {}): Promis
   const { limit = 30, signal } = opts;
   const audiusGenre = AUDIUS_GENRE_MAP[genre.toLowerCase()] ?? genre;
   const [ia, au] = await Promise.all([
-    settle(
+    deadline(
       archive
         .searchAlbums({ genre, rows: 22, sort: "downloads desc", signal })
         .then((albums) => archive.tracksFromAlbums(shuffleArray(albums), { perAlbum: 2, max: limit, signal })),
       [] as Track[],
     ),
-    settle(audius.fetchTracksByGenre(audiusGenre, { limit, signal }), [] as Track[]),
+    deadline(audius.fetchTracksByGenre(audiusGenre, { limit, signal }), [] as Track[]),
   ]);
   return dedupe(interleaveMany([au, ia])).slice(0, limit);
 }
@@ -178,13 +181,14 @@ export async function searchEverything(query: string, opts: CatalogQuery = {}): 
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  // Search across multiple databases
+  // Search across multiple databases — each capped so a hung mirror never
+  // freezes results; the fastest sources paint first.
   const [js, yt, jam, au, ia] = await Promise.all([
-    settle(jiosaavn.searchTracks(trimmed, 35), [] as Track[]),
-    settle(youtube.searchTracks(trimmed, 30), [] as Track[]),
-    settle(jamendo.searchTracks(trimmed, 25), [] as Track[]),
-    settle(audius.searchTracks(trimmed, { limit: 25, signal }), [] as Track[]),
-    settle(archive.searchTracks(trimmed, { limit: 20, signal }), [] as Track[]),
+    deadline(jiosaavn.searchTracks(trimmed, 35), [] as Track[]),
+    deadline(youtube.searchTracks(trimmed, 30), [] as Track[]),
+    deadline(jamendo.searchTracks(trimmed, 25), [] as Track[]),
+    deadline(audius.searchTracks(trimmed, { limit: 25, signal }), [] as Track[]),
+    deadline(archive.searchTracks(trimmed, { limit: 20, signal }), [] as Track[]),
   ]);
 
   const all = [...js, ...yt, ...au, ...jam, ...ia];
@@ -201,8 +205,8 @@ export async function fetchSearchSuggestions(query: string, opts: CatalogQuery =
 
   // Get real suggestions from JioSaavn database (fast, actual song names)
   const [jsSugg, auSugg] = await Promise.all([
-    settle(jiosaavn.fetchSuggestions(trimmed, limit), [] as string[]),
-    settle(
+    deadline(jiosaavn.fetchSuggestions(trimmed, limit), [] as string[]),
+    deadline(
       audius.searchTracks(trimmed, { limit: 4, signal }).then((tracks) =>
         tracks.map((t) => `${t.title} - ${t.artist}`)
       ),
