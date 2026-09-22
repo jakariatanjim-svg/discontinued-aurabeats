@@ -68,19 +68,19 @@ export function FullScreenPlayer() {
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
-    <div className="fixed inset-0 z-[85] animate-fade-in overflow-hidden">
+    <div className="fixed inset-0 z-[85] animate-fade-in overflow-hidden bg-base">
       {/* backdrop */}
       <div className="absolute inset-0 -z-10">
         {current.artworkLarge || current.artwork ? (
           <img
             src={current.artworkLarge || current.artwork}
             alt=""
-            className="h-full w-full scale-125 object-cover opacity-40 blur-3xl"
+            className="h-full w-full scale-125 object-cover opacity-30 blur-[64px]"
           />
         ) : (
-          <div className="h-full w-full" style={{ backgroundImage: gradientFrom(current.title) }} />
+          <div className="h-full w-full opacity-60" style={{ backgroundImage: gradientFrom(current.title) }} />
         )}
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-black/80" />
         <div
           className="absolute inset-0 opacity-45 gradient-drift"
           style={{ backgroundImage: "linear-gradient(120deg, var(--c-accent), transparent 55%, var(--c-accent2))" }}

@@ -52,7 +52,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         <h1 className="mb-3 max-w-3xl text-balance text-4xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">
           Stream open music and live radio.
         </h1>
-        <p className="mb-7 max-w-2xl text-sm font-medium leading-7 text-ink2 sm:text-base">
+        <p className="mb-7 max-w-2xl text-sm font-medium leading-7 text-ink3 sm:text-base">
           Five live sources. No accounts. No previews. Full tracks, instantly.
         </p>
         <div className="flex flex-wrap gap-3">

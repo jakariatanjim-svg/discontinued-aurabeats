@@ -56,7 +56,7 @@ export function Artwork({
         />
       ) : (
         <div
-          className="flex h-full w-full items-center justify-center text-ink/80"
+          className="flex h-full w-full items-center justify-center text-ink3"
           style={{ backgroundImage: gradientFrom(alt) }}
         >
           {initials(alt) ? (

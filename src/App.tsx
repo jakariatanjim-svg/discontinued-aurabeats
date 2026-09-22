@@ -77,7 +77,7 @@ function Shell() {
     });
   }, []);
 
-  const { setExpanded, setQueueOpen, queueOpen, next, previous, toggle, current, favorites, volume, setVolume, settings } = usePlayer();
+  const { setExpanded, setQueueOpen, queueOpen, next, previous, toggle, current, favorites, volume, setVolume, settings, expanded } = usePlayer();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -101,12 +101,14 @@ function Shell() {
     // Mouse wheel volume control
     const onWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement | null;
-      // If we are in FullScreen player, we ALWAYS want volume control unless scrolling the up-next list
-      const isFullScreen = document.querySelector("[z-index='85']") || target?.closest(".fixed.inset-0");
+      // Is the full screen player currently mounted and visible?
+      const isFullScreen = expanded;
       
+      // If NOT in full screen, disable volume wheel over scrollable areas (so page can scroll normally)
       if (!isFullScreen && target?.closest(".scroll-area, main, aside, [role=dialog]")) return;
-      // Still allow scrolling in the "Up Next" queue in full screen
-      if (target?.closest(".scroll-area")) return;
+      
+      // If IN full screen, ONLY disable volume wheel if hovering over the "Up Next" queue area
+      if (isFullScreen && target?.closest(".scroll-area")) return;
 
       e.preventDefault();
       const delta = e.deltaY < 0 ? 0.05 : -0.05;
@@ -118,7 +120,7 @@ function Shell() {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("wheel", onWheel);
     };
-  }, [toggle, next, previous, setExpanded, setQueueOpen, queueOpen, current, volume, setVolume]);
+  }, [toggle, next, previous, setExpanded, setQueueOpen, queueOpen, current, volume, setVolume, expanded]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden p-0 sm:p-3 md:p-5 gap-4 relative z-0">
