@@ -22,7 +22,11 @@ const FullScreenPlayer = lazy(() => import("@/components/FullScreenPlayer").then
 const QueuePanel = lazy(() => import("@/components/FullScreenPlayer").then((m) => ({ default: m.QueuePanel })));
 
 function Shell() {
-  const [route, setRoute] = useState<RouteKey>(() => storage.get<RouteKey>("route", "home"));
+  // Always start at "home" — don't restore search/settings from last session
+  const [route, setRoute] = useState<RouteKey>(() => {
+    const saved = storage.get<RouteKey>("route", "home");
+    return (saved === "search" || saved === "settings" || saved === "history") ? "home" : saved;
+  });
   const [collapsed, setCollapsed] = useState<boolean>(() => storage.get("sidebarCollapsed", false));
 
   const navigate = useCallback((next: RouteKey) => {

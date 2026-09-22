@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic2, Music2, Search as SearchIcon, Sparkles, X, History, ChevronLeft } from "lucide-react";
+import { Mic2, Music2, Search as SearchIcon, X, History, ChevronLeft } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useDebouncedValue, useFeed } from "@/hooks/useFeed";
 import { fetchArtistTracks, searchArtists } from "@/services/audius";
@@ -13,13 +13,13 @@ import { storage } from "@/utils/storage";
 import type { Artist, Track } from "@/types";
 
 const RECENT_KEY = "searchRecent";
-const DISCOVER = [
-  "Trending Now",
-  "Lofi Chill",
-  "Deep House",
-  "Piano Solo",
-  "Workout Mix",
-  "Bollywood Hits",
+const DISCOVER: { label: string; emoji: string; query: string; gradient: string }[] = [
+  { label: "Trending Now",   emoji: "🔥", query: "trending hits 2025",    gradient: "from-orange-500/70 to-red-600/70" },
+  { label: "Lofi Chill",    emoji: "🎧", query: "lofi chill beats",       gradient: "from-indigo-500/70 to-violet-700/70" },
+  { label: "Deep House",    emoji: "🎛️", query: "deep house music",       gradient: "from-cyan-500/70 to-blue-700/70" },
+  { label: "Piano Solo",    emoji: "🎹", query: "piano solo instrumental", gradient: "from-slate-500/70 to-zinc-700/70" },
+  { label: "Workout Mix",   emoji: "💪", query: "workout motivation mix",  gradient: "from-green-500/70 to-emerald-700/70" },
+  { label: "Bollywood",     emoji: "🎬", query: "bollywood hits",          gradient: "from-pink-500/70 to-rose-700/70" },
 ];
 
 function uniqueStrings(items: string[]): string[] {
@@ -34,7 +34,7 @@ function uniqueStrings(items: string[]): string[] {
 
 export function SearchView() {
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<"all" | "tracks" | "artists">("all");
+  const [view, setView] = useState<"tracks" | "artists">("tracks");
   const [artist, setArtist] = useState<Artist | null>(null);
   const [recent, setRecent] = useState<string[]>(() => storage.get<string[]>(RECENT_KEY, []));
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -77,8 +77,8 @@ export function SearchView() {
   );
 
   const allTracks = tracks.data ?? [];
-  const displayedTracks = allTracks.slice(0, view === "all" ? 12 : visibleCount);
-  const visibleArtists = (artists.data ?? []).slice(0, view === "artists" ? 24 : 6);
+  const displayedTracks = allTracks.slice(0, visibleCount);
+  const visibleArtists = (artists.data ?? []).slice(0, 24);
 
   const rememberSearch = (value: string) => {
     const next = uniqueStrings([value.trim(), ...recent]).slice(0, 10);
@@ -109,9 +109,9 @@ export function SearchView() {
     <div className="space-y-6 pb-4" id="home-search">
       <section className="space-y-4">
         {/* Sticky Search Input like Spotify */}
-        <div className="sticky top-0 z-20 -mx-4 px-4 py-2 sm:-mx-8 sm:px-8 bg-[var(--c-base)]/80 backdrop-blur-xl border-b border-white/5">
+        <div className="sticky top-0 z-20 -mx-4 px-4 py-2 sm:-mx-8 sm:px-8 bg-[var(--c-base)]/60 backdrop-blur-3xl border-b border-white/5 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.5)]">
           <div className="relative max-w-4xl mx-auto">
-            <div className="blur-panel glass-inset flex items-center gap-2 rounded-full p-1 pl-4 transition-all duration-300 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.5)] focus-within:ring-2 focus-within:ring-accent/50 focus-within:shadow-[0_12px_40px_-10px_var(--c-accent)]">
+            <div className="blur-panel glass-inset flex items-center gap-2 rounded-full bg-white/[0.02] p-1 pl-4 transition-all duration-300 shadow-inner focus-within:bg-white/[0.05] focus-within:ring-2 focus-within:ring-accent/50 focus-within:shadow-[0_12px_40px_-10px_var(--c-accent)]">
               <SearchIcon className="h-5 w-5 shrink-0 text-ink3 group-focus-within:text-accent" />
               <input
                 ref={inputRef}
@@ -145,7 +145,6 @@ export function SearchView() {
         <div className="flex flex-wrap gap-2 pt-2">
           {(
             [
-              { key: "all", label: "All", icon: Sparkles },
               { key: "tracks", label: "Tracks", icon: Music2 },
               { key: "artists", label: "Artists", icon: Mic2 },
             ] as const
@@ -185,18 +184,26 @@ export function SearchView() {
           )}
           <section>
             <SectionHeader title="Browse all" />
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {DISCOVER.map((item) => (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {DISCOVER.map(({ label, emoji, query, gradient }) => (
                 <button
-                  key={item}
-                  onClick={() => setQuery(item)}
-                  className="group relative aspect-square overflow-hidden rounded-[24px] bg-gradient-to-br from-accent/20 to-accent2/20 p-4 text-left shadow-lg transition-transform duration-300 hover:scale-[1.03] hover:shadow-[0_15px_30px_-10px_var(--c-accent)]"
+                  key={label}
+                  onClick={() => setQuery(query)}
+                  className={cn(
+                    "group relative aspect-video overflow-hidden rounded-[20px] p-5 text-left shadow-xl",
+                    "bg-gradient-to-br", gradient,
+                    "border border-white/10 backdrop-blur-sm",
+                    "transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl",
+                  )}
                 >
-                  <span className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
-                  <span className="relative text-lg font-black tracking-tight text-white drop-shadow-md">
-                    {item}
-                  </span>
-                  <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-accent/40 blur-2xl group-hover:bg-accent/60 transition-colors" />
+                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors rounded-[20px]" />
+                  <div className="relative z-10 flex h-full flex-col justify-between">
+                    <span className="text-3xl drop-shadow-lg">{emoji}</span>
+                    <span className="text-base font-black tracking-tight text-white drop-shadow-md leading-tight">
+                      {label}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-6 -right-6 h-28 w-28 rounded-full bg-white/10 blur-xl" />
                 </button>
               ))}
             </div>
@@ -247,7 +254,7 @@ export function SearchView() {
       {/* Real-time Results View */}
       {enabled && !artist && (
         <div className="space-y-8">
-          {(view === "all" || view === "tracks") && (
+          {view === "tracks" && (
             <section className="space-y-4 animate-fade-in">
               <div className="flex items-end justify-between">
                 <h2 className="text-2xl font-black tracking-tight text-ink">Songs</h2>
@@ -270,26 +277,17 @@ export function SearchView() {
                     <TrackRow key={track.id} track={track} context={allTracks} index={index} />
                   ))}
                   
-                  {view === "tracks" && tracks.loading && (
+                  {tracks.loading && (
                     <div className="flex justify-center p-6">
                       <Spinner />
                     </div>
-                  )}
-                  
-                  {view === "all" && allTracks.length > 12 && (
-                    <button 
-                      onClick={() => setView("tracks")}
-                      className="w-full p-4 text-sm font-bold text-ink hover:bg-white/5 transition-colors text-center"
-                    >
-                      See all songs
-                    </button>
                   )}
                 </div>
               )}
             </section>
           )}
 
-          {(view === "all" || view === "artists") && (
+          {view === "artists" && (
             <section className="space-y-4 animate-fade-in">
               <h2 className="text-2xl font-black tracking-tight text-ink">Artists</h2>
               

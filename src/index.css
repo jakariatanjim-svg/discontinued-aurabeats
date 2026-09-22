@@ -84,7 +84,7 @@
   --c-ink2: #c9bfe6;
   --c-ink3: #9186b4;
   --panel-alpha: 1;
-  --panel-blur: 32px;
+  --panel-blur: 16px;
   --panel-border: 1px solid rgb(255 255 255 / 0.1);
   --panel-radius: 24px;
   --glow-strength: 1.1;
@@ -107,7 +107,7 @@
   --c-ink2: #554b72;
   --c-ink3: #857ca1;
   --panel-alpha: 1;
-  --panel-blur: 30px;
+  --panel-blur: 16px;
   --panel-border: 1px solid rgb(255 255 255 / 0.92);
   --panel-radius: 24px;
   --glow-strength: 0.8;
@@ -135,59 +135,29 @@ body {
   margin: 0;
   background-color: var(--c-base);
   background-image: var(--app-bg-image);
-  background-attachment: fixed;
   color: var(--c-ink);
   font-family: var(--font-display);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.4s ease, color 0.3s ease;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.3s ease, color 0.2s ease;
 }
 
-/* --- Dynamic Aurora Mesh Background --- */
-body::before,
-body::after,
-#root::before {
+/* --- Optimized Static Aurora Background (Zero GPU Lag) --- */
+body::before {
   content: "";
   position: fixed;
+  inset: 0;
   pointer-events: none;
   z-index: 0;
-  border-radius: 50%;
-  filter: blur(120px) saturate(150%);
-  opacity: 0.5;
-  animation: ab-aurora 25s ease-in-out infinite alternate;
+  background: 
+    radial-gradient(circle at 15% 30%, color-mix(in oklab, var(--c-accent) 18%, transparent) 0%, transparent 45%),
+    radial-gradient(circle at 85% 70%, color-mix(in oklab, var(--c-accent2) 15%, transparent) 0%, transparent 50%),
+    radial-gradient(circle at 50% 100%, color-mix(in oklab, #ff0080 10%, transparent) 0%, transparent 60%);
 }
 
-body::before {
-  top: -10%;
-  left: -10%;
-  width: 60vw;
-  height: 60vh;
-  background: radial-gradient(circle at center, color-mix(in oklab, var(--c-accent) 60%, transparent), transparent 70%);
-  animation-delay: -5s;
-}
-
-body::after {
-  bottom: -10%;
-  right: -10%;
-  width: 50vw;
-  height: 50vh;
-  background: radial-gradient(circle at center, color-mix(in oklab, var(--c-accent2) 50%, transparent), transparent 70%);
-  animation-delay: -10s;
-}
-
-#root::before {
-  top: 30%;
-  left: 30%;
-  width: 40vw;
-  height: 40vh;
-  background: radial-gradient(circle at center, color-mix(in oklab, #ff0080 20%, transparent), transparent 70%);
-  animation-duration: 30s;
-}
-
-[data-mode="light"] body::before,
-[data-mode="light"] body::after,
-[data-mode="light"] #root::before {
-  opacity: 0.3;
+[data-mode="light"] body::before {
+  opacity: 0.6;
 }
 
 ::selection {
@@ -232,16 +202,15 @@ body::after {
   border-radius: var(--panel-radius);
 }
 @utility blur-panel {
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--c-elev2) 50%, transparent), transparent 40%),
-    var(--c-elev);
+  background: var(--c-elev);
   border: var(--panel-border);
   border-radius: var(--panel-radius);
-  backdrop-filter: blur(var(--panel-blur)) saturate(165%);
-  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(165%);
+  backdrop-filter: blur(var(--panel-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--panel-blur)) saturate(140%);
   box-shadow:
-    0 20px 60px -30px rgb(0 0 0 / 0.65),
+    0 8px 32px -12px rgb(0 0 0 / 0.45),
     inset 0 1px 0 rgb(255 255 255 / 0.08);
+  contain: layout style;
 }
 @utility glass-inset {
   box-shadow:

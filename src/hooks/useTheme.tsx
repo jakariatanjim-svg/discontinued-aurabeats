@@ -96,7 +96,8 @@ export function accentRgbString(hex: string): string {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<ThemeName>(() => storage.get<ThemeName>("theme", "glassy"));
   const [mode, setModeState] = useState<ThemeMode>(() => storage.get<ThemeMode>("mode", "dark"));
-  const [accent, setAccentState] = useState<string>(() => storage.get<string>("accent", ACCENTS[0].value));
+  // Default accent: Ocean (#3b82f6) — index 7 in ACCENTS
+  const [accent, setAccentState] = useState<string>(() => storage.get<string>("accent", ACCENTS[7].value));
 
   useEffect(() => {
     const root = document.documentElement;
