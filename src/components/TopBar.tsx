@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Moon, Palette, Search, Sparkles, Sun, Wifi } from "lucide-react";
+import { Check, ChevronDown, Moon, Palette, Search, Sparkles, Sun, Wifi, AudioWaveform } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { ACCENTS, useTheme } from "@/hooks/useTheme";
 import { routeLabel, type RouteKey } from "@/routes";
@@ -120,28 +120,28 @@ export function TopBar({
   const live = route === "radio";
 
   return (
-    <header className="blur-panel sticky top-0 z-40 flex items-center gap-2 rounded-none! border-x-0! border-t-0! px-3 py-2.5 sm:px-5">
+    <header className="blur-panel glass-inset sticky top-0 z-40 flex items-center gap-4 rounded-none! border-x-0! border-t-0! px-4 py-3 sm:px-6">
       <button
         type="button"
         onClick={onToggleSidebar}
         className="focus-ring flex items-center gap-2 md:hidden"
         aria-label="Toggle navigation"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-white">
-          <Sparkles className="h-4 w-4" />
+        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 text-white shadow-lg">
+          <AudioWaveform className="h-5 w-5 drop-shadow" />
         </span>
       </button>
 
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-sm font-bold tracking-tight text-ink sm:text-base">{routeLabel(route)}</h1>
-        <p className="flex items-center gap-1.5 truncate text-[10px] text-ink3">
-          <Wifi className="h-3 w-3 text-accent" />
+        <h1 className="truncate text-lg font-black tracking-tight text-ink sm:text-xl drop-shadow-sm">{routeLabel(route)}</h1>
+        <p className="flex items-center gap-1.5 text-[11px] font-medium text-ink3 sm:text-xs">
+          <Wifi className="h-3.5 w-3.5 text-accent drop-shadow-[0_0_8px_var(--c-accent)]" />
           {failoverNote ? (
             <span className="text-accent">{failoverNote}</span>
           ) : live ? (
             "Open radio archive · live streams"
           ) : (
-            "Live open music network · no keys, no limits"
+            "Pure multi-source streaming engine"
           )}
         </p>
       </div>
@@ -149,7 +149,7 @@ export function TopBar({
       <button
         type="button"
         onClick={() => onNavigate("search")}
-        className="focus-ring hidden items-center gap-2 rounded-full border border-line px-3.5 py-2 text-xs text-ink3 transition hover:border-accent hover:text-accent lg:flex"
+        className="focus-ring glass-inset hidden items-center gap-2 rounded-full border border-line/80 bg-white/[0.03] px-4 py-2.5 text-xs text-ink3 transition hover:border-accent hover:text-accent lg:flex"
       >
         <Search className="h-3.5 w-3.5" />
         Search millions of open tracks

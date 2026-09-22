@@ -57,8 +57,13 @@ function Shell() {
     // Mouse wheel volume control
     const onWheel = (e: WheelEvent) => {
       const target = e.target as HTMLElement | null;
-      // Only trigger when not scrolling inside a scroll area
-      if (target?.closest(".scroll-area, main, aside, [role=dialog]")) return;
+      // If we are in FullScreen player, we ALWAYS want volume control unless scrolling the up-next list
+      const isFullScreen = document.querySelector("[z-index='85']") || target?.closest(".fixed.inset-0");
+      
+      if (!isFullScreen && target?.closest(".scroll-area, main, aside, [role=dialog]")) return;
+      // Still allow scrolling in the "Up Next" queue in full screen
+      if (target?.closest(".scroll-area")) return;
+
       e.preventDefault();
       const delta = e.deltaY < 0 ? 0.05 : -0.05;
       setVolume(Math.min(1, Math.max(0, volume + delta)));
@@ -72,14 +77,14 @@ function Shell() {
   }, [toggle, next, previous, setExpanded, setQueueOpen, queueOpen, current, volume, setVolume]);
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden p-0 sm:p-3 md:p-5 gap-4 relative z-0">
       <Sidebar route={route} onNavigate={navigate} collapsed={collapsed} onToggleCollapse={toggleCollapse} />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col relative z-10 h-full rounded-[2rem] blur-panel overflow-hidden border border-white/5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)]">
         <TopBar route={route} onNavigate={navigate} onToggleSidebar={toggleCollapse} />
         <main 
           id="ab-scroll" 
-          className="scroll-area min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+11rem)] sm:px-6 md:pb-[calc(env(safe-area-inset-bottom)+8rem)]"
+          className="scroll-area min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+12rem)] sm:px-8 md:pb-[calc(env(safe-area-inset-bottom)+9rem)]"
         >
           <div key={route} className="animate-fade-up mx-auto w-full max-w-[1600px] pb-8">
             {route === "home" && <HomeView onNavigate={navigate} />}

@@ -105,9 +105,7 @@ export function FullScreenPlayer() {
                     ? "High quality database"
                     : current.source === "jamendo"
                       ? "Independent CC"
-                      : current.source === "hearthis"
-                        ? "HearThis artist"
-                        : "Open radio directory"}
+                      : "Open radio directory"}
             </p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center">

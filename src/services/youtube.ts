@@ -1,25 +1,31 @@
+/**
+ * YouTube Music Engine — Piped Instance Pool
+ * ---------------------------------------------------------------------------
+ * Replaced Invidious with Piped API for better reliability and faster streaming.
+ * Features:
+ *  - Parallel racing across multiple Piped instances
+ *  - Music-only filtering
+ *  - Real-time audio stream resolution
+ */
+
 import type { Track } from "@/types";
 
-const HOSTS = [
-  "https://invidious.f5.si",
-  "https://invidious.tiekoetter.com",
-  "https://invidious.nerdvpn.de",
-  "https://inv.nadeko.net",
+const PIPED_INSTANCES = [
+  "https://pipedapi.kavin.rocks",
+  "https://api-piped.mha.fi",
+  "https://pipedapi.us.to",
+  "https://piped-api.garudalinux.org",
+  "https://pipedapi.roke.host"
 ];
 
-let preferredIndex = Math.floor(Math.random() * HOSTS.length);
+let preferredIndex = Math.floor(Math.random() * PIPED_INSTANCES.length);
 
-/** Healthy host order */
-function getHosts() {
-  return [...HOSTS.slice(preferredIndex), ...HOSTS.slice(0, preferredIndex)];
-}
-
-async function raceFetch<T>(path: string, params: Record<string, string>): Promise<{ data: T; host: string }> {
-  const currentHosts = getHosts();
+async function racePiped<T>(path: string, params: Record<string, string>): Promise<{ data: T; host: string }> {
   const urlParams = new URLSearchParams(params).toString();
-  const controllers = currentHosts.map(() => new AbortController());
-  
-  const promises = currentHosts.map(async (host, i) => {
+  const instances = [...PIPED_INSTANCES.slice(preferredIndex), ...PIPED_INSTANCES.slice(0, preferredIndex)];
+  const controllers = instances.map(() => new AbortController());
+
+  const promises = instances.map(async (host, i) => {
     try {
       const res = await fetch(`${host}${path}?${urlParams}`, {
         signal: controllers[i].signal,
@@ -27,59 +33,79 @@ async function raceFetch<T>(path: string, params: Record<string, string>): Promi
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      // Cancel others
       controllers.forEach((c, j) => { if (i !== j) c.abort(); });
-      preferredIndex = i; // Updating for next run
+      preferredIndex = (preferredIndex + i) % PIPED_INSTANCES.length;
       return { data, host };
-    } catch (e) {
-      throw e;
+    } catch {
+      throw new Error("Instance failed");
     }
   });
 
-  // Racing manually to support older targets if needed, though vite handles it
   return new Promise((resolve, reject) => {
     let errors = 0;
     promises.forEach(p => {
       p.then(resolve).catch(() => {
         errors++;
-        if (errors === promises.length) reject(new Error("All YouTube mirrors failed"));
+        if (errors === promises.length) reject(new Error("All Piped mirrors failed"));
       });
     });
   });
 }
 
-function normalize(v: any, host: string): Track {
-  const videoId = v.videoId;
+/** Resolves playable stream URLs from a video ID at play-time */
+export async function resolveStreamUrls(videoId: string): Promise<{ urls: string[], bitrate?: number, codec?: string }> {
+  const instances = [...PIPED_INSTANCES.slice(preferredIndex), ...PIPED_INSTANCES.slice(0, preferredIndex)];
+  
+  for (const host of instances) {
+    try {
+      const res = await fetch(`${host}/streams/${videoId}`);
+      if (!res.ok) continue;
+      const data = await res.json();
+      
+      // Get highest quality audio stream
+      const audio = (data.audioStreams || [])
+        .filter((s: any) => s.mimeType?.includes("audio"))
+        .sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
+
+      if (audio.length > 0) {
+        return {
+          urls: audio.map((s: any) => s.url),
+          bitrate: Math.round((audio[0].bitrate || 0) / 1024),
+          codec: audio[0].format || "MP3"
+        };
+      }
+    } catch { continue; }
+  }
+  throw new Error("Could not resolve Piped stream");
+}
+
+function normalize(v: any): Track {
+  const id = v.url.split("v=")[1] || v.url.split("/").pop();
   return {
-    id: `yt:${videoId}`,
+    id: `yt:${id}`,
     title: v.title,
-    artist: v.author,
-    artwork: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,
-    artworkLarge: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
-    duration: v.lengthSeconds || 0,
+    artist: v.uploaderName,
+    artwork: v.thumbnail,
+    artworkLarge: v.thumbnail,
+    duration: v.duration || 0,
     source: "youtube",
-    // We use a local proxy through the invidious instance to play the audio
-    streamUrl: `${host}/latest/videoplayback?id=${videoId}&itag=140&local=true`, 
-    fallbackUrls: HOSTS.map(h => `${h}/latest/videoplayback?id=${videoId}&itag=140&local=true`),
-    homepage: `https://www.youtube.com/watch?v=${videoId}`,
+    streamUrl: `yt-resolve:${id}`,
+    fallbackUrls: [`yt-resolve:${id}`],
+    homepage: `https://www.youtube.com/watch?v=${id}`,
     isLive: false,
   };
 }
 
-export async function searchTracks(query: string, limit = 20): Promise<Track[]> {
+export async function searchTracks(query: string, limit = 50): Promise<Track[]> {
   try {
-    // We append "topic" or "official audio" to help filter for music only
-    const musicQuery = `${query} official audio`;
-    const { data, host } = await raceFetch<any[]>("/api/v1/search", {
-      q: musicQuery,
-      type: "video",
-      sort: "relevance"
+    const { data } = await racePiped<any>("/search", {
+      q: query,
+      filter: "music_songs"
     });
     
-    return (data || [])
-      .filter(v => v.type === "video" && v.lengthSeconds < 600) // avoid long mixes/blogs
+    return (data.items || [])
       .slice(0, limit)
-      .map(v => normalize(v, host));
+      .map((v: any) => normalize(v));
   } catch {
     return [];
   }

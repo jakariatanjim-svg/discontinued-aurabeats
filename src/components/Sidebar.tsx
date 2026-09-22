@@ -62,18 +62,18 @@ export function Sidebar({
         onClick={() => onNavigate(item.key)}
         title={item.label}
         className={cn(
-          "focus-ring group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200",
-          active ? "bg-accent/15 text-accent" : "text-ink2 hover:bg-ink/[0.07] hover:text-ink",
-          collapsed && "justify-center px-0",
+          "focus-ring group relative flex items-center gap-3 rounded-2xl text-sm font-semibold transition-all duration-200",
+          active ? "bg-accent/15 text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]" : "text-ink2 hover:bg-ink/[0.07] hover:text-ink",
+          collapsed ? "mx-auto h-12 w-12 justify-center p-0" : "w-full px-4 py-3"
         )}
       >
-        {active && <span className="absolute top-1/2 left-0 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent" />}
-        <Icon className={cn("h-[18px] w-[18px] shrink-0", active && "drop-shadow-[0_0_8px_var(--c-accent)]")} />
+        {active && !collapsed && <span className="absolute top-1/2 left-1 h-5 w-1 -translate-y-1/2 rounded-full bg-accent" />}
+        <Icon className={cn("h-5 w-5 shrink-0 transition-transform group-hover:scale-110", active && "drop-shadow-[0_0_8px_var(--c-accent)]")} />
         {!collapsed && (
           <>
             <span className="flex-1 truncate text-left">{item.label}</span>
             {badge !== undefined && badge > 0 && (
-              <span className="rounded-full bg-ink/10 px-1.5 py-0.5 text-[10px] tabular-nums text-ink3">{badge}</span>
+              <span className="rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink">{badge}</span>
             )}
           </>
         )}
@@ -84,44 +84,54 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "blur-panel relative z-30 hidden h-full shrink-0 flex-col rounded-none! border-y-0! border-l-0! transition-[width] duration-300 md:flex",
-        collapsed ? "w-[4.75rem]" : "w-[16.5rem]",
+        "blur-panel glass-inset relative z-30 hidden h-full shrink-0 flex-col rounded-[2rem] border border-white/5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)] transition-all duration-300 md:flex",
+        collapsed ? "w-[5rem]" : "w-[17.5rem]",
       )}
     >
-      <div className={cn("flex items-center justify-between gap-2.5 px-4 pt-5 pb-4", collapsed && "justify-center px-2")}>
-        <div className={cn("flex items-center gap-2.5 min-w-0", collapsed && "justify-center") }>
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-[0_0_22px_-4px_var(--c-accent)]">
-            <AudioWaveform className="h-5 w-5" />
+      <div className={cn("relative flex items-center pt-6 pb-4", collapsed ? "justify-center px-0" : "justify-between px-5")}>
+        <div className={cn("flex items-center gap-3 min-w-0", collapsed && "hidden")}>
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 text-white shadow-[0_8px_20px_-6px_var(--c-accent)]">
+            <AudioWaveform className="h-5 w-5 drop-shadow-md" />
+            <div className="absolute inset-0 rounded-2xl ring-1 ring-white/20" />
           </div>
-          {!collapsed && (
-            <div className="min-w-0">
-              <p className="truncate text-[15px] leading-tight font-black tracking-tight text-ink">AuraBeats</p>
-              <p className="truncate text-[10px] font-medium tracking-wide text-ink3 uppercase">Pure Sound</p>
-            </div>
-          )}
+          <div className="min-w-0">
+            <p className="truncate text-base leading-tight font-black tracking-tight text-ink drop-shadow-sm">AuraBeats</p>
+            <p className="truncate text-[10px] font-bold tracking-widest text-ink3 uppercase opacity-80">Pure Sound</p>
+          </div>
         </div>
-        <IconButton
-          size="sm"
-          onClick={onToggleCollapse}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className={cn("border border-line", collapsed && "absolute right-2 top-5")}
-        >
-          <ChevronLeft className={cn("h-3.5 w-3.5 transition-transform", collapsed && "rotate-180")} />
-        </IconButton>
+        
+        {/* Simplified Toggle Button - Centers perfectly when collapsed */}
+        <div className={cn(collapsed && "flex w-full justify-center")}>
+          <IconButton
+            size="sm"
+            onClick={onToggleCollapse}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={cn(
+              "border border-line/50 transition-all hover:border-accent/50",
+              collapsed && "h-10 w-10 rounded-2xl bg-gradient-to-br from-accent to-accent2 text-white shadow-[0_8px_20px_-6px_var(--c-accent)] border-none"
+            )}
+          >
+            {collapsed ? (
+               <AudioWaveform className="h-5 w-5 drop-shadow-md" />
+            ) : (
+               <ChevronLeft className="h-4 w-4" />
+            )}
+          </IconButton>
+        </div>
       </div>
 
       {!collapsed && (
-        <div className="mx-3 mb-6 animate-fade-in rounded-2xl border border-line bg-ink/[0.04] p-3.5 shadow-sm">
+        <div className="mx-3 mb-6 animate-fade-in rounded-[1.4rem] border border-line/80 bg-white/[0.03] p-3.5 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.6)] backdrop-blur-xl">
           <p className="flex items-center gap-1.5 text-[11px] font-bold text-ink">
-            <ListMusic className="h-3.5 w-3.5 text-accent" /> Mult-Source Engine
+            <ListMusic className="h-3.5 w-3.5 text-accent" /> Glass Engine
           </p>
           <p className="mt-1 text-[10px] leading-relaxed text-ink3">
-            Aggregating Jamendo, Audius, JioSaavn and HearThis for fast, unrestricted streaming.
+            Aggregating JioSaavn, Audius, Jamendo, Archive and live radio inside a premium glass audio shell.
           </p>
         </div>
       )}
 
-      <nav className="flex-1 space-y-6 overflow-y-auto scroll-area px-3 pb-24">
+      <nav className={cn("flex-1 space-y-6 overflow-y-auto scroll-area pb-24", collapsed ? "px-2" : "px-3")}>
         <div className="space-y-1">
           {MAIN.map((item) => (
             <Item key={item.key} item={item} />

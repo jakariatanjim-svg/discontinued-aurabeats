@@ -18,7 +18,6 @@ import * as archive from "@/services/archive";
 import * as audius from "@/services/audius";
 import * as jiosaavn from "@/services/jiosaavn";
 import * as jamendo from "@/services/jamendo";
-import * as hearthis from "@/services/hearthis";
 import * as youtube from "@/services/youtube";
 import { shuffleArray } from "@/utils/format";
 import type { Track } from "@/types";
@@ -78,10 +77,10 @@ function scoreTrack(query: string, track: Track): number {
 
   score += tokens.reduce((acc, token) => acc + (title.includes(token) ? 18 : 0) + (artist.includes(token) ? 10 : 0), 0);
 
-  if (track.source === "jiosaavn") score += 30; // Very high quality database
+  if (track.source === "jiosaavn") score += 35; // Pure music database
+  if (track.source === "youtube") score += 25;  // YouTube Music mirror
   if (track.source === "jamendo") score += 20;
   if (track.source === "audius") score += 15;
-  if (track.source === "hearthis") score += 12;
   if (track.source === "archive") score += 8;
 
   if (track.duration > 0 && track.duration <= 7 * 60) score += 8;
@@ -115,14 +114,14 @@ export interface CatalogQuery {
   signal?: AbortSignal;
 }
 
-/** Trending full tracks across all active open databases. */
+/** Trending full tracks across all active databases. */
 export async function fetchPopular(opts: CatalogQuery = {}): Promise<Track[]> {
   const { limit = 34, signal } = opts;
-  const [js, jam, au, ht, ia] = await Promise.all([
+  const [js, yt, jam, au, ia] = await Promise.all([
     settle(jiosaavn.fetchTrending(Math.ceil(limit / 2)), [] as Track[]),
+    settle(youtube.searchTracks("popular", 10), [] as Track[]),
     settle(jamendo.fetchPopular(Math.ceil(limit / 3)), [] as Track[]),
-    settle(audius.fetchTrending({ limit: Math.ceil(limit / 3), signal }), [] as Track[]),
-    settle(hearthis.fetchTrending(Math.ceil(limit / 4)), [] as Track[]),
+    settle(audius.fetchTrending({ limit: 10, signal }), [] as Track[]),
     settle(
       archive
         .searchAlbums({ collection: "netlabels", rows: 12, sort: "downloads desc", signal })
@@ -130,16 +129,15 @@ export async function fetchPopular(opts: CatalogQuery = {}): Promise<Track[]> {
       [] as Track[],
     ),
   ]);
-  const merged = dedupe(interleaveMany([js, jam, au, ht, ia]));
+  const merged = dedupe(interleaveMany([js, yt, jam, au, ia]));
   return merged.length > 0 ? merged.slice(0, limit) : [];
 }
 
-/** Freshly added open releases. */
+/** Freshly added releases. */
 export async function fetchFresh(opts: CatalogQuery = {}): Promise<Track[]> {
   const { limit = 28, signal } = opts;
-  const [au, ht, jam, ia] = await Promise.all([
+  const [au, jam, ia] = await Promise.all([
     settle(audius.fetchUnderground({ limit: 12, signal }), [] as Track[]),
-    settle(hearthis.fetchTrending(10), [] as Track[]),
     settle(jamendo.searchTracks("new", 10), [] as Track[]),
     settle(
       archive
@@ -148,7 +146,7 @@ export async function fetchFresh(opts: CatalogQuery = {}): Promise<Track[]> {
       [] as Track[],
     ),
   ]);
-  return dedupe(interleaveMany([au, ht, jam, ia])).slice(0, limit);
+  return dedupe(interleaveMany([au, jam, ia])).slice(0, limit);
 }
 
 /** A whole open collection (net labels, live concerts, 78rpm…). */
@@ -176,21 +174,20 @@ export async function fetchGenre(genre: string, opts: CatalogQuery = {}): Promis
 
 /** Full-text search across all active databases, including YouTube Music mirrors. */
 export async function searchEverything(query: string, opts: CatalogQuery = {}): Promise<Track[]> {
-  const { limit = 50, signal } = opts;
+  const { limit = 60, signal } = opts;
   const trimmed = query.trim();
   if (!trimmed) return [];
 
-  // Increased limits and added YouTube
-  const [js, yt, jam, au, ht, ia] = await Promise.all([
-    settle(jiosaavn.searchTracks(trimmed, 25), [] as Track[]),
-    settle(youtube.searchTracks(trimmed, 20), [] as Track[]),
-    settle(jamendo.searchTracks(trimmed, 15), [] as Track[]),
-    settle(audius.searchTracks(trimmed, { limit: 15, signal }), [] as Track[]),
-    settle(hearthis.searchTracks(trimmed, 10), [] as Track[]),
-    settle(archive.searchTracks(trimmed, { limit: 10, signal }), [] as Track[]),
+  // Search across multiple databases
+  const [js, yt, jam, au, ia] = await Promise.all([
+    settle(jiosaavn.searchTracks(trimmed, 35), [] as Track[]),
+    settle(youtube.searchTracks(trimmed, 30), [] as Track[]),
+    settle(jamendo.searchTracks(trimmed, 25), [] as Track[]),
+    settle(audius.searchTracks(trimmed, { limit: 25, signal }), [] as Track[]),
+    settle(archive.searchTracks(trimmed, { limit: 20, signal }), [] as Track[]),
   ]);
 
-  const all = [...js, ...yt, ...au, ...jam, ...ht, ...ia];
+  const all = [...js, ...yt, ...au, ...jam, ...ia];
   
   return dedupe(all)
     .sort((a, b) => scoreTrack(trimmed, b) - scoreTrack(trimmed, a))

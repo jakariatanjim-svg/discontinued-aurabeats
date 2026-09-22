@@ -50,7 +50,7 @@ jobs:
         run: npm run build
 
       - name: Prepare release file
-        run: cp dist/index.html "aurabeats-${{ steps.ver.outputs.version }}.html"
+        run: cp dist/index.html "index.html"
 
       - name: Push to Release
         uses: softprops/action-gh-release@v2
@@ -58,7 +58,7 @@ jobs:
           tag_name: ${{ steps.ver.outputs.version }}
           name: "AuraBeats ${{ steps.ver.outputs.version }}"
           body_path: LATEST_RELEASE.md
-          files: aurabeats-${{ steps.ver.outputs.version }}.html
+          files: index.html
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

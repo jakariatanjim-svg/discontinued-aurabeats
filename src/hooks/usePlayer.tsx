@@ -17,9 +17,24 @@ import {
 } from "react";
 import { useAudioEngine, type AudioEngine } from "@/hooks/useAudioEngine";
 import { reportListen } from "@/services/radio";
+import { resolveStreamUrls } from "@/services/youtube";
 import { storage } from "@/utils/storage";
 import { shuffleArray, uid } from "@/utils/format";
 import type { RepeatMode, ToastMessage, Track, UserPlaylist, PlayerSettings } from "@/types";
+
+/**
+ * Resolve a stream URL — if it's a lazy `yt-resolve:ID` placeholder,
+ * contact the mirror pool and return fresh playable URLs.
+ */
+async function resolveLazyUrl(track: Track): Promise<string[]> {
+  const primary = track.streamUrl;
+  if (primary.startsWith("yt-resolve:")) {
+    const videoId = primary.slice("yt-resolve:".length);
+    const { urls } = await resolveStreamUrls(videoId);
+    return urls;
+  }
+  return track.fallbackUrls.length > 0 ? track.fallbackUrls : [primary];
+}
 
 const HISTORY_LIMIT = 80;
 
@@ -236,20 +251,38 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   /* --------------------------- stream loading ---------------------------- */
   const current = queue[index] ?? null;
+  const resolvedUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
     if (!current) {
       engine.pause();
       return;
     }
+    let alive = true;
     recordedRef.current = "";
     setFailoverNote(attempt > 0 ? `Retrying via mirror #${attempt + 1}` : null);
 
-    const urls = [current.streamUrl, ...(current.fallbackUrls || [])];
-    const url = urls[Math.min(attempt, urls.length - 1)] || current.streamUrl;
-    
-    engine.load(url, { autoplay: true, live: current.isLive });
-    if (current.source === "radio") reportListen(current.id);
+    const doLoad = async () => {
+      try {
+        if (attempt === 0 || resolvedUrlsRef.current.length === 0) {
+          const urls = await resolveLazyUrl(current);
+          if (!alive) return;
+          resolvedUrlsRef.current = urls;
+        }
+        const urls = resolvedUrlsRef.current;
+        const url = urls[Math.min(attempt, urls.length - 1)] ?? current.streamUrl;
+        if (!alive) return;
+        engine.load(url, { autoplay: true, live: current.isLive });
+        if (current.source === "radio") reportListen(current.id);
+      } catch {
+        if (!alive) return;
+        toast(`Could not start "${current.title}" — skipping to next`, "error");
+        next();
+      }
+    };
+
+    void doLoad();
+    return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [current?.id, attempt]);
 
@@ -303,7 +336,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const q = queueRef.current;
       if (q.length === 0) return;
       const clamped = ((nextIndex % q.length) + q.length) % q.length;
-
+      resolvedUrlsRef.current = []; // Reset resolved URLs for new track
       setIndex(clamped);
       setAttempt(0);
     },

@@ -313,9 +313,7 @@ export function TrackRow({
                     ? "Direct music database"
                     : track.source === "jamendo"
                       ? "Independent CC library"
-                      : track.source === "hearthis"
-                        ? "HearThis · Indie"
-                        : track.source === "youtube"
+                      : track.source === "youtube"
                           ? "YouTube Music mirror · 320kbps"
                           : "Open radio directory"
             }
@@ -325,7 +323,6 @@ export function TrackRow({
               track.source === "audius" ? "indie net" : 
               track.source === "jiosaavn" ? "database" :
               track.source === "jamendo" ? "CC library" :
-              track.source === "hearthis" ? "hearthis" :
               track.source === "youtube" ? "yt mirror" :
               "radio"
             }

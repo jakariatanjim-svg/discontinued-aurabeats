@@ -83,9 +83,9 @@ export function IconButton({
       type="button"
       aria-pressed={active}
       className={cn(
-        "focus-ring inline-flex shrink-0 items-center justify-center rounded-full text-ink2 transition-all duration-200",
-        "hover:bg-ink/10 hover:text-ink active:scale-90",
-        active && "text-accent hover:text-accent",
+        "focus-ring glass-inset inline-flex shrink-0 items-center justify-center rounded-full text-ink2 transition-all duration-200",
+        "hover:bg-ink/[0.08] hover:text-ink active:scale-90 active:brightness-110",
+        active && "bg-accent/12 text-accent hover:text-accent",
         sizes[size],
         className,
       )}
@@ -108,9 +108,9 @@ export function Button({
       type="button"
       className={cn(
         "focus-ring inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 active:scale-[0.97] disabled:opacity-40",
-        variant === "solid" && "bg-accent text-white hover:brightness-110 glow-soft",
-        variant === "outline" && "border border-line text-ink hover:border-accent hover:text-accent",
-        variant === "ghost" && "text-ink2 hover:bg-ink/10 hover:text-ink",
+        variant === "solid" && "bg-accent text-white hover:brightness-110 glow-soft shadow-[0_14px_34px_-18px_var(--c-accent)]",
+        variant === "outline" && "glass-inset border border-line bg-white/[0.02] text-ink hover:border-accent hover:text-accent",
+        variant === "ghost" && "text-ink2 hover:bg-ink/[0.08] hover:text-ink",
         className,
       )}
       {...rest}
@@ -140,10 +140,10 @@ export function Chip({
     <button
       type="button"
       className={cn(
-        "focus-ring shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200",
+        "focus-ring glass-inset shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200",
         active
-          ? "border-transparent bg-accent text-white shadow-[0_6px_24px_-8px_var(--c-accent)]"
-          : "border-line text-ink2 hover:border-accent/60 hover:text-ink",
+          ? "border-transparent bg-accent text-white shadow-[0_8px_26px_-10px_var(--c-accent)]"
+          : "border-line bg-white/[0.02] text-ink2 hover:border-accent/60 hover:text-ink",
         className,
       )}
       {...rest}
@@ -167,12 +167,12 @@ export function SectionHeader({
 }) {
   return (
     <div className="mb-4 flex items-end justify-between gap-4">
-      <div className="min-w-0">
-        <h2 className="flex items-center gap-2 text-lg font-bold tracking-tight text-ink sm:text-xl">
+      <div className="min-w-0 max-w-[56rem]">
+        <h2 className="flex items-center gap-2 text-lg font-black tracking-tight text-ink sm:text-xl">
           {icon}
-          <span className="truncate">{title}</span>
+          <span className="text-balance leading-tight">{title}</span>
         </h2>
-        {subtitle && <p className="mt-0.5 truncate text-xs text-ink3 sm:text-sm">{subtitle}</p>}
+        {subtitle && <p className="mt-1 max-w-[52rem] text-xs leading-relaxed text-ink3 sm:text-sm">{subtitle}</p>}
       </div>
       {action}
     </div>

@@ -37,10 +37,11 @@ export function PlayerBar({ onOpenQueue }: { onOpenQueue: () => void }) {
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
-    <div className="blur-panel fixed inset-x-0 bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-[45] rounded-none! border-x-0! border-b-0! px-4 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] md:bottom-0 md:px-6 md:py-3 md:pb-3">
-      {/* mobile progress line - moved to absolute top for better layout */}
-      <div className="absolute top-0 left-0 right-0 md:hidden">
-        <Slider
+    <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-[45] flex justify-center pointer-events-none md:bottom-5 md:px-5">
+      <div className="blur-panel glass-inset pointer-events-auto relative w-full max-w-[1200px] border-x-0! border-b-0! rounded-none! px-4 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] md:rounded-[2rem]! md:border-x! md:border-b! md:px-6 md:py-3 md:pb-3">
+        {/* mobile progress line - moved to absolute top for better layout */}
+        <div className="absolute top-0 left-0 right-0 md:hidden">
+          <Slider
           ariaLabel="Seek"
           value={isLive ? 0 : currentTime}
           max={isLive ? 0 : duration}
@@ -60,6 +61,7 @@ export function PlayerBar({ onOpenQueue }: { onOpenQueue: () => void }) {
           className="group flex min-w-0 flex-1 items-center gap-3 text-left md:w-[25%] md:flex-none"
         >
           <div className="relative h-10 w-10 shrink-0 sm:h-12 sm:w-12">
+            <span className="pointer-events-none absolute inset-0 rounded-full bg-white/[0.05] blur-[6px]" />
             <Artwork
               src={current?.artwork || undefined}
               fallbackSrc={current?.artworkFallback}
@@ -202,6 +204,7 @@ export function PlayerBar({ onOpenQueue }: { onOpenQueue: () => void }) {
           </IconButton>
         </div>
       </div>
+    </div>
     </div>
   );
 }
