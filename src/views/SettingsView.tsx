@@ -309,6 +309,24 @@ export function SettingsView() {
       <section>
         <SectionHeader title="Sources & privacy" subtitle="Zero keys, zero accounts, zero limits" icon={<Shield className="h-4 w-4 text-accent" />} />
         <div className="space-y-3">
+          <a
+            href="/privacy"
+            data-nav="true"
+            className="blur-panel glass-inset group flex items-center justify-between gap-3 p-4 transition-transform hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-26px_var(--c-accent)]"
+          >
+            <div className="flex items-center gap-4">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent/15 text-accent">
+                <Shield className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-sm font-bold text-ink group-hover:text-accent transition-colors">Privacy Policy</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-ink3">Read exactly how we protect your data</p>
+              </div>
+            </div>
+            <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1.5 text-[10px] font-bold text-ink3 transition group-hover:border-accent group-hover:text-accent">
+              Read
+            </span>
+          </a>
           <SourceCard
             icon={<Database className="h-4 w-4" />}
             title="Internet Archive · open music"

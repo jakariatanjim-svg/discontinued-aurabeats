@@ -1,5 +1,14 @@
-import { useMemo, useState } from "react";
-import { Disc3, Flame, Heart, Radio, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Disc3,
+  Flame,
+  Heart,
+  Radio,
+  RefreshCw,
+  Search,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 import { useFeed } from "@/hooks/useFeed";
 import {
   ARCHIVE_COLLECTIONS,
@@ -14,6 +23,8 @@ import { Chip, IconButton, SectionHeader } from "@/components/ui";
 import { EmptyState, ErrorState } from "@/components/states";
 import { usePlayer } from "@/hooks/usePlayer";
 import type { Track } from "@/types";
+
+
 
 /** Derive the user's top genres from their listening history + favorites. */
 function deriveTopGenres(history: Track[], favorites: Track[]): string[] {
@@ -31,27 +42,64 @@ function deriveTopGenres(history: Track[], favorites: Track[]): string[] {
     .filter((g) => GENRE_CHIPS.some((c) => c.value.toLowerCase() === g));
 }
 
+function useEnteredViewport<T extends HTMLElement>(rootMargin = "560px 0px") {
+  const ref = useRef<T | null>(null);
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    if (entered) return;
+    const node = ref.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setEntered(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setEntered(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin },
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [entered, rootMargin]);
+
+  return [ref, entered] as const;
+}
+
 export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") => void }) {
   const { playAll, toast, history, favorites } = usePlayer();
   const [genre, setGenre] = useState<string>(GENRE_CHIPS[0].value);
+
+  const [forYouRef, forYouReady] = useEnteredViewport<HTMLElement>();
+  const [freshRef, freshReady] = useEnteredViewport<HTMLElement>();
+  const [genreRef, genreReady] = useEnteredViewport<HTMLElement>();
 
   // Personalized "For You" — derived from user's listening habits
   const topGenres = useMemo(() => deriveTopGenres(history, favorites), [history, favorites]);
   const forYouGenre = topGenres[0] ?? "";
   const forYou = useFeed<Track[]>(
     `cat:foryou:${forYouGenre}`,
-    (signal) => fetchGenre(forYouGenre, { limit: 16, signal }),
-    { enabled: forYouGenre.length > 0 },
+    (signal) => fetchGenre(forYouGenre, { limit: 12, signal }),
+    { enabled: forYouGenre.length > 0 && forYouReady },
   );
 
-  const popular = useFeed<Track[]>("cat:popular", (signal) => fetchPopular({ limit: 34, signal }));
-  const fresh = useFeed<Track[]>("cat:fresh", (signal) => fetchFresh({ limit: 26, signal }));
-  const genreFeed = useFeed<Track[]>(`cat:genre:${genre}`, (signal) => fetchGenre(genre, { limit: 26, signal }));
+  // Keep the first paint light: only the primary chart loads immediately.
+  const popular = useFeed<Track[]>("cat:popular", (signal) => fetchPopular({ limit: 18, signal }));
+  const fresh = useFeed<Track[]>("cat:fresh", (signal) => fetchFresh({ limit: 14, signal }), { enabled: freshReady });
+  const genreFeed = useFeed<Track[]>(`cat:genre:${genre}`, (signal) => fetchGenre(genre, { limit: 14, signal }), {
+    enabled: genreReady,
+  });
 
   const hero = useMemo(() => {
     const list = popular.data ?? [];
     if (list.length === 0) return null;
-    const slot = Math.floor(Date.now() / (1000 * 60 * 20)) % Math.min(8, list.length);
+    const slot = Math.floor(Date.now() / (1000 * 60 * 20)) % Math.min(6, list.length);
     return list[slot];
   }, [popular.data]);
 
@@ -65,62 +113,57 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
   };
 
   return (
-    <div className="space-y-8 pb-4">
-      {/* Clean hero — no clutter, just CTA */}
-      <section className="blur-panel glass-inset overflow-hidden rounded-[2rem] px-6 py-8 sm:px-10 sm:py-12" id="home-hero">
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.05] px-3.5 py-1.5 shadow-sm">
+    <div className="space-y-6 pb-4 sm:space-y-8">
+      <section className="blur-panel glass-inset overflow-hidden rounded-[1.6rem] px-5 py-7 sm:rounded-[2rem] sm:px-10 sm:py-12" id="home-hero">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.05] px-3.5 py-1.5 shadow-sm">
           <Sparkles className="h-3.5 w-3.5 text-accent" />
-          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink2">
-            Free open music player
-          </span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink2">Free open music player</span>
         </div>
-        <h1 className="mb-3 max-w-3xl text-balance text-4xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">
-          Stream open music and live radio.
+        <h1 className="max-w-3xl text-balance text-3xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">
+          Play free open tracks. Jump into live radio. Start instantly.
         </h1>
-        <p className="mb-4 max-w-2xl text-sm font-medium leading-7 sm:text-base" style={{ color: "var(--c-ink2)" }}>
-          Five live sources. No accounts. No previews. Full tracks, instantly.
+        <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-ink2 sm:text-base">
+          AuraBeats streams full tracks from multiple public music networks and live radio directories inside one fast browser player.
         </p>
-        <div className="mb-7 flex flex-wrap gap-x-5 gap-y-1 text-[11px] font-semibold" style={{ color: "var(--c-ink3)" }}>
-          <span>✓ Creative Commons & open-licensed music</span>
-          <span>✓ Artist-approved independent uploads</span>
-          <span>✓ Public domain archives & live radio</span>
-          <span>✓ 100% ad-free — no banners, no interruptions</span>
-          <span>✓ Zero data collection · fully client-side</span>
-        </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <a
             href="#home-popular"
-            className="focus-ring rounded-full bg-accent px-6 py-3 text-sm font-bold text-white shadow-[0_14px_34px_-16px_var(--c-accent)] transition hover:brightness-110 active:scale-95"
+            className="focus-ring inline-flex w-full items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-bold text-white shadow-[0_14px_34px_-16px_var(--c-accent)] transition hover:brightness-110 active:scale-95 sm:w-auto"
             onClick={(e) => {
               e.preventDefault();
               document.getElementById("home-popular")?.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            Start listening
-          </a>
-          <a
-            href="/search"
-            data-nav="true"
-            className="focus-ring rounded-full border border-line bg-white/[0.03] px-6 py-3 text-sm font-bold text-ink transition hover:border-accent hover:text-accent active:scale-95"
-            onClick={(e) => { e.preventDefault(); onNavigate("search"); }}
-          >
-            Search tracks
+            Play free open tracks
           </a>
           <a
             href="/radio"
             data-nav="true"
-            className="focus-ring rounded-full border border-line bg-white/[0.03] px-6 py-3 text-sm font-bold text-ink transition hover:border-accent hover:text-accent active:scale-95"
-            onClick={(e) => { e.preventDefault(); onNavigate("radio"); }}
+            className="focus-ring inline-flex w-full items-center justify-center rounded-full border border-line bg-white/[0.03] px-6 py-3 text-sm font-bold text-ink transition hover:border-accent hover:text-accent active:scale-95 sm:w-auto"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate("radio");
+            }}
           >
-            Live radio
+            Browse live radio
           </a>
         </div>
+        <p className="mt-3 text-xs font-semibold text-ink3 sm:text-sm">
+          No sign-up. Full tracks. Works instantly in your browser.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2.5 text-[11px] font-semibold text-ink3">
+          <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1">Creative Commons, archive and indie sources</span>
+          <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1">Automatic mirror failover during playback</span>
+          <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1">Favourites, history and playlists stay on-device</span>
+        </div>
       </section>
+
+
 
       {popular.loading && !popular.data ? (
         <div className="blur-panel p-5 sm:p-7">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            <div className="skeleton mx-auto aspect-square w-40 rounded-2xl sm:mx-0 sm:w-44" />
+            <div className="skeleton mx-auto aspect-square w-36 rounded-2xl sm:mx-0 sm:w-44" />
             <div className="flex-1 space-y-3">
               <div className="skeleton h-3 w-28 rounded-full" />
               <div className="skeleton h-8 w-3/4 rounded-full" />
@@ -135,7 +178,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         hero && <HeroCard track={hero} context={popular.data ?? [hero]} />
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <QuickAction
           title="Popular Mix"
           hint="The hottest open hits"
@@ -161,17 +204,16 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
           title="Deep Search"
           hint="Find anything instantly"
           tint="bg-violet-500/15 text-violet-300"
-          icon={<Sparkles className="h-5 w-5" />}
+          icon={<Search className="h-5 w-5" />}
           onClick={() => onNavigate("search")}
         />
       </div>
 
-      {/* Personalized "For You" — only shown when user has listening history */}
-      {forYouGenre && forYou.data && forYou.data.length > 0 && (
-        <section>
+      {forYouGenre && (
+        <section ref={forYouRef}>
           <SectionHeader
             title="For You"
-            subtitle={`Based on your love for ${topGenres.join(", ")}`}
+            subtitle={`Based on your local listening patterns: ${topGenres.join(", ")}`}
             icon={<Heart className="h-4 w-4 text-rose-400" />}
             action={
               <button
@@ -183,22 +225,29 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
               </button>
             }
           />
-          <Carousel>
-            {forYou.data.map((t) => (
-              <TrackCard key={t.id} track={t} context={forYou.data ?? undefined} />
-            ))}
-          </Carousel>
+          {!forYouReady ? (
+            <DeferredNotice
+              title="Personalized picks load only when you reach them"
+              body="This section waits until it is near your screen so the home page stays fast on first load."
+            />
+          ) : forYou.loading && !forYou.data ? (
+            <CardSkeleton />
+          ) : forYou.error && !forYou.data ? (
+            <ErrorState message={forYou.error} onRetry={forYou.refresh} />
+          ) : forYou.data && forYou.data.length > 0 ? (
+            <Carousel>
+              {forYou.data.map((t) => (
+                <TrackCard key={t.id} track={t} context={forYou.data ?? undefined} />
+              ))}
+            </Carousel>
+          ) : null}
         </section>
       )}
 
       <section id="home-popular">
         <SectionHeader
           title="Popular on AuraBeats"
-          subtitle={
-            popular.data
-              ? `${popular.data.length} full-length tracks · no limits`
-              : "Connecting to open archives…"
-          }
+          subtitle={popular.data ? `${popular.data.length} full-length tracks · fast first load` : "Connecting to open archives…"}
           icon={<TrendingUp className="h-4 w-4 text-accent" />}
           action={
             <IconButton onClick={popular.refresh} aria-label="Refresh">
@@ -219,10 +268,10 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         )}
       </section>
 
-      <section>
+      <section ref={freshRef}>
         <SectionHeader
           title="Fresh Releases"
-          subtitle="Independent creators · Artist-approved streams"
+          subtitle="Independent creators · loaded on demand to keep the homepage light"
           icon={<Flame className="h-4 w-4 text-accent2" />}
           action={
             <IconButton onClick={fresh.refresh} aria-label="Refresh">
@@ -230,7 +279,12 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
             </IconButton>
           }
         />
-        {fresh.loading && !fresh.data ? (
+        {!freshReady ? (
+          <DeferredNotice
+            title="Fresh releases are fetched when you scroll here"
+            body="That keeps unnecessary artwork and track metadata off the first paint while preserving full discovery once you continue browsing."
+          />
+        ) : fresh.loading && !fresh.data ? (
           <CardSkeleton />
         ) : fresh.error && !fresh.data ? (
           <ErrorState message={fresh.error} onRetry={fresh.refresh} />
@@ -243,7 +297,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         )}
       </section>
 
-      <section id="home-genres">
+      <section id="home-genres" ref={genreRef}>
         <SectionHeader
           title="Browse by Genre"
           subtitle="Live exploration across the decentralised web"
@@ -265,15 +319,20 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
             </Chip>
           ))}
         </div>
-        {genreFeed.loading && !genreFeed.data ? (
+        {!genreReady ? (
+          <DeferredNotice
+            title="Genre rows wake up when you reach this block"
+            body="The app now avoids preloading every section at once, which improves first-load speed without removing catalog depth."
+          />
+        ) : genreFeed.loading && !genreFeed.data ? (
           <TrackRowSkeleton rows={6} />
         ) : genreFeed.error && !genreFeed.data ? (
           <ErrorState message={genreFeed.error} onRetry={genreFeed.refresh} />
         ) : (genreFeed.data ?? []).length === 0 ? (
           <EmptyState title="No open tracks in that genre right now" hint="Pick another genre chip." />
         ) : (
-          <div className="blur-panel overflow-hidden p-1.5 sm:p-2.5">
-            {(genreFeed.data ?? []).slice(0, 10).map((t, i) => (
+          <div className="blur-panel overflow-hidden rounded-[1.4rem] p-1.5 sm:p-2.5">
+            {(genreFeed.data ?? []).slice(0, 8).map((t, i) => (
               <TrackRow key={t.id} track={t} context={genreFeed.data ?? undefined} index={i} />
             ))}
           </div>
@@ -283,7 +342,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
       <section id="home-collections">
         <SectionHeader
           title="Open Collections"
-          subtitle="Infinite free archives, one tap away"
+          subtitle="Archive playlists are loaded only when you tap them"
           icon={<Disc3 className="h-4 w-4 text-accent" />}
         />
         <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
@@ -292,8 +351,6 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
           ))}
         </div>
       </section>
-
-
     </div>
   );
 }
@@ -307,7 +364,7 @@ function QuickAction({
 }: {
   title: string;
   hint: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   tint: string;
   onClick: () => void;
 }) {
@@ -315,14 +372,23 @@ function QuickAction({
     <button
       type="button"
       onClick={onClick}
-      className="blur-panel glass-inset flex items-center gap-3 p-3 text-left transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-26px_var(--c-accent)]"
+      className="blur-panel glass-inset flex items-center gap-3 rounded-[1.35rem] p-3 text-left transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-26px_var(--c-accent)] sm:p-3.5"
     >
       <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tint}`}>{icon}</span>
       <span className="min-w-0">
-        <span className="block truncate text-xs font-bold text-ink">{title}</span>
-        <span className="block truncate text-[10px] text-ink3">{hint}</span>
+        <span className="block truncate text-xs font-bold text-ink sm:text-sm">{title}</span>
+        <span className="block truncate text-[10px] text-ink3 sm:text-[11px]">{hint}</span>
       </span>
     </button>
+  );
+}
+
+function DeferredNotice({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="blur-panel glass-inset rounded-[1.5rem] p-4 sm:p-5">
+      <p className="text-sm font-bold text-ink">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-ink2">{body}</p>
+    </div>
   );
 }
 
@@ -352,14 +418,14 @@ function CollectionRow({ slug, label, blurb }: { slug: string; label: string; bl
       type="button"
       onClick={go}
       disabled={pending}
-      className="blur-panel group flex items-center gap-3 p-4 text-left transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
+      className="blur-panel group flex items-center gap-3 rounded-[1.45rem] p-4 text-left transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
     >
       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent">
         <Disc3 className={pending ? "h-5 w-5 animate-spin" : "h-5 w-5"} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-bold text-ink">{label}</span>
-        <span className="block truncate text-[11px] text-ink3">{pending ? "Loading full tracks…" : blurb}</span>
+        <span className="block text-[11px] leading-5 text-ink3">{pending ? "Loading full tracks…" : blurb}</span>
       </span>
     </button>
   );

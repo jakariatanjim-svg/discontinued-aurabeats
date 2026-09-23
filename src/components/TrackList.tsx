@@ -494,7 +494,7 @@ export function Carousel({ children }: { children: ReactNode }) {
 
 /* ------------------------------ Hero / feature ---------------------------- */
 
-export function HeroCard({ track, context }: { track: Track; context?: Track[] }) {
+export function HeroCard({ track, context, eager = false }: { track: Track; context?: Track[]; eager?: boolean }) {
   const { playNow, current, isPlaying } = usePlayer();
   const isCurrent = current?.id === track.id;
   return (
@@ -518,7 +518,7 @@ export function HeroCard({ track, context }: { track: Track; context?: Track[] }
             src={track.artworkLarge || track.artwork || undefined}
             fallbackSrc={track.artworkFallback}
             alt={track.title}
-            eager
+            eager={eager}
             className={cn(
               "aspect-square w-full shadow-2xl",
               isCurrent && isPlaying && "animate-spin-slow glow-ring rounded-full",

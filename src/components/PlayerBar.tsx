@@ -42,8 +42,8 @@ export function PlayerBar({ onOpenQueue }: { onOpenQueue: () => void }) {
   if (!current) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-[45] flex justify-center pointer-events-none md:bottom-5 md:px-5">
-      <div className="blur-panel glass-inset pointer-events-auto relative w-full max-w-[1200px] border-x-0! border-b-0! rounded-none! px-4 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] md:rounded-[2rem]! md:border-x! md:border-b! md:px-6 md:py-3 md:pb-3">
+    <div className="fixed inset-x-0 bottom-[calc(4.85rem+env(safe-area-inset-bottom))] z-[45] flex justify-center pointer-events-none px-2 md:bottom-5 md:px-5">
+      <div className="blur-panel glass-inset pointer-events-auto relative w-full max-w-[1200px] rounded-[1.6rem]! px-4 pt-1.5 pb-[calc(env(safe-area-inset-bottom)+0.55rem)] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] md:rounded-[2rem]! md:px-6 md:py-3 md:pb-3">
         {/* mobile progress line - moved to absolute top for better layout */}
         <div className="absolute top-0 left-0 right-0 md:hidden">
           <Slider

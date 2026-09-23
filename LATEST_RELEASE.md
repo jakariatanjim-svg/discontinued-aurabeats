@@ -1,3 +1,36 @@
+### Homepage Trust + Speed + Mobile UX Refresh
+
+**1. Homepage trust explainer added**
+- New **"Where the music comes from"** section added directly under the hero.
+- Plain-language explanations now clarify what AuraBeats pulls from **JioSaavn, Audius, Jamendo, Internet Archive, and live radio**.
+- Added a simple explanation of what **"open"** means in AuraBeats and what playback limitations users may notice per source.
+
+**2. Hero messaging rewritten for first-time visitors**
+- Homepage hero now uses a cleaner, more benefit-led CTA structure:
+  - **Primary:** "Play free open tracks"
+  - **Secondary:** "Browse live radio"
+- Added reassurance copy explaining that AuraBeats needs **no sign-up**, plays **full tracks**, and works **instantly in the browser**.
+
+**3. New "How AuraBeats works" section**
+- Added a compact 3-step explainer covering:
+  - source discovery
+  - instant browser playback with mirror failover
+  - favourites / playlists / history stored locally
+- This makes the product easier to understand for new users before they interact with the player.
+
+**4. Faster first load on Home**
+- Homepage now loads **fewer initial tracks** in the first paint.
+- Below-the-fold sections like **Fresh Releases**, **Genre browsing**, and **personalized For You** now load **when the user reaches them**, instead of preloading everything immediately.
+- This reduces early payload, unnecessary artwork work, and homepage startup pressure.
+
+**5. Mobile UI cleanup**
+- Mobile top bar simplified to reduce clutter.
+- Added a dedicated **mobile settings shortcut** in the top bar.
+- Bottom mobile navigation is now cleaner and more focused on the 5 primary destinations.
+- Home page cards, spacing, CTA layout, and explainer blocks were rebalanced for better one-hand browsing.
+
+---
+
 ### Massive Offline Update: In-App Downloads & Stability
 
 **1. In-App Downloads (True Offline Playback)**

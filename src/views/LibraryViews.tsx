@@ -88,7 +88,7 @@ function PlaylistCard({ playlist, onOpen }: { playlist: UserPlaylist; onOpen: ()
 }
 
 export function LibraryView({ onNavigate }: { onNavigate: (r: RouteKey) => void }) {
-  const { playlists, favorites, history, createPlaylist } = usePlayer();
+  const { playlists, favorites, history, offlineTracks, createPlaylist } = usePlayer();
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("");
 
@@ -109,7 +109,7 @@ export function LibraryView({ onNavigate }: { onNavigate: (r: RouteKey) => void 
 
       <section>
         <SectionHeader title="Quick access" subtitle="Auto-curated collections" />
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <CollectionTile
             title="Favourites"
             count={favorites.length}
@@ -117,6 +117,14 @@ export function LibraryView({ onNavigate }: { onNavigate: (r: RouteKey) => void 
             tint="bg-rose-500/20 text-rose-400"
             tracks={favorites}
             onOpen={() => onNavigate("favorites")}
+          />
+          <CollectionTile
+            title="Downloads"
+            count={offlineTracks.length}
+            icon={<DownloadCloud className="h-5 w-5" />}
+            tint="bg-cyan-500/20 text-cyan-400"
+            tracks={offlineTracks}
+            onOpen={() => onNavigate("downloads")}
           />
           <CollectionTile
             title="Recently played"

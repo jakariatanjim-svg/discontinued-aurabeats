@@ -22,6 +22,13 @@ song lists.
 - Raw HTML fallback hero content for crawlers and rich link preview tools
 - Social preview image included for consistent sharing across apps
 
+### Homepage onboarding & trust
+- Hero CTAs rewritten around real user intent: **play free open tracks** or **browse live radio**
+- Plain-language **"Where the music comes from"** explainer covering JioSaavn, Audius, Jamendo, Internet Archive and live radio
+- Simple **"How AuraBeats works"** 3-step section for first-time visitors
+- Below-the-fold home sections load on demand for a lighter first paint
+- Mobile home layout and navigation polished for cleaner one-hand use
+
 ### Multi-source streaming engine
 
 Every song is a complete, full-length recording streamed from free, open

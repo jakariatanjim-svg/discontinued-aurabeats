@@ -101,7 +101,7 @@ export function PrivacyView() {
       </section>
 
       <p className="text-center text-xs text-ink3 pt-4">
-        Last updated: June 2025 · AuraBeats is open-source software.
+        Last updated: September 2026 · AuraBeats is open-source software.
       </p>
     </div>
   );

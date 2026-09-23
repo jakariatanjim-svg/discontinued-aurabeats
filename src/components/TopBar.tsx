@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Moon, Palette, Search, Sparkles, Sun, Wifi } from "lucide-react";
+import { Check, ChevronDown, Moon, Palette, Search, Settings, Sparkles, Sun, Wifi } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { ACCENTS, useTheme } from "@/hooks/useTheme";
 import { routeLabel, type RouteKey } from "@/routes";
 import { IconButton, WaveformLogo } from "@/components/ui";
 import { usePlayer } from "@/hooks/usePlayer";
 
-function ThemeSwitch() {
+function ThemeSwitch({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
   return (
-    <div className="blur-panel flex items-center gap-0.5 p-1">
+    <div className={cn("blur-panel flex items-center gap-0.5 p-1", className)}>
       {(
         [
           { key: "glassy", label: "Glassy", icon: Sparkles },
@@ -21,12 +21,12 @@ function ThemeSwitch() {
           type="button"
           onClick={() => setTheme(key)}
           className={cn(
-            "focus-ring flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold transition-all duration-200",
+            "focus-ring flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[10px] font-bold transition-all duration-200 sm:px-3 sm:text-[11px]",
             theme === key ? "bg-accent text-white shadow-[0_4px_18px_-6px_var(--c-accent)]" : "text-ink3 hover:text-ink",
           )}
         >
           <Icon className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">{label}</span>
+          <span className="hidden lg:inline">{label}</span>
         </button>
       ))}
     </div>
@@ -118,27 +118,25 @@ export function TopBar({
   const live = route === "radio";
 
   return (
-    <header className="blur-panel glass-inset sticky top-0 z-40 flex items-center gap-3 rounded-none! border-x-0! border-t-0! px-4 py-3 sm:gap-4 sm:px-6">
-      {/* Mobile brand — the app name is otherwise invisible without the sidebar */}
+    <header className="blur-panel glass-inset sticky top-0 z-40 flex items-center gap-2.5 rounded-none! border-x-0! border-t-0! px-3 py-2.5 sm:gap-4 sm:px-6 sm:py-3">
       <button
         type="button"
         onClick={() => onNavigate("home")}
-        className="focus-ring flex shrink-0 items-center gap-2.5 rounded-2xl md:hidden"
+        className="focus-ring flex min-w-0 shrink items-center gap-2.5 rounded-2xl md:hidden"
         aria-label="AuraBeats — go to home"
       >
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-lg shadow-blue-500/30">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-lg shadow-blue-500/30">
           <WaveformLogo className="h-5 w-5" />
         </span>
-        <span className="flex flex-col items-start leading-tight">
-          <span className="text-[15px] font-black tracking-tight text-ink">AuraBeats</span>
-          <span className="text-[10px] font-semibold text-ink3">Open music player</span>
+        <span className="min-w-0 flex flex-col items-start leading-tight">
+          <span className="truncate text-[15px] font-black tracking-tight text-ink">AuraBeats</span>
+          <span className="truncate text-[10px] font-semibold text-ink3">{routeLabel(route)}</span>
         </span>
       </button>
 
-      {/* Route title — text hidden on phones; the brand + bottom nav carry context there */}
-      <div className="min-w-0 flex-1">
-        <p className="hidden truncate text-lg font-black tracking-tight text-ink sm:block sm:text-xl drop-shadow-sm">{routeLabel(route)}</p>
-        <p className="hidden items-center gap-1.5 text-[11px] font-medium text-ink3 sm:flex sm:text-xs">
+      <div className="hidden min-w-0 flex-1 md:block">
+        <p className="truncate text-lg font-black tracking-tight text-ink drop-shadow-sm sm:text-xl">{routeLabel(route)}</p>
+        <p className="mt-0.5 hidden items-center gap-1.5 text-[11px] font-medium text-ink3 sm:flex sm:text-xs">
           <Wifi className="h-3.5 w-3.5 shrink-0 text-accent drop-shadow-[0_0_8px_var(--c-accent)]" />
           {failoverNote ? (
             <span className="truncate text-accent">{failoverNote}</span>
@@ -160,9 +158,18 @@ export function TopBar({
         <ChevronDown className="h-3 w-3 -rotate-90 opacity-60" />
       </button>
 
-      <ThemeSwitch />
-      <ModeSwitch />
-      <AccentPicker />
+      <div className="ml-auto flex items-center gap-2 sm:gap-2.5">
+        <IconButton
+          onClick={() => onNavigate("settings")}
+          aria-label="Open settings"
+          className={cn("border border-line md:hidden", route === "settings" && "text-accent")}
+        >
+          <Settings className="h-4 w-4" />
+        </IconButton>
+        <ThemeSwitch className="hidden sm:flex" />
+        <ModeSwitch />
+        <AccentPicker />
+      </div>
     </header>
   );
 }
