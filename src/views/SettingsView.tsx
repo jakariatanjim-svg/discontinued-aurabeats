@@ -196,13 +196,16 @@ export function SettingsView() {
       </section>
 
       <section>
-        <SectionHeader title="Experimental" subtitle="Beta features and power-user tools" icon={<Shield className="h-4 w-4 text-accent" />} />
+        <SectionHeader title="Experimental" subtitle="New features being tested — may change in future updates" icon={<Shield className="h-4 w-4 text-accent" />} />
         <div className="blur-panel space-y-4 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-bold text-ink">Playback queue</p>
+              <p className="text-sm font-bold text-ink flex items-center gap-2">
+                Playback queue
+                <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[9px] font-bold tracking-wider text-accent uppercase">Beta</span>
+              </p>
               <p className="mt-0.5 text-[11px] leading-relaxed text-ink3">
-                Enable advanced queue management, re-ordering and "up next" visibility.
+                Enable advanced queue management, "play next" and the "up next" panel in the full-screen player. This feature is under active development — your feedback shapes its future.
               </p>
             </div>
             <button

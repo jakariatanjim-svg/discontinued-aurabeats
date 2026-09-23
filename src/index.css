@@ -141,6 +141,28 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   transition: background-color 0.3s ease, color 0.2s ease;
+  /* Smooth scroll & scrolling physics on mobile */
+  scroll-behavior: smooth;
+  overscroll-behavior-y: none;
+}
+
+/* Force hardware acceleration on main scrolling areas */
+.scroll-area {
+  -webkit-overflow-scrolling: touch;
+  transform: translate3d(0,0,0);
+  will-change: scroll-position;
+}
+
+/* Global smooth transitions for UI states */
+button, a, .blur-panel, .chip {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Bypass transitions for elements that need raw FPS (visualizers) */
+.visualizer-canvas, .eq-bar, .animate-spin-slow, .animate-spin-med {
+  transition: none !important;
 }
 
 /* --- Optimized Static Aurora Background (Zero GPU Lag) --- */
@@ -210,7 +232,16 @@ body::before {
   box-shadow:
     0 8px 32px -12px rgb(0 0 0 / 0.45),
     inset 0 1px 0 rgb(255 255 255 / 0.08);
-  contain: layout style;
+  /* 
+     GPU Acceleration & FPS Stability 
+     - force 3D layer for composite smoothness
+     - backface-visibility prevents flicker on resize
+     - contain prevents expensive layout thrashing
+  */
+  contain: layout style paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 @utility glass-inset {
   box-shadow:

@@ -39,13 +39,13 @@
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta
       name="description"
-      content="Stream open music, artist-approved releases, and live radio in a sleek browser player — no sign-up required."
+      content="Stream open music, artist-approved releases, and live radio in a sleek browser player. Discover millions of tracks from open sources with no sign-up required."
     />
     <link rel="canonical" href="https://aurabeats.pages.dev/" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://aurabeats.pages.dev/" />
     <meta property="og:title" content="AuraBeats — Pure Open Streaming" />
-    <meta property="og:description" content="Stream open music, artist-approved releases, and live radio in a sleek browser player — no sign-up required." />
+    <meta property="og:description" content="Stream open music, artist-approved releases, and live radio in a sleek browser player. Discover millions of tracks from open sources with no sign-up required." />
     <meta property="og:image" content="https://aurabeats.pages.dev/og-card.svg" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="AuraBeats — Pure Open Streaming" />
@@ -69,6 +69,11 @@
       }
     </script>
     <title>AuraBeats — Pure Open Streaming</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AuraBeats" />
     <!-- DNS prefetch & preconnect for all music sources -->
     <link rel="dns-prefetch" href="https://archive.org" />
     <link rel="dns-prefetch" href="https://discoveryprovider.audius.co" />
@@ -110,12 +115,23 @@
           <a href="/radio" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.18);">Live radio</a>
           <a href="/library" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.18);">Your library</a>
         </nav>
-        <section style="max-width:820px;margin-bottom:20px;">
+        <section style="max-width:820px;margin-bottom:30px;">
           <strong style="display:block;margin-bottom:8px;">Why trust AuraBeats?</strong>
-          <p style="margin:0;color:#c9bfe6;">
+          <p style="margin:0 0 16px;color:#c9bfe6;">
             AuraBeats pulls music from open catalogs and public radio networks. Sources include artist-approved uploads, Creative Commons libraries, public-domain archives and live radio streams. Nothing requires an account, and the app keeps your playlists, favourites and listening history in your own browser.
           </p>
+          <ul style="list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;color:#c9bfe6;font-size:0.9rem;">
+            <li><strong>Multiple Sources:</strong> JioSaavn, Audius, Jamendo, Archive.org.</li>
+            <li><strong>Live Radio:</strong> Global network of thousands of radio stations.</li>
+            <li><strong>Full Privacy:</strong> No accounts, no data collection, local storage only.</li>
+            <li><strong>High Quality:</strong> Streaming at up to 320kbps for crystal clear audio.</li>
+            <li><strong>Artist Focused:</strong> Promoting open licenses and independent music.</li>
+            <li><strong>Smart Search:</strong> Deep-scan across all supported databases instantly.</li>
+          </ul>
         </section>
+        <footer style="border-top:1px solid rgba(255,255,255,.1);padding-top:20px;font-size:0.8rem;color:#857ca1;">
+          <p>&copy; 2025 AuraBeats Open Music Player. Built for performance and privacy. All rights to music belong to their respective owners on open platforms.</p>
+        </footer>
       </main>
     </div>
     <script type="module" src="/src/main.tsx"></script>

@@ -64,13 +64,13 @@ export function Sidebar({
         onClick={() => onNavigate(item.key)}
         title={item.label}
         className={cn(
-          "focus-ring group relative flex items-center gap-3 rounded-2xl text-sm font-semibold transition-all duration-200",
-          active ? "bg-accent/15 text-accent shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]" : "text-ink2 hover:bg-ink/[0.07] hover:text-ink",
+          "focus-ring relative flex items-center gap-3 rounded-2xl text-sm font-semibold will-change-[background-color,color] transition-colors duration-150",
+          active ? "bg-accent/15 text-accent" : "text-ink2 hover:bg-ink/[0.07] hover:text-ink",
           collapsed ? "mx-auto h-12 w-12 justify-center p-0" : "w-full px-4 py-3"
         )}
       >
         {active && !collapsed && <span className="absolute top-1/2 left-1 h-5 w-1 -translate-y-1/2 rounded-full bg-accent" />}
-        <Icon className={cn("h-5 w-5 shrink-0 transition-transform group-hover:scale-110", active && "drop-shadow-[0_0_8px_var(--c-accent)]")} />
+        <Icon className={cn("h-5 w-5 shrink-0", active && "drop-shadow-[0_0_8px_var(--c-accent)]")} />
         {!collapsed && (
           <>
             <span className="flex-1 truncate text-left">{item.label}</span>
@@ -86,9 +86,10 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "blur-panel glass-inset relative z-30 hidden h-full shrink-0 flex-col rounded-[2rem] border border-white/5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)] transition-all duration-300 md:flex",
+        "blur-panel glass-inset relative z-30 hidden h-full shrink-0 flex-col rounded-[2rem] border border-white/5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)] transition-[width] duration-300 md:flex",
         collapsed ? "w-[5rem]" : "w-[17.5rem]",
       )}
+      style={{ contain: "layout style paint" }}
     >
       <div className={cn("relative flex items-center pt-6 pb-4", collapsed ? "justify-center px-0" : "justify-between px-5")}>
         <div className={cn("flex items-center gap-3 min-w-0", collapsed && "hidden")}>
