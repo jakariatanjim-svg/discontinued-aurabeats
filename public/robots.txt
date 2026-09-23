@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://aurabeats.jakariatanjim.workers.dev/sitemap.xml
+Sitemap: https://aurabeats.pages.dev/sitemap.xml

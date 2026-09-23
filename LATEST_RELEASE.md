@@ -1,26 +1,25 @@
-### Clean Slash URLs + Cloudflare-Native SEO + Tap-Anywhere
+### Cloudflare Pages & Clean URL Overhaul
 
-**1. Clean Slash URLs — Real Paths, Zero Hardcoding**
-- Sections moved from hash fragments (`#/search`) to genuine paths: `/home`, `/search`, `/radio`, `/library`, `/favorites`, `/history`, `/settings`, `/about`, `/playlist/<id>`. Audit tools, link previews and crawlers now see each section as a first-class page.
-- Browser Back/Forward, deep-link refresh and pasted links all work. Landing at bare `/` opens Discover (Home).
-- Static fallback content (for JS-off crawlers) now uses the same clean `/home`, `/search`, `/radio`, `/library` links.
-- `sitemap.xml` lists the real section paths for indexing.
-- Everything still ships as ONE self-contained `index.html` — the History API router rehydrates each path client-side.
+**1. Professional URL Structure (Cloudflare Pages Migration)**
+- AuraBeats has officially moved to **aurabeats.pages.dev**.
+- Replaced hash-based routing (`#/search`) with clean slash URLs (`/search`, `/radio`, `/settings`).
+- Added native SPA support via `_redirects` and `_headers` for seamless Cloudflare Pages deployment.
+- Updated all canonical links, Open Graph tags, and the XML sitemap to reflect the new domain.
 
-**2. Native Cloudflare SPA Support (2 new deploy files)**
-- **`_redirects`**: declares the section paths + catch-all (`/* /index.html 200`) so visiting any section directly never 404s. It is **auto-generated at build time** from the route list in `src/config/routes.ts` (single source of truth) — add a route there and it is covered on the next build; no manual edits, no divergence.
-- **`_headers`**: adds nosniff, frame and referrer hardening for the static host.
-- Both live in `public/` and flow into `dist/` automatically. **Upload the whole `dist/` folder as-is (now 6 files instead of 4) — no extra steps.** The single-file `index.html` release asset still works offline by double-click (it gracefully opens Discover).
+**2. Feed Performance (10s+ → ~2s typical)**
+- Every music source now races against a **4.5-second hard deadline**.
+- Slow or unresponsive mirrors are automatically dropped, ensuring the UI paints music almost instantly.
+- Added timeouts and proper connection cancellation to JioSaavn, Jamendo, and YouTube (Piped) mirror racing.
 
-**3. Tap-Anywhere Playback (mobile usability)**
-- Track rows and cards now start playback when tapped **anywhere** — artwork, gaps, duration, the whole surface. Previously only the tiny title text triggered playback (and rows needed a double-click), which was painful on phones.
-- Rows and carousel/grid cards also gained keyboard play (Enter), visible focus rings, cursor pointers, and touch press feedback.
-- Favourite / menu / download buttons keep their own isolated actions — tapping them never accidentally starts the track.
-- Applies everywhere automatically: Home, Search results, Radio stations, Library, Favourites and History all share the same row/card components.
+**3. Visual & UX Fixes**
+- **Invisible Text Fix:** The hero subtitle ("Five live sources...") now uses a solid high-contrast variable that works perfectly in both Dark and Light modes.
+- **Full Screen Player:** Fixed a visual seam/line in the backdrop glow. The background is now a smooth, deeply blurred atmosphere that prevents back-page text from peeking through.
+- **Tap-Anywhere Playback:** You can now tap anywhere on a song row or card (artwork, title, or empty space) to start playing — a major win for mobile usability.
+- **Professional Icons:** Removed all emojis from the discovery cards, replacing them with crisp, device-independent Lucide SVG icons.
 
-**4. Still Includes the Previous Release**
-- Player bar hidden until first play; hidden = zero reserved layout space; session queue restore on refresh (paused); wiped on tab close.
-- 4.5s feed deadlines + per-service timeouts (10s+ → ~1-2s typical).
-- Lucide SVG icons everywhere — zero emojis.
-- Mobile brand header, hero eyebrow badge, stronger hero subtitle contrast.
-- `aurabeats-dist.zip` release asset for one-step Cloudflare deployment.
+**4. Storage & Session Management**
+- The "Now Playing" queue now lives in **sessionStorage**. It survives a page refresh (F5) but is automatically cleared when you close the tab/browser, keeping your fresh starts clean.
+- The Player Bar is completely hidden until you actually play your first song, reclaiming valuable screen space.
+
+**5. Release Packaging**
+- New `aurabeats-dist.zip` asset added to releases for one-step drag-and-drop deployment to Cloudflare Pages.

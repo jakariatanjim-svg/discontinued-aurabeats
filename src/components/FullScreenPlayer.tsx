@@ -5,7 +5,6 @@ import {
   Loader2,
   Pause,
   Play,
-  Radio as RadioIcon,
   Repeat,
   Repeat1,
   Shuffle,
@@ -68,53 +67,31 @@ export function FullScreenPlayer() {
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
-    <div className="fixed inset-0 z-[85] animate-fade-in overflow-hidden bg-base">
-      {/* backdrop */}
-      <div className="absolute inset-0 -z-10">
+    <div className="fixed inset-0 z-[85] animate-fade-in overflow-hidden">
+      {/* backdrop — artwork glow fills the entire screen */}
+      <div className="absolute inset-0 overflow-hidden bg-black">
         {current.artworkLarge || current.artwork ? (
           <img
             src={current.artworkLarge || current.artwork}
             alt=""
-            className="h-full w-full scale-125 object-cover opacity-30 blur-[64px]"
+            className="absolute inset-0 h-full w-full scale-[1.8] object-cover opacity-50 blur-[120px] saturate-150"
           />
         ) : (
-          <div className="h-full w-full opacity-60" style={{ backgroundImage: gradientFrom(current.title) }} />
+          <div className="absolute inset-0 scale-[1.8] opacity-50 blur-[120px]" style={{ backgroundImage: gradientFrom(current.title) }} />
         )}
-        <div className="absolute inset-0 bg-black/80" />
-        <div
-          className="absolute inset-0 opacity-45 gradient-drift"
-          style={{ backgroundImage: "linear-gradient(120deg, var(--c-accent), transparent 55%, var(--c-accent2))" }}
-        />
+        <div className="absolute inset-0 bg-black/25" />
       </div>
 
-      <div className="relative flex h-full flex-col">
-        <div className="flex items-center justify-between px-4 pt-4 sm:px-8">
-          <IconButton onClick={() => setExpanded(false)} aria-label="Close full screen" className="text-white/80 hover:text-white">
+      <div className="relative z-10 flex h-full flex-col">
+        {/* floating close button — no bar, no header */}
+        <div className="absolute top-4 left-4 z-50 sm:top-6 sm:left-6">
+          <IconButton 
+            onClick={() => setExpanded(false)} 
+            aria-label="Close full screen" 
+            className="bg-white/10 text-white/80 backdrop-blur-xl hover:bg-white/20 hover:text-white"
+          >
             <ChevronDown className="h-5 w-5" />
           </IconButton>
-          <div className="text-center">
-            <p className="text-[10px] font-bold tracking-[0.28em] text-white/60 uppercase">
-              {current.isLive ? "Live broadcast" : "Now playing"}
-            </p>
-            <p className="mt-0.5 text-[11px] text-white/50">
-              {current.source === "audius"
-                ? "Audius open network"
-                : current.source === "archive"
-                  ? "Internet Archive"
-                  : current.source === "jiosaavn"
-                    ? "High quality database"
-                    : current.source === "jamendo"
-                      ? "Independent CC"
-                      : "Open radio directory"}
-            </p>
-          </div>
-          <div className="flex h-10 w-10 items-center justify-center">
-            {current.isLive && (
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-600 px-2.5 py-1 text-[10px] font-bold tracking-wide text-white uppercase">
-                <RadioIcon className="h-3 w-3" /> live
-              </span>
-            )}
-          </div>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto scroll-area px-4 pt-4 pb-6 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10">
@@ -159,7 +136,7 @@ export function FullScreenPlayer() {
             </div>
 
             <div className="w-full max-w-xl text-center">
-              <h2 className="truncate text-2xl font-black tracking-tight text-white text-glow sm:text-4xl">
+              <h2 className="truncate text-2xl font-black tracking-tight text-white sm:text-4xl">
                 {current.title}
               </h2>
               <p className="mt-1.5 truncate text-sm text-white/70 sm:text-base">
