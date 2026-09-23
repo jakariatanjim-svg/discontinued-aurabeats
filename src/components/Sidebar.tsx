@@ -62,9 +62,10 @@ export function Sidebar({
         type="button"
         onClick={() => onNavigate(item.key)}
         title={item.label}
+        style={{ contain: "layout style paint", transform: "translateZ(0)" }}
         className={cn(
-          "focus-ring relative flex items-center gap-3 rounded-2xl text-sm font-semibold will-change-[background-color,color] transition-colors duration-150",
-          active ? "bg-accent/15 text-accent" : "text-ink2 hover:bg-ink/[0.07] hover:text-ink",
+          "focus-ring relative flex items-center gap-3 rounded-2xl text-sm font-semibold transition-colors duration-150",
+          active ? "bg-accent/15 text-accent" : "text-ink2 hover:bg-[rgba(255,255,255,0.05)] hover:text-ink",
           collapsed ? "mx-auto h-12 w-12 justify-center p-0" : "w-full px-4 py-3"
         )}
       >
@@ -133,7 +134,7 @@ export function Sidebar({
         </div>
       )}
 
-      <nav className={cn("flex-1 space-y-6 overflow-y-auto scroll-area pb-24", collapsed ? "px-2" : "px-3")}>
+      <nav className={cn("flex-1 space-y-6 overflow-y-auto scroll-area pb-24", collapsed ? "px-2" : "px-3")} style={{ contain: "layout style paint" }}>
         <div className="space-y-1">
           {MAIN.map((item) => (
             <Item key={item.key} item={item} />
@@ -195,9 +196,10 @@ export function Sidebar({
                   key={p.id}
                   type="button"
                   onClick={() => onNavigate(`playlist:${p.id}` as RouteKey)}
+                  style={{ contain: "layout style paint", transform: "translateZ(0)" }}
                   className={cn(
-                    "focus-ring flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition hover:bg-ink/[0.07]",
-                    route === `playlist:${p.id}` && "bg-ink/[0.07]",
+                    "focus-ring flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors duration-150 hover:bg-[rgba(255,255,255,0.05)]",
+                    route === `playlist:${p.id}` && "bg-[rgba(255,255,255,0.05)]",
                   )}
                 >
                   <Artwork alt={p.name} src={p.tracks[0]?.artwork} className="h-8 w-8 shrink-0" rounded="rounded-lg" />

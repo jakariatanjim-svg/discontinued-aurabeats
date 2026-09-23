@@ -1,35 +1,26 @@
-### Search Overhaul + PWA + Performance Polish
+### Personalization + Privacy Policy + Audit Fixes
 
-**1. Search UI Redesign**
-- Browse All cards are now compact horizontal tiles instead of oversized boxes — fits desktop and mobile naturally.
-- Artist grid adjusted from 6 columns to 5 with tighter spacing; cards are cleaner with fixed avatar sizes.
-- Result list panel padding tightened for a denser, more professional look.
+**1. "For You" — Personalized Recommendations**
+- AuraBeats now learns from your listening history and favourites to derive your top genres.
+- A new "For You" carousel appears on the Home page once you have enough listening data — powered entirely by local analysis, no server, no tracking.
+- Shows "Based on your love for electronic, lo-fi, jazz" (whatever your top genres are).
 
-**2. Real-Time Search Suggestions (Autocomplete)**
-- As you type, a dropdown of real song/artist matches appears below the search box (powered by JioSaavn's database).
-- Click any suggestion to instantly search that exact song or artist name.
-- Works for specific songs — "Jennifer Lopez On The Floor" will now surface the actual track via autocomplete, not just broad keyword results.
+**2. Privacy Policy Page**
+- New `/privacy` route with a comprehensive, honest privacy policy.
+- Covers: what we store (localStorage only), what we don't collect (nothing), third-party API connections, security headers, and how to delete all data.
+- Linked from the About page.
 
-**3. Infinite Scroll + End Marker**
-- Results load progressively as you scroll (20 at a time).
-- When all results are loaded, a clean "End of results · X tracks loaded" message appears — no hard lock, no confusion.
+**3. Audit Report Fixes**
+- **Trust signals in hero:** Added a trust bar explaining exactly what "open music" means — Creative Commons, artist-approved uploads, public domain archives, zero data collection.
+- **Information hierarchy:** Hero section is now tighter with clear CTA + trust bar, separating marketing copy from app content.
+- **Consistent branding:** Wire-type AudioWaveform icon replaced everywhere (Sidebar, TopBar, About page) with the solid waveform bars logo matching the tab favicon — one cohesive brand.
 
-**4. Queue — Beta Label**
-- The experimental queue feature in Settings now has a clear "Beta" badge and a friendlier description explaining it is under active development — no more user confusion about why it might behave unexpectedly.
+**4. DNS Optimization**
+- Primary APIs (JioSaavn, Jamendo, Archive, Audius) use `preconnect` for full DNS+TCP+TLS warmup.
+- All fallback mirrors (Piped, Audius 2/3, JioSaavn Vercel mirrors) use `dns-prefetch`.
+- Faster first API response on cold loads.
 
-**5. PWA — Installable on PC and Mobile**
-- AuraBeats is now a Progressive Web App. On supported browsers:
-  - **Chrome/Edge (PC):** Click the install icon in the address bar to install as a desktop app.
-  - **Android (Chrome):** "Add to Home Screen" prompt or the install banner.
-  - **iOS (Safari):** Share → Add to Home Screen.
-- Once installed, AuraBeats opens in its own window with a custom icon, no browser chrome, and offline app shell caching via Service Worker.
-
-**6. SEO & Audit Fixes**
-- Meta description expanded to 156 characters (was 108, target 120-160).
-- Raw HTML content significantly expanded: feature list, source details, and footer added to the static `index.html` so crawlers see rich content without JavaScript.
-- All URLs updated to `aurabeats.pages.dev`.
-
-**7. GPU Acceleration**
-- `blur-panel` elements now use `transform: translateZ(0)`, `backface-visibility: hidden`, and `contain: layout style paint` for hardware-accelerated compositing.
-- Scroll areas force GPU layers with `translate3d(0,0,0)`.
-- Sidebar hover animations simplified to color-only transitions (no scale transforms) to eliminate flicker on glass panels.
+**5. Previous Updates Included**
+- Search UI overhaul with autocomplete, infinite scroll, compact PC layout.
+- PWA installable on PC and mobile.
+- GPU acceleration, full screen player fixes, clean slash URLs.

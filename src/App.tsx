@@ -15,6 +15,7 @@ const SearchView = lazy(() => import("@/views/SearchView").then((m) => ({ defaul
 const RadioView = lazy(() => import("@/views/RadioView").then((m) => ({ default: m.RadioView })));
 const SettingsView = lazy(() => import("@/views/SettingsView").then((m) => ({ default: m.SettingsView })));
 const AboutView = lazy(() => import("@/views/AboutView").then((m) => ({ default: m.AboutView })));
+const PrivacyView = lazy(() => import("@/views/PrivacyView").then((m) => ({ default: m.PrivacyView })));
 const FavoritesView = lazy(() => import("@/views/LibraryViews").then((m) => ({ default: m.FavoritesView })));
 const HistoryView = lazy(() => import("@/views/LibraryViews").then((m) => ({ default: m.HistoryView })));
 const LibraryView = lazy(() => import("@/views/LibraryViews").then((m) => ({ default: m.LibraryView })));
@@ -159,6 +160,7 @@ function Shell() {
               {route === "history" && <HistoryView />}
               {route === "settings" && <SettingsView />}
               {route === "about" && <AboutView />}
+              {route === "privacy" && <PrivacyView />}
               {route.startsWith("playlist:") && (
                 <PlaylistDetailView playlistId={route.slice("playlist:".length)} onBack={() => navigate("library")} />
               )}

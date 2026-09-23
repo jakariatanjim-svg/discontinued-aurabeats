@@ -13,4 +13,5 @@ export const CLEAN_PATHS: string[] = [
   "/history",
   "/settings",
   "/about",
+  "/privacy",
 ];

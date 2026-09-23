@@ -1,5 +1,5 @@
-import { Archive, AudioWaveform, Globe, Heart, Mic2, Music2, Radio, Shield } from "lucide-react";
-import { SectionHeader } from "@/components/ui";
+import { Archive, Globe, Heart, Mic2, Music2, Radio, Shield } from "lucide-react";
+import { SectionHeader, WaveformLogo } from "@/components/ui";
 
 const SOURCES = [
   {
@@ -56,7 +56,7 @@ const PRINCIPLES = [
     body: "Your favorites, playlists and listening history live entirely in your own browser's localStorage. Clear it anytime.",
   },
   {
-    icon: AudioWaveform,
+    icon: WaveformLogo,
     title: "Full-length tracks only",
     body: "AuraBeats never plays 30-second previews. Every track is a complete, full-length recording — the same policy applied to every source.",
   },
@@ -74,7 +74,7 @@ export function AboutView() {
         <SectionHeader
           title="About AuraBeats"
           subtitle="How it works, where the music comes from, and what open streaming means"
-          icon={<AudioWaveform className="h-5 w-5 text-accent" />}
+          icon={<WaveformLogo className="h-5 w-5 text-accent" />}
         />
         <p className="max-w-3xl text-sm leading-7 text-ink2">
           AuraBeats is an open-source browser music player that aggregates multiple free public music

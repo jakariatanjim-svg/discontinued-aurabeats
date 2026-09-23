@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Disc3, Flame, Radio, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
+import { Disc3, Flame, Heart, Radio, RefreshCw, Sparkles, TrendingUp } from "lucide-react";
 import { useFeed } from "@/hooks/useFeed";
 import {
   ARCHIVE_COLLECTIONS,
@@ -15,9 +15,34 @@ import { EmptyState, ErrorState } from "@/components/states";
 import { usePlayer } from "@/hooks/usePlayer";
 import type { Track } from "@/types";
 
+/** Derive the user's top genres from their listening history + favorites. */
+function deriveTopGenres(history: Track[], favorites: Track[]): string[] {
+  const counts = new Map<string, number>();
+  const bump = (t: Track, weight: number) => {
+    const tags = [...(t.tags ?? []), t.genre].filter(Boolean).map((g) => g!.toLowerCase());
+    tags.forEach((g) => counts.set(g, (counts.get(g) ?? 0) + weight));
+  };
+  history.forEach((t) => bump(t, 1));
+  favorites.forEach((t) => bump(t, 3));
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([g]) => g)
+    .filter((g) => GENRE_CHIPS.some((c) => c.value.toLowerCase() === g));
+}
+
 export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") => void }) {
-  const { playAll, toast } = usePlayer();
+  const { playAll, toast, history, favorites } = usePlayer();
   const [genre, setGenre] = useState<string>(GENRE_CHIPS[0].value);
+
+  // Personalized "For You" — derived from user's listening habits
+  const topGenres = useMemo(() => deriveTopGenres(history, favorites), [history, favorites]);
+  const forYouGenre = topGenres[0] ?? "";
+  const forYou = useFeed<Track[]>(
+    `cat:foryou:${forYouGenre}`,
+    (signal) => fetchGenre(forYouGenre, { limit: 16, signal }),
+    { enabled: forYouGenre.length > 0 },
+  );
 
   const popular = useFeed<Track[]>("cat:popular", (signal) => fetchPopular({ limit: 34, signal }));
   const fresh = useFeed<Track[]>("cat:fresh", (signal) => fetchFresh({ limit: 26, signal }));
@@ -52,9 +77,16 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         <h1 className="mb-3 max-w-3xl text-balance text-4xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">
           Stream open music and live radio.
         </h1>
-        <p className="mb-7 max-w-2xl text-sm font-medium leading-7 sm:text-base" style={{ color: "var(--c-ink2)" }}>
+        <p className="mb-4 max-w-2xl text-sm font-medium leading-7 sm:text-base" style={{ color: "var(--c-ink2)" }}>
           Five live sources. No accounts. No previews. Full tracks, instantly.
         </p>
+        <div className="mb-7 flex flex-wrap gap-x-5 gap-y-1 text-[11px] font-semibold" style={{ color: "var(--c-ink3)" }}>
+          <span>✓ Creative Commons & open-licensed music</span>
+          <span>✓ Artist-approved independent uploads</span>
+          <span>✓ Public domain archives & live radio</span>
+          <span>✓ 100% ad-free — no banners, no interruptions</span>
+          <span>✓ Zero data collection · fully client-side</span>
+        </div>
         <div className="flex flex-wrap gap-3">
           <a
             href="#home-popular"
@@ -133,6 +165,31 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
           onClick={() => onNavigate("search")}
         />
       </div>
+
+      {/* Personalized "For You" — only shown when user has listening history */}
+      {forYouGenre && forYou.data && forYou.data.length > 0 && (
+        <section>
+          <SectionHeader
+            title="For You"
+            subtitle={`Based on your love for ${topGenres.join(", ")}`}
+            icon={<Heart className="h-4 w-4 text-rose-400" />}
+            action={
+              <button
+                type="button"
+                onClick={() => playSection(forYou.data, "your personalised mix")}
+                className="rounded-full border border-line px-3.5 py-1.5 text-[11px] font-bold text-ink3 transition hover:border-accent hover:text-accent"
+              >
+                Play all
+              </button>
+            }
+          />
+          <Carousel>
+            {forYou.data.map((t) => (
+              <TrackCard key={t.id} track={t} context={forYou.data ?? undefined} />
+            ))}
+          </Carousel>
+        </section>
+      )}
 
       <section id="home-popular">
         <SectionHeader
