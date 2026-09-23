@@ -9,6 +9,7 @@ export type RouteKey =
   | "settings"
   | "about"
   | "privacy"
+  | "downloads"
   | `playlist:${string}`;
 
 export interface RouteMeta {
@@ -40,7 +41,7 @@ export function pathToRoute(pathname: string): RouteKey {
     return id ? (`playlist:${id}` as RouteKey) : "library";
   }
   const key = clean.slice(1);
-  const valid: RouteKey[] = ["home", "search", "radio", "library", "favorites", "history", "settings", "about", "privacy"];
+  const valid: RouteKey[] = ["home", "search", "radio", "library", "favorites", "history", "settings", "about", "privacy", "downloads"];
   return valid.includes(key as RouteKey) ? (key as RouteKey) : "home";
 }
 
@@ -65,6 +66,8 @@ export function routeLabel(route: RouteKey): string {
       return "About AuraBeats";
     case "privacy":
       return "Privacy Policy";
+    case "downloads":
+      return "Downloads";
     default:
       return "AuraBeats";
   }

@@ -11,6 +11,7 @@ import {
   Radio,
   Search,
   Settings,
+  DownloadCloud,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { usePlayer } from "@/hooks/usePlayer";
@@ -32,6 +33,7 @@ const MAIN: NavItem[] = [
 
 const COLLECTION: NavItem[] = [
   { key: "favorites", label: "Favourites", icon: Heart },
+  { key: "downloads", label: "Downloads", icon: DownloadCloud },
   { key: "history", label: "Recently Played", icon: Clock },
   { key: "settings", label: "Settings", icon: Settings },
   { key: "about", label: "About", icon: Info },

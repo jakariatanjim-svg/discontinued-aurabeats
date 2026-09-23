@@ -12,6 +12,7 @@ import {
   Trash2,
   ExternalLink,
   Download,
+  DownloadCloud,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatCount, formatTime, gradientFrom, relativeTime } from "@/utils/format";
@@ -56,7 +57,21 @@ function TrackMenu({
   const [pickerOpen, setPickerOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
-  const { addToQueue, playNext, addToPlaylist, playlists, createPlaylist, downloadTrack, toast, settings } = usePlayer();
+  const { 
+    addToQueue, 
+    playNext, 
+    addToPlaylist, 
+    playlists, 
+    createPlaylist, 
+    downloadTrack, 
+    saveOffline, 
+    isOffline, 
+    removeOffline,
+    toast, 
+    settings 
+  } = usePlayer();
+
+  const offline = isOffline(track.id);
 
   useEffect(() => {
     if (!open) return;
@@ -87,6 +102,9 @@ function TrackMenu({
   const items: { label: string; icon: ReactNode; run: () => void }[] = [
     { label: "Save to playlist", icon: <Plus className="h-4 w-4" />, run: () => setPickerOpen(true) },
     { label: "Download MP3", icon: <Download className="h-4 w-4" />, run: () => downloadTrack(track) },
+    offline
+      ? { label: "Remove from offline", icon: <Trash2 className="h-4 w-4 text-rose-400" />, run: () => removeOffline(track.id) }
+      : { label: "Save for offline", icon: <DownloadCloud className="h-4 w-4 text-accent" />, run: () => saveOffline(track) },
   ];
   if (settings.queueEnabled) {
     items.unshift(
@@ -244,9 +262,10 @@ export function TrackRow({
   showArtwork?: boolean;
   meta?: string;
 }) {
-  const { current, isPlaying, playNow, isFavorite, toggleFavorite } = usePlayer();
+  const { current, isPlaying, playNow, isFavorite, toggleFavorite, isOffline, saveOffline, removeOffline } = usePlayer();
   const isCurrent = current?.id === track.id;
   const fav = isFavorite(track.id);
+  const offline = isOffline(track.id);
 
   return (
     <div
@@ -351,6 +370,20 @@ export function TrackRow({
         <Heart className={cn("h-4 w-4", fav && "fill-current")} />
       </IconButton>
 
+      {!track.isLive && (
+        <IconButton
+          size="sm"
+          aria-label={offline ? "Remove from downloads" : "Save for offline"}
+          onClick={(e) => {
+            e.stopPropagation();
+            offline ? removeOffline(track.id) : saveOffline(track);
+          }}
+          className={cn("hidden transition sm:flex", offline ? "text-accent opacity-100" : "opacity-0 group-hover/row:opacity-100 focus:opacity-100")}
+        >
+          <DownloadCloud className={cn("h-4 w-4", offline && "fill-current")} />
+        </IconButton>
+      )}
+
       <span className="w-10 shrink-0 text-right text-xs tabular-nums text-ink3">
         {track.isLive ? "∞" : formatTime(track.duration)}
       </span>
@@ -363,9 +396,10 @@ export function TrackRow({
 /* ------------------------------- Track card ------------------------------- */
 
 export function TrackCard({ track, context }: { track: Track; context?: Track[] }) {
-  const { playNow, current, isPlaying, toggleFavorite, isFavorite } = usePlayer();
+  const { playNow, current, isPlaying, toggleFavorite, isFavorite, isOffline } = usePlayer();
   const isCurrent = current?.id === track.id;
   const fav = isFavorite(track.id);
+  const offline = isOffline(track.id);
   return (
     <div
       role="button"
@@ -405,10 +439,16 @@ export function TrackCard({ track, context }: { track: Track; context?: Track[] 
             }}
           />
         </div>
-        {track.isLive && (
+        {track.isLive ? (
           <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-rose-600 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-white uppercase shadow sm:px-2 sm:text-[9px]">
             <RadioIcon className="h-2 w-2 sm:h-2.5 sm:w-2.5" /> live
           </span>
+        ) : (
+          offline && (
+            <span className="absolute top-2 left-2 flex items-center gap-1 rounded-full bg-accent/90 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-white uppercase shadow backdrop-blur-sm sm:px-2 sm:text-[9px]">
+              <DownloadCloud className="h-2 w-2 sm:h-2.5 sm:w-2.5" /> offline
+            </span>
+          )
         )}
       </div>
       {/* plain div — the card itself carries the play action */}

@@ -8,6 +8,7 @@ import {
   Play,
   Plus,
   Trash2,
+  DownloadCloud,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatDurationList, gradientFrom, relativeTime } from "@/utils/format";
@@ -467,6 +468,59 @@ export function HistoryView() {
               context={history}
               index={i}
               meta={relativeTime(t.addedAt)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function DownloadsView() {
+  const { offlineTracks, removeOffline, playAll } = usePlayer();
+
+  return (
+    <div className="space-y-6 pb-4">
+      <section className="blur-panel glass-inset rounded-[2rem] px-6 py-8 sm:px-10 sm:py-10">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.05] px-3.5 py-1.5">
+          <DownloadCloud className="h-4 w-4 text-accent" />
+          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink2">Offline Music</span>
+        </div>
+        <h1 className="mb-3 text-3xl font-black tracking-tight text-ink sm:text-4xl">
+          Your Downloads
+        </h1>
+        <p className="max-w-xl text-sm leading-relaxed text-ink2">
+          Tracks saved for offline playback. These are stored in your browser's internal database
+          and can be played even without an internet connection.
+        </p>
+        {offlineTracks.length > 0 && (
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button onClick={() => playAll(offlineTracks, 0)}>
+              <Play className="h-4 w-4 fill-current" /> Play all
+            </Button>
+          </div>
+        )}
+      </section>
+
+      {offlineTracks.length === 0 ? (
+        <EmptyState
+          title="No downloads yet"
+          hint="Save tracks for offline playback from the '...' menu on any song."
+        />
+      ) : (
+        <div className="blur-panel overflow-hidden p-1.5 sm:p-2.5">
+          {offlineTracks.map((t, i) => (
+            <TrackRow
+              key={t.id}
+              track={t}
+              context={offlineTracks}
+              index={i}
+              removeLabel="Remove from downloads"
+              onRemove={() => {
+                if (window.confirm(`Remove "${t.title}" from offline storage?`)) {
+                  removeOffline(t.id);
+                }
+              }}
             />
           ))}
         </div>

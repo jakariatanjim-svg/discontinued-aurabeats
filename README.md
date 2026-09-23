@@ -99,6 +99,74 @@ Clean section URLs (no hash): the app uses the History API, so `/home`, `/search
 
 ---
 
+## 📱 Install as App (PWA)
+
+AuraBeats is a fully installable Progressive Web App — works like a native app on all platforms.
+No App Store, no Play Store, no login required.
+
+### Android (Chrome / Edge)
+1. Open [aurabeats.pages.dev](https://aurabeats.pages.dev/) in Chrome or Edge.
+2. Tap the **three-dot menu (⋮)** in the top-right corner.
+3. Tap **"Add to Home screen"** or **"Install app"**.
+4. Tap **Install** on the confirmation prompt.
+5. AuraBeats icon appears on your home screen — tap to open in full-screen, no browser bar.
+
+### PC — Chrome / Edge (Windows, Mac, Linux)
+1. Open [aurabeats.pages.dev](https://aurabeats.pages.dev/) in Chrome or Edge.
+2. Look for the **install icon (⊕)** in the address bar (right side).
+3. Click it → click **Install**.
+4. AuraBeats opens in its own window like a desktop app.
+5. Find it in Start Menu (Windows) or Applications (Mac/Linux).
+
+> **Tip:** In Chrome you can also go to **Menu (⋮) → Cast, save and share → Install page as app**.
+
+### iOS — Safari (iPhone / iPad)
+1. Open [aurabeats.pages.dev](https://aurabeats.pages.dev/) in **Safari** (must be Safari — Chrome on iOS does not support PWA install).
+2. Tap the **Share button** (the box with an arrow pointing up) at the bottom of the screen.
+3. Scroll down and tap **"Add to Home Screen"**.
+4. Edit the name if you want → tap **Add**.
+5. AuraBeats icon appears on your home screen. Tap it — opens full-screen, no Safari bar.
+
+> **iOS Notes:**
+> - Works on iOS 16.4+ (full PWA support including service worker caching).
+> - iOS 15 and below will add the icon but opens in Safari — no full-screen mode.
+> - Audio continues playing when you switch apps on iOS 17+.
+
+---
+
+## 🔄 How PWA Updates Work
+
+AuraBeats uses a **Service Worker** for caching and offline support. Here is exactly how updates reach you:
+
+### What happens when a new version is deployed
+
+| Step | What happens |
+|------|-------------|
+| 1 | You open the app |
+| 2 | Service worker checks for an updated `sw.js` file in the background |
+| 3 | If a new version is found, it downloads silently |
+| 4 | On your **next visit** (or next app reopen), the new version activates automatically |
+
+### So — Auto or Manual?
+
+- ✅ **Fully automatic** — you don't need to do anything.
+- Updates happen silently in the background while you use the app.
+- The new version kicks in the **next time you open the app** (close and reopen, or close the tab and come back).
+- You will **never** need to uninstall and reinstall.
+
+### Edge cases
+
+| Situation | Behaviour |
+|-----------|-----------|
+| App open for a long time (hours) | Old version stays active until you close/reopen |
+| No internet connection | App loads from cache (offline mode) |
+| Major update with breaking cache | Service worker clears old cache automatically on activation |
+| iOS Safari | Same behaviour — updates on next open |
+
+> **In short:** Just use it normally. Updates install themselves. No manual steps needed on any platform.
+
+---
+
 ## ☁️ Hosting
 
 ### Cloudflare Pages (recommended)

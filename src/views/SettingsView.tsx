@@ -1,6 +1,7 @@
 import {
   Check,
   Database,
+  DownloadCloud,
   Info,
   Moon,
   Palette,
@@ -22,7 +23,7 @@ import { storage } from "@/utils/storage";
 
 export function SettingsView() {
   const { theme, setTheme, mode, setMode, accent, setAccent } = useTheme();
-  const { volume, setVolume, toast, favorites, history, playlists, settings, updateSettings } = usePlayer();
+  const { volume, setVolume, toast, favorites, history, playlists, settings, updateSettings, clearOffline } = usePlayer();
 
   const bytes = storage.bytes();
 
@@ -252,7 +253,7 @@ export function SettingsView() {
             ))}
           </div>
           <p className="text-[11px] text-ink3">Local storage footprint: {(bytes / 1024).toFixed(1)} KB</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <Button
               variant="outline"
               onClick={() => {
@@ -261,19 +262,45 @@ export function SettingsView() {
                 toast("Re-negotiating open network mirrors…", "success");
                 window.setTimeout(() => window.location.reload(), 550);
               }}
+              className="justify-start"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Refresh open sources
             </Button>
             <Button
               variant="outline"
               onClick={() => {
-                if (!window.confirm("Clear all favourites, playlists and history?")) return;
+                if (!window.confirm("Clear app shell cache? This may fix loading issues but requires a redownload on next visit.")) return;
+                window.caches.keys().then((keys) => {
+                  Promise.all(keys.map((k) => window.caches.delete(k))).then(() => {
+                    toast("App cache cleared — reloading", "success");
+                    window.location.reload();
+                  });
+                });
+              }}
+              className="justify-start border-yellow-500/30 text-yellow-400 hover:border-yellow-500 hover:text-yellow-300"
+            >
+              <Shield className="h-3.5 w-3.5" /> Clear app cache
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!window.confirm("Delete all downloaded music? This will remove all offline tracks.")) return;
+                clearOffline();
+              }}
+              className="justify-start border-rose-500/30 text-rose-400 hover:border-rose-500 hover:text-rose-300"
+            >
+              <DownloadCloud className="h-3.5 w-3.5" /> Clear offline media
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!window.confirm("Clear all favourites, playlists and history? Your downloaded music will stay.")) return;
                 storage.clearAll();
                 window.location.reload();
               }}
-              className="border-rose-500/40 text-rose-400 hover:border-rose-500 hover:text-rose-300"
+              className="justify-start border-rose-500/40 text-rose-400 hover:border-rose-500 hover:text-rose-300"
             >
-              <Trash2 className="h-3.5 w-3.5" /> Clear all local data
+              <Trash2 className="h-3.5 w-3.5" /> Clear app data
             </Button>
           </div>
         </div>

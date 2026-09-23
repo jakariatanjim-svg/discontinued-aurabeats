@@ -19,6 +19,7 @@ import { useAudioEngine, type AudioEngine } from "@/hooks/useAudioEngine";
 import { reportListen } from "@/services/radio";
 import { resolveStreamUrls } from "@/services/youtube";
 import { storage, session } from "@/utils/storage";
+import { db } from "@/utils/db";
 import { shuffleArray, uid } from "@/utils/format";
 import type { RepeatMode, ToastMessage, Track, UserPlaylist, PlayerSettings } from "@/types";
 
@@ -108,6 +109,11 @@ interface PlayerContextValue {
   addToPlaylist: (playlistId: string, track: Track | Track[]) => void;
   removeFromPlaylist: (playlistId: string, trackId: string) => void;
   downloadTrack: (track: Track) => void;
+  saveOffline: (track: Track) => Promise<void>;
+  removeOffline: (id: string) => Promise<void>;
+  isOffline: (id: string) => boolean;
+  clearOffline: () => Promise<void>;
+  offlineTracks: Track[];
   settings: PlayerSettings;
   updateSettings: (s: Partial<PlayerSettings>) => void;
   toast: (text: string, tone?: ToastMessage["tone"]) => void;
@@ -152,6 +158,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [expanded, setExpanded] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
   const [failoverNote, setFailoverNote] = useState<string | null>(null);
+  const [offlineTracks, setOfflineTracks] = useState<Track[]>([]);
+
+  // Load offline tracks from IndexedDB
+  useEffect(() => {
+    db.getAllTracks().then(setOfflineTracks);
+  }, []);
 
   const queueRef = useRef(queue);
   const indexRef = useRef(index);
@@ -183,6 +195,49 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const dismissToast = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
+
+  const saveOffline = useCallback(async (track: Track) => {
+    if (offlineTracks.some((t) => t.id === track.id)) return;
+    try {
+      toast(`Saving "${track.title}" for offline playback...`, "info");
+      
+      const controller = new AbortController();
+      let timeoutId = setTimeout(() => controller.abort(), 20000);
+      let response = await fetch(track.streamUrl, { mode: "cors", signal: controller.signal }).catch(() => null);
+      if (!response || !response.ok) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => controller.abort(), 30000);
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(track.streamUrl)}`;
+        response = await fetch(proxyUrl, { mode: "cors", signal: controller.signal });
+      }
+      clearTimeout(timeoutId);
+      if (!response || !response.ok) throw new Error(`HTTP ${response?.status}`);
+
+      const blob = await response.blob();
+      await db.saveTrack(track, blob);
+      setOfflineTracks(await db.getAllTracks());
+      toast(`Saved "${track.title}" for offline playback`, "success");
+    } catch (err) {
+      console.error("Offline save failed", err);
+      toast(`Could not save "${track.title}" for offline`, "error");
+    }
+  }, [offlineTracks, toast]);
+
+  const removeOffline = useCallback(async (id: string) => {
+    await db.deleteTrack(id);
+    setOfflineTracks(await db.getAllTracks());
+    toast("Removed from offline storage", "info");
+  }, [toast]);
+
+  const isOffline = useCallback((id: string) => {
+    return offlineTracks.some((t) => t.id === id);
+  }, [offlineTracks]);
+
+  const clearOffline = useCallback(async () => {
+    await db.clearAll();
+    setOfflineTracks([]);
+    toast("All offline media cleared", "success");
+  }, [toast]);
 
   const downloadTrack = useCallback(async (track: Track) => {
     const ext = track.codec?.toLowerCase().includes("mp4") || track.streamUrl.includes(".mp4") ? "m4a" : "mp3";
@@ -276,6 +331,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
     const doLoad = async () => {
       try {
+        // 1. Try local offline storage first
+        const offlineBlob = await db.getTrackBlob(current.id);
+        if (offlineBlob && alive) {
+          const localUrl = URL.createObjectURL(offlineBlob);
+          engine.load(localUrl, { autoplay: !restorePauseRef.current, live: current.isLive });
+          restorePauseRef.current = false;
+          return;
+        }
+
+        // 2. Fall back to network
         if (attempt === 0 || resolvedUrlsRef.current.length === 0) {
           const urls = await resolveLazyUrl(current);
           if (!alive) return;
@@ -284,8 +349,6 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
         const urls = resolvedUrlsRef.current;
         const url = urls[Math.min(attempt, urls.length - 1)] ?? current.streamUrl;
         if (!alive) return;
-        // Refresh-restore loads PAUSED (no surprise autoplay); every play that
-        // follows a real user action autoplays as usual.
         engine.load(url, { autoplay: !restorePauseRef.current, live: current.isLive });
         restorePauseRef.current = false;
         if (current.source === "radio") reportListen(current.id);
@@ -653,6 +716,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       muted,
       expanded,
       queueOpen,
+      offlineTracks,
       setExpanded,
       setQueueOpen,
       playNow,
@@ -672,6 +736,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       toggleMute,
       isFavorite,
       toggleFavorite,
+      saveOffline,
+      removeOffline,
+      isOffline,
+      clearOffline,
       createPlaylist,
       deletePlaylist,
       renamePlaylist,
@@ -699,6 +767,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       muted,
       expanded,
       queueOpen,
+      offlineTracks,
       playNow,
       playAll,
       addToQueue,
@@ -716,6 +785,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       toggleMute,
       isFavorite,
       toggleFavorite,
+      saveOffline,
+      removeOffline,
+      isOffline,
+      clearOffline,
       createPlaylist,
       deletePlaylist,
       renamePlaylist,
