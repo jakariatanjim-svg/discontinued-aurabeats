@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import {
   ChevronDown,
   Heart,
@@ -14,6 +14,8 @@ import {
   Volume2,
   VolumeX,
   Download,
+  DownloadCloud,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatTime, gradientFrom } from "@/utils/format";
@@ -51,7 +53,12 @@ export function FullScreenPlayer() {
     playNow,
     settings,
     downloadTrack,
+    isOffline,
+    saveOffline,
+    removeOffline,
   } = usePlayer();
+
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!expanded) return;
@@ -64,10 +71,37 @@ export function FullScreenPlayer() {
 
   if (!expanded || !current) return null;
   const fav = isFavorite(current.id);
+  const offline = isOffline(current.id);
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    const scrollEl = target.closest(".scroll-area");
+    if (scrollEl && scrollEl.scrollTop > 0) return;
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const deltaY = e.touches[0].clientY - touchStartRef.current.y;
+    const deltaX = e.touches[0].clientX - touchStartRef.current.x;
+    if (deltaY > 90 && Math.abs(deltaY) > Math.abs(deltaX) * 2) {
+      setExpanded(false);
+      touchStartRef.current = null;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStartRef.current = null;
+  };
+
   return (
-    <div className="fixed inset-0 z-[85] animate-fade-in overflow-hidden">
+    <div 
+      className="fixed inset-0 z-[85] animate-fade-in overflow-hidden touch-pan-y"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* backdrop — artwork glow fills the entire screen */}
       <div className="absolute inset-0 overflow-hidden bg-black">
         {current.artworkLarge || current.artwork ? (
@@ -227,7 +261,14 @@ export function FullScreenPlayer() {
                 <Heart className={cn("h-5 w-5", fav && "fill-current")} />
               </IconButton>
               <IconButton
-                aria-label="Download"
+                aria-label={offline ? "Remove from offline" : "Save for offline"}
+                onClick={() => offline ? removeOffline(current.id) : saveOffline(current)}
+                className={cn("text-white/70 hover:text-white", offline && "text-cyan-400 hover:text-cyan-300")}
+              >
+                {offline ? <Trash2 className="h-5 w-5" /> : <DownloadCloud className="h-5 w-5" />}
+              </IconButton>
+              <IconButton
+                aria-label="Export file"
                 onClick={() => downloadTrack(current)}
                 className="text-white/70 hover:text-white"
               >

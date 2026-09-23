@@ -99,12 +99,12 @@ function TrackMenu({
     };
   }, [open]);
 
-  const items: { label: string; icon: ReactNode; run: () => void }[] = [
+  const items: { label: string; sub?: string; icon: ReactNode; run: () => void }[] = [
     { label: "Save to playlist", icon: <Plus className="h-4 w-4" />, run: () => setPickerOpen(true) },
-    { label: "Download MP3", icon: <Download className="h-4 w-4" />, run: () => downloadTrack(track) },
     offline
-      ? { label: "Remove from offline", icon: <Trash2 className="h-4 w-4 text-rose-400" />, run: () => removeOffline(track.id) }
-      : { label: "Save for offline", icon: <DownloadCloud className="h-4 w-4 text-accent" />, run: () => saveOffline(track) },
+      ? { label: "Remove from offline", sub: "Clear app storage", icon: <Trash2 className="h-4 w-4 text-rose-400" />, run: () => removeOffline(track.id) }
+      : { label: "Save for offline", sub: "Play without internet", icon: <DownloadCloud className="h-4 w-4 text-accent" />, run: () => saveOffline(track) },
+    { label: "Export file", sub: "Download MP3/M4A", icon: <Download className="h-4 w-4" />, run: () => downloadTrack(track) },
   ];
   if (settings.queueEnabled) {
     items.unshift(
@@ -153,10 +153,13 @@ function TrackMenu({
                 setOpen(false);
                 it.run();
               }}
-              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-xs font-medium text-ink2 transition hover:bg-ink/10 hover:text-ink"
+              className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition hover:bg-ink/10"
             >
-              {it.icon}
-              {it.label}
+              <div className="shrink-0 text-ink3 group-hover:text-ink">{it.icon}</div>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-xs font-medium text-ink2 group-hover:text-ink">{it.label}</span>
+                {it.sub && <span className="truncate text-[9px] font-medium text-ink3 opacity-80">{it.sub}</span>}
+              </div>
             </button>
           ))}
         </div>

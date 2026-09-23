@@ -122,9 +122,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         <h1 className="max-w-3xl text-balance text-3xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">
           Play free open tracks. Jump into live radio. Start instantly.
         </h1>
-        <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-ink2 sm:text-base">
-          AuraBeats streams full tracks from multiple public music networks and live radio directories inside one fast browser player.
-        </p>
+
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <a
             href="#home-popular"
