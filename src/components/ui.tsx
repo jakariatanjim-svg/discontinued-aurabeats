@@ -13,6 +13,18 @@ import { gradientFrom, initials } from "@/utils/format";
 import { usePlayer } from "@/hooks/usePlayer";
 import { clamp } from "@/utils/format";
 
+/* ---- Brand waveform icon (matches tab favicon — solid bars, not wireframe) ---- */
+export function WaveformLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 28 28" fill="none" className={className}>
+      <rect x="3"  y="12" width="4" height="11" rx="2" fill="currentColor" />
+      <rect x="9"  y="7"  width="4" height="16" rx="2" fill="currentColor" />
+      <rect x="15" y="9"  width="4" height="14" rx="2" fill="currentColor" />
+      <rect x="21" y="14" width="4" height="8"  rx="2" fill="currentColor" />
+    </svg>
+  );
+}
+
 /* ------------------------------- Artwork --------------------------------- */
 export function Artwork({
   src,

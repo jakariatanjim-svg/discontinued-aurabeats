@@ -28,6 +28,7 @@
       .app-logo{
         width:56px;height:56px;border-radius:16px;
         background:linear-gradient(135deg,#3b82f6,#22d3ee);
+        /* same as tab favicon */
         display:flex;align-items:center;justify-content:center;
         box-shadow:0 0 30px rgba(59,130,246,.5);
         animation:pulse 1.6s ease-in-out infinite;
@@ -74,27 +75,31 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="AuraBeats" />
-    <!-- DNS prefetch & preconnect for all music sources -->
-    <link rel="dns-prefetch" href="https://archive.org" />
-    <link rel="dns-prefetch" href="https://discoveryprovider.audius.co" />
-    <link rel="dns-prefetch" href="https://api.audius.co" />
-    <link rel="dns-prefetch" href="https://saavn.sumit.co" />
-    <link rel="dns-prefetch" href="https://api.jamendo.com" />
-    <link rel="dns-prefetch" href="https://de1.api.radio-browser.info" />
+    <!-- DNS prefetch & preconnect — fastest possible connection setup -->
+    <!-- Primary music APIs (preconnect = DNS + TCP + TLS upfront) -->
     <link rel="preconnect" href="https://saavn.sumit.co" crossorigin />
     <link rel="preconnect" href="https://api.jamendo.com" crossorigin />
     <link rel="preconnect" href="https://archive.org" crossorigin />
     <link rel="preconnect" href="https://discoveryprovider.audius.co" crossorigin />
+    <!-- Secondary mirrors (dns-prefetch only — lighter, covers fallbacks) -->
+    <link rel="dns-prefetch" href="https://discoveryprovider2.audius.co" />
+    <link rel="dns-prefetch" href="https://discoveryprovider3.audius.co" />
+    <link rel="dns-prefetch" href="https://api.audius.co" />
+    <link rel="dns-prefetch" href="https://jiosaavn-api-liart-three.vercel.app" />
+    <link rel="dns-prefetch" href="https://jiosaavn-api-sumit.vercel.app" />
+    <link rel="dns-prefetch" href="https://pipedapi.kavin.rocks" />
+    <link rel="dns-prefetch" href="https://de1.api.radio-browser.info" />
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c5cff'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Cg fill='white'%3E%3Crect x='24' y='44' width='9' height='26' rx='4.5'/%3E%3Crect x='40' y='30' width='9' height='40' rx='4.5'/%3E%3Crect x='56' y='38' width='9' height='32' rx='4.5'/%3E%3Crect x='72' y='50' width='9' height='20' rx='4.5'/%3E%3C/g%3E%3C/svg%3E"
-    />
+    <!-- Favicon: blue-to-cyan waveform logo — same on tab, PWA, homescreen -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
   </head>
   <body>
     <div id="app-loading" aria-hidden="true">

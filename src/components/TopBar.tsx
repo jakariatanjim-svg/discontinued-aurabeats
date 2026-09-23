@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Moon, Palette, Search, Sparkles, Sun, Wifi, AudioWaveform } from "lucide-react";
+import { Check, ChevronDown, Moon, Palette, Search, Sparkles, Sun, Wifi } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { ACCENTS, useTheme } from "@/hooks/useTheme";
 import { routeLabel, type RouteKey } from "@/routes";
-import { IconButton } from "@/components/ui";
+import { IconButton, WaveformLogo } from "@/components/ui";
 import { usePlayer } from "@/hooks/usePlayer";
 
 function ThemeSwitch() {
@@ -126,8 +126,8 @@ export function TopBar({
         className="focus-ring flex shrink-0 items-center gap-2.5 rounded-2xl md:hidden"
         aria-label="AuraBeats — go to home"
       >
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 text-white shadow-lg">
-          <AudioWaveform className="h-5 w-5 drop-shadow" />
+        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-lg shadow-blue-500/30">
+          <WaveformLogo className="h-5 w-5" />
         </span>
         <span className="flex flex-col items-start leading-tight">
           <span className="text-[15px] font-black tracking-tight text-ink">AuraBeats</span>

@@ -11,11 +11,10 @@ import {
   Radio,
   Search,
   Settings,
-  AudioWaveform,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { usePlayer } from "@/hooks/usePlayer";
-import { Artwork, IconButton } from "@/components/ui";
+import { Artwork, IconButton, WaveformLogo } from "@/components/ui";
 import type { RouteKey } from "@/routes";
 
 interface NavItem {
@@ -93,8 +92,8 @@ export function Sidebar({
     >
       <div className={cn("relative flex items-center pt-6 pb-4", collapsed ? "justify-center px-0" : "justify-between px-5")}>
         <div className={cn("flex items-center gap-3 min-w-0", collapsed && "hidden")}>
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent2 text-white shadow-[0_8px_20px_-6px_var(--c-accent)]">
-            <AudioWaveform className="h-5 w-5 drop-shadow-md" />
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-[0_8px_20px_-6px_#3b82f6]">
+            <WaveformLogo className="h-5 w-5" />
             <div className="absolute inset-0 rounded-2xl ring-1 ring-white/20" />
           </div>
           <div className="min-w-0">
@@ -111,11 +110,11 @@ export function Sidebar({
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={cn(
               "border border-line/50 transition-all hover:border-accent/50",
-              collapsed && "h-10 w-10 rounded-2xl bg-gradient-to-br from-accent to-accent2 text-white shadow-[0_8px_20px_-6px_var(--c-accent)] border-none"
+              collapsed && "h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-[0_8px_20px_-6px_#3b82f6] border-none"
             )}
           >
             {collapsed ? (
-               <AudioWaveform className="h-5 w-5 drop-shadow-md" />
+               <WaveformLogo className="h-5 w-5" />
             ) : (
                <ChevronLeft className="h-4 w-4" />
             )}
