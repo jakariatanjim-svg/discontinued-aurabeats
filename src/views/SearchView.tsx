@@ -17,12 +17,18 @@ import type { Artist, Track } from "@/types";
 
 const RECENT_KEY = "searchRecent";
 const DISCOVER: { label: string; icon: typeof Flame; query: string; gradient: string }[] = [
-  { label: "Trending Now", icon: Flame,             query: "trending hits 2025",     gradient: "from-orange-500/70 to-red-600/70" },
-  { label: "Lofi Chill",   icon: Headphones,        query: "lofi chill beats",       gradient: "from-indigo-500/70 to-violet-700/70" },
-  { label: "Deep House",   icon: SlidersHorizontal, query: "deep house music",       gradient: "from-cyan-500/70 to-blue-700/70" },
-  { label: "Piano Solo",   icon: Piano,             query: "piano solo instrumental", gradient: "from-slate-500/70 to-zinc-700/70" },
-  { label: "Workout Mix",  icon: Dumbbell,          query: "workout motivation mix",  gradient: "from-green-500/70 to-emerald-700/70" },
-  { label: "Bollywood",    icon: Clapperboard,      query: "bollywood hits",          gradient: "from-pink-500/70 to-rose-700/70" },
+  { label: "Trending Now",    icon: Flame,             query: "trending hits 2025",        gradient: "from-orange-500/80 to-red-600/80" },
+  { label: "Lofi Chill",     icon: Headphones,        query: "lofi chill beats",           gradient: "from-indigo-500/80 to-violet-700/80" },
+  { label: "Deep House",     icon: SlidersHorizontal, query: "deep house music",           gradient: "from-cyan-500/80 to-blue-700/80" },
+  { label: "Piano Solo",     icon: Piano,             query: "piano solo instrumental",    gradient: "from-slate-400/70 to-zinc-700/80" },
+  { label: "Workout Mix",    icon: Dumbbell,          query: "workout motivation mix",     gradient: "from-green-500/80 to-emerald-700/80" },
+  { label: "Bollywood",      icon: Clapperboard,      query: "bollywood hits",             gradient: "from-pink-500/80 to-rose-700/80" },
+  { label: "Hip-Hop",        icon: Mic2,              query: "hip hop rap beats",          gradient: "from-yellow-500/80 to-amber-700/80" },
+  { label: "Classical",      icon: Music2,            query: "classical orchestra music",  gradient: "from-purple-500/80 to-fuchsia-700/80" },
+  { label: "Jazz",           icon: Headphones,        query: "jazz saxophone smooth",      gradient: "from-teal-500/80 to-cyan-800/80" },
+  { label: "K-Pop",          icon: Flame,             query: "kpop hits 2025",             gradient: "from-rose-400/80 to-pink-700/80" },
+  { label: "Acoustic",       icon: Music2,            query: "acoustic guitar folk",       gradient: "from-lime-500/80 to-green-800/80" },
+  { label: "EDM / Dance",    icon: SlidersHorizontal, query: "edm dance festival hits",    gradient: "from-blue-400/80 to-indigo-700/80" },
 ];
 
 function uniqueStrings(items: string[]): string[] {
@@ -132,7 +138,7 @@ export function SearchView() {
     <div className="space-y-6 pb-4" id="home-search">
       <section className="space-y-4">
         {/* Sticky Search Input */}
-        <div className="sticky top-0 z-20 -mx-4 px-4 py-2 sm:-mx-8 sm:px-8 bg-[var(--c-base)]/60 backdrop-blur-3xl border-b border-white/5">
+        <div className="sticky top-0 z-20 -mx-4 px-4 py-3 sm:-mx-8 sm:px-8">
           <div className="relative max-w-2xl mx-auto" ref={suggestRef}>
             <div className="blur-panel glass-inset flex items-center gap-2 rounded-full bg-white/[0.02] p-1 pl-4 transition-colors duration-150 focus-within:bg-white/[0.05] focus-within:ring-2 focus-within:ring-accent/50">
               <SearchIcon className="h-5 w-5 shrink-0 text-ink3" />
@@ -222,25 +228,25 @@ export function SearchView() {
           )}
           <section>
             <SectionHeader title="Browse all" />
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6">
               {DISCOVER.map(({ label, icon: Icon, query: q, gradient }) => (
                 <button
                   key={label}
                   onClick={() => setQuery(q)}
                   className={cn(
-                    "group relative overflow-hidden rounded-2xl p-4 text-left shadow-lg",
+                    "group relative overflow-hidden rounded-xl text-left shadow-lg",
                     "bg-gradient-to-br", gradient,
                     "border border-white/10",
-                    "transition-colors duration-150 hover:brightness-110 active:scale-[0.97]",
-                    "aspect-[2.5/1] sm:aspect-[2/1]",
+                    "transition-all duration-150 hover:brightness-110 hover:scale-[1.02] active:scale-[0.97]",
+                    "h-20 sm:h-24",
                   )}
                 >
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors rounded-2xl" />
-                  <div className="relative z-10 flex h-full items-center gap-3">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/25 shrink-0">
-                      <Icon className="h-4 w-4 text-white" strokeWidth={2.25} />
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors rounded-xl" />
+                  <div className="relative z-10 flex h-full flex-col justify-end gap-1.5 p-3">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 ring-1 ring-white/25 shrink-0">
+                      <Icon className="h-3.5 w-3.5 text-white" strokeWidth={2.25} />
                     </span>
-                    <span className="text-sm font-bold tracking-tight text-white leading-tight">
+                    <span className="text-xs font-bold tracking-tight text-white leading-tight drop-shadow">
                       {label}
                     </span>
                   </div>
