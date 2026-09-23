@@ -307,14 +307,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   useEffect(() => storage.set("playlists", playlists), [playlists]);
   useEffect(() => session.set("queue", queue.slice(0, 200)), [queue]);
   useEffect(() => session.set("index", index), [index]);
+  // engineRef keeps these effects stable — the engine object itself is
+  // re-created on every playback tick, so depending on it directly would
+  // re-run these (and re-write storage) multiple times per second.
   useEffect(() => {
-    engine.setVolume(volume);
+    engineRef.current.setVolume(volume);
     storage.set("volume", volume);
-  }, [volume, engine]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [volume]);
   useEffect(() => {
-    engine.setMuted(muted);
+    engineRef.current.setMuted(muted);
     storage.set("muted", muted);
-  }, [muted, engine]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [muted]);
 
   /* --------------------------- stream loading ---------------------------- */
   const current = queue[index] ?? null;
@@ -422,27 +427,30 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   );
   goToRef.current = goTo;
 
+  // Stable identities via engineRef: the engine object is re-created on every
+  // playback tick, so closing over it would re-create these callbacks ~4x/sec
+  // and churn the whole PlayerContext for every consumer (sidebar flicker).
   const next = useCallback(() => {
     const q = queueRef.current;
     if (q.length === 0) return;
     if (q.length === 1) {
       setAttempt(0);
-      engine.seek(0);
-      void engine.play();
+      engineRef.current.seek(0);
+      void engineRef.current.play();
       return;
     }
     goTo(indexRef.current + 1);
-  }, [engine, goTo]);
+  }, [goTo]);
 
   const previous = useCallback(() => {
-    if (engine.currentTime > 4) {
-      engine.seek(0);
+    if (engineRef.current.currentTime > 4) {
+      engineRef.current.seek(0);
       return;
     }
     const q = queueRef.current;
     if (q.length === 0) return;
     goTo(indexRef.current - 1);
-  }, [engine, goTo]);
+  }, [goTo]);
 
   /* ---------------------- end / error handling --------------------------- */
   useEffect(() => {
@@ -573,8 +581,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setAttempt(0);
   }, []);
 
-  const toggle = useCallback(() => engine.toggle(), [engine]);
-  const seek = useCallback((seconds: number) => engine.seek(seconds), [engine]);
+  const toggle = useCallback(() => engineRef.current.toggle(), []);
+  const seek = useCallback((seconds: number) => engineRef.current.seek(seconds), []);
 
   const toggleShuffle = useCallback(() => {
     setShuffle((on) => {
@@ -697,14 +705,24 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     [engine.currentTime, engine.duration, engine.bufferedAhead, engine.isLive, engine.isPlaying, engine.isBuffering],
   );
 
+  // Primitive snapshots of the play state. The engine OBJECT gets a new
+  // identity on every playback tick, but these booleans only change on real
+  // play/pause/buffer transitions — so depending on them (instead of the
+  // engine object) keeps the whole PlayerContext value referentially stable
+  // while audio plays. Consumer components (sidebar, lists, views) no longer
+  // re-render several times per second, which eliminates the menu flicker.
+  const isPlayingNow = engine.isPlaying;
+  const isBufferingNow = engine.isBuffering;
+  const isLiveNow = engine.isLive;
+
   const value = useMemo<PlayerContextValue>(
     () => ({
       queue,
       current,
       index,
-      isPlaying: engine.isPlaying,
-      isBuffering: engine.isBuffering,
-      isLive: engine.isLive,
+      isPlaying: isPlayingNow,
+      isBuffering: isBufferingNow,
+      isLive: isLiveNow,
       failoverNote,
       shuffle,
       repeat,
@@ -752,7 +770,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       dismissToast,
     }),
     [
-      engine,
+      isPlayingNow,
+      isBufferingNow,
+      isLiveNow,
       queue,
       current,
       index,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import {
   ChevronLeft,
   Clock,
@@ -39,7 +39,56 @@ const COLLECTION: NavItem[] = [
   { key: "about", label: "About", icon: Info },
 ];
 
-export function Sidebar({
+/**
+ * Menu button — deliberately hoisted to module scope and memoized.
+ *
+ * Defining a component INSIDE <Sidebar> gives it a brand-new identity on every
+ * render, so React unmounts and remounts every menu button whenever the player
+ * context ticks. That remount churn destroyed hover/focus state and restarted
+ * CSS transitions — the visible "menu flicker". A stable, memoized component
+ * keeps the same DOM nodes alive across renders, so nothing ever flickers.
+ */
+const NavItemButton = memo(function NavItemButton({
+  item,
+  active,
+  collapsed,
+  badge,
+  onNavigate,
+}: {
+  item: NavItem;
+  active: boolean;
+  collapsed: boolean;
+  badge?: number;
+  onNavigate: (r: RouteKey) => void;
+}) {
+  const Icon = item.icon;
+  return (
+    <button
+      type="button"
+      onClick={() => onNavigate(item.key)}
+      title={item.label}
+      style={{ contain: "layout style paint", transform: "translateZ(0)" }}
+      className={cn(
+        "focus-ring relative flex items-center gap-3 rounded-2xl text-sm font-semibold transition-colors duration-150",
+        active ? "bg-accent/15 text-accent" : "text-ink2 hover:bg-[rgba(255,255,255,0.05)] hover:text-ink",
+        collapsed ? "mx-auto h-12 w-12 justify-center p-0" : "w-full px-4 py-3"
+      )}
+    >
+      {active && !collapsed && <span className="absolute top-1/2 left-1 h-5 w-1 -translate-y-1/2 rounded-full bg-accent" />}
+      <Icon className={cn("h-5 w-5 shrink-0", active && "drop-shadow-[0_0_8px_var(--c-accent)]")} />
+      {!collapsed && (
+        <>
+          <span className="flex-1 truncate text-left">{item.label}</span>
+          {badge !== undefined && badge > 0 && (
+            <span className="rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink">{badge}</span>
+          )}
+        </>
+      )}
+    </button>
+  );
+});
+
+export const Sidebar = memo(function Sidebar({
   route,
   onNavigate,
   collapsed,
@@ -54,36 +103,8 @@ export function Sidebar({
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
 
-  const Item = ({ item }: { item: NavItem }) => {
-    const Icon = item.icon;
-    const active = route === item.key;
-    const badge =
-      item.key === "favorites" ? favorites.length : item.key === "history" ? history.length : undefined;
-    return (
-      <button
-        type="button"
-        onClick={() => onNavigate(item.key)}
-        title={item.label}
-        style={{ contain: "layout style paint", transform: "translateZ(0)" }}
-        className={cn(
-          "focus-ring relative flex items-center gap-3 rounded-2xl text-sm font-semibold transition-colors duration-150",
-          active ? "bg-accent/15 text-accent" : "text-ink2 hover:bg-[rgba(255,255,255,0.05)] hover:text-ink",
-          collapsed ? "mx-auto h-12 w-12 justify-center p-0" : "w-full px-4 py-3"
-        )}
-      >
-        {active && !collapsed && <span className="absolute top-1/2 left-1 h-5 w-1 -translate-y-1/2 rounded-full bg-accent" />}
-        <Icon className={cn("h-5 w-5 shrink-0", active && "drop-shadow-[0_0_8px_var(--c-accent)]")} />
-        {!collapsed && (
-          <>
-            <span className="flex-1 truncate text-left">{item.label}</span>
-            {badge !== undefined && badge > 0 && (
-              <span className="rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-ink">{badge}</span>
-            )}
-          </>
-        )}
-      </button>
-    );
-  };
+  const badgeFor = (key: RouteKey): number | undefined =>
+    key === "favorites" ? favorites.length : key === "history" ? history.length : undefined;
 
   return (
     <aside
@@ -104,7 +125,7 @@ export function Sidebar({
             <p className="truncate text-[10px] font-bold tracking-widest text-ink3 uppercase opacity-80">Pure Sound</p>
           </div>
         </div>
-        
+
         {/* Simplified Toggle Button - Centers perfectly when collapsed */}
         <div className={cn(collapsed && "flex w-full justify-center")}>
           <IconButton
@@ -139,7 +160,14 @@ export function Sidebar({
       <nav className={cn("flex-1 space-y-6 overflow-y-auto scroll-area pb-24", collapsed ? "px-2" : "px-3")} style={{ contain: "layout style paint" }}>
         <div className="space-y-1">
           {MAIN.map((item) => (
-            <Item key={item.key} item={item} />
+            <NavItemButton
+              key={item.key}
+              item={item}
+              active={route === item.key}
+              collapsed={collapsed}
+              badge={badgeFor(item.key)}
+              onNavigate={onNavigate}
+            />
           ))}
         </div>
 
@@ -220,10 +248,17 @@ export function Sidebar({
             <p className="mb-1 px-3 text-[10px] font-bold tracking-[0.16em] text-ink3 uppercase">Collection</p>
           )}
           {COLLECTION.map((item) => (
-            <Item key={item.key} item={item} />
+            <NavItemButton
+              key={item.key}
+              item={item}
+              active={route === item.key}
+              collapsed={collapsed}
+              badge={badgeFor(item.key)}
+              onNavigate={onNavigate}
+            />
           ))}
         </div>
       </nav>
     </aside>
   );
-}
+});
