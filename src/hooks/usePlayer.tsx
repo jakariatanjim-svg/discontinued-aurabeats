@@ -245,44 +245,69 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const downloadTrack = useCallback(async (track: Track) => {
-    // YouTube tracks — In-app download modal using apisyu.com widget
+    // YouTube tracks — in-app converter (cnvmp3.com — ad-free, working)
     if (track.streamUrl.startsWith("yt-resolve:") || track.source === "youtube") {
       const videoId = track.streamUrl.replace("yt-resolve:", "");
-      
-      // Remove any existing modal
+      const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
       document.getElementById("yt-dl-modal")?.remove();
-      
-      // Create modal overlay
+
       const overlay = document.createElement("div");
       overlay.id = "yt-dl-modal";
-      overlay.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);";
-      
+      overlay.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.88);backdrop-filter:blur(14px);padding:12px;";
+
       const card = document.createElement("div");
-      card.style.cssText = "background:#1a1a2e;border-radius:20px;padding:20px;width:min(420px,90vw);max-height:80vh;overflow:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.6);";
-      
-      const closeBtn = document.createElement("button");
-      closeBtn.textContent = "\u2715";
-      closeBtn.style.cssText = "position:absolute;top:12px;right:16px;background:none;border:none;color:#888;font-size:20px;cursor:pointer;z-index:10;";
-      closeBtn.onclick = () => overlay.remove();
-      
-      const titleEl = document.createElement("p");
-      titleEl.textContent = `Download: ${track.title}`;
-      titleEl.style.cssText = "color:#fff;font-weight:bold;font-size:14px;margin-bottom:12px;padding-right:30px;";
-      
-      // Embed converter widget — works inside the app, no new tab
+      card.style.cssText = "background:#0d0b1a;border-radius:22px;width:min(440px,94vw);max-height:88vh;overflow:hidden;position:relative;box-shadow:0 24px 64px rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.08);";
+
+      // Header
+      // Auto-copy URL to clipboard immediately when download is clicked
+      try {
+        await navigator.clipboard.writeText(ytUrl);
+      } catch {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = ytUrl;
+          ta.style.cssText = "position:fixed;opacity:0;";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        } catch { /* clipboard not available */ }
+      }
+
+      const header = document.createElement("div");
+      header.style.cssText = "padding:14px 14px 8px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;";
+      header.innerHTML = `
+        <div style="min-width:0;flex:1;">
+          <p style="color:#fff;font-weight:800;font-size:13px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Download: ${track.title}</p>
+          <p style="color:#666;font-size:11px;margin:4px 0 0;">${track.artist}</p>
+          <div style="margin-top:8px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:12px;">✅</span>
+            <span style="color:#86efac;font-size:11px;font-weight:600;">YouTube URL auto-copied! Paste it in the converter below.</span>
+          </div>
+        </div>
+        <button id="yt-dl-close" style="background:rgba(255,255,255,0.08);border:none;color:#aaa;font-size:15px;cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;">\u2715</button>
+      `;
+
+      // Converter iframe — cnvmp3.com (ad-free, used by yt-ai)
+      // zoom=0.75 via CSS transform to show more content without scrolling
+      const iframeWrap = document.createElement("div");
+      iframeWrap.style.cssText = "width:100%;height:520px;overflow:hidden;position:relative;";
+
       const iframe = document.createElement("iframe");
-      iframe.src = `https://apisyu.com/widget/${videoId}?theme=dark`;
-      iframe.style.cssText = "width:100%;height:340px;border:none;border-radius:12px;";
-      iframe.allow = "autoplay; encrypted-media";
-      
-      card.appendChild(closeBtn);
-      card.appendChild(titleEl);
-      card.appendChild(iframe);
+      iframe.src = `https://cnvmp3.com/v55?url=${encodeURIComponent(ytUrl)}`;
+      // scale down so full converter is visible without scrolling
+      iframe.style.cssText = "width:133%;height:133%;border:none;background:#fff;transform:scale(0.75);transform-origin:top left;";
+      iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-downloads");
+      iframeWrap.appendChild(iframe);
+
+      card.appendChild(header);
+      card.appendChild(iframeWrap);
       overlay.appendChild(card);
       overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-      
       document.body.appendChild(overlay);
-      toast(`Download panel opened for: ${track.title}`, "info");
+
+      document.getElementById("yt-dl-close")!.onclick = () => overlay.remove();
       return;
     }
 
