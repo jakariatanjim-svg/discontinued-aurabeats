@@ -8,6 +8,7 @@ export type TrackSource = "archive" | "audius" | "radio" | "jiosaavn" | "jamendo
 
 export interface PlayerSettings {
   queueEnabled: boolean;
+  rememberSearchTab: boolean;
 }
 
 export interface Track {

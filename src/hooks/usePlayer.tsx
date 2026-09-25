@@ -131,7 +131,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const engine = useAudioEngine();
 
   const [settings, setSettings] = useState<PlayerSettings>(() => 
-    storage.get("settings", { queueEnabled: false })
+    storage.get("settings", { queueEnabled: false, rememberSearchTab: true })
   );
 
   const updateSettings = useCallback((next: Partial<PlayerSettings>) => {

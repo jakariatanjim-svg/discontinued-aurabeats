@@ -10,6 +10,7 @@ import { TrackRow, TrackRowSkeleton } from "@/components/TrackList";
 import { Chip, SectionHeader, Spinner } from "@/components/ui";
 import { EmptyState, ErrorState } from "@/components/states";
 import { storage } from "@/utils/storage";
+import { usePlayer } from "@/hooks/usePlayer";
 import type { Track } from "@/types";
 
 const RECENT_KEY = "searchRecent";
@@ -31,7 +32,10 @@ const DISCOVER = [
 
 export function SearchView() {
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<"ytmusic" | "sources">("ytmusic");
+  const { settings } = usePlayer();
+  const [view, setView] = useState<"ytmusic" | "sources">(
+    () => (settings.rememberSearchTab ? storage.get("lastSearchTab", "ytmusic") : "ytmusic") as "ytmusic" | "sources"
+  );
   const [recent, setRecent] = useState<string[]>(() => storage.get<string[]>(RECENT_KEY, []));
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -153,7 +157,10 @@ export function SearchView() {
             { key: "ytmusic" as const, label: "YT Music", icon: Music2 },
             { key: "sources" as const, label: "Other Sources", icon: Mic2 },
           ]).map(({ key, label, icon: Icon }) => (
-            <button key={key} type="button" onClick={() => setView(key)}
+            <button key={key} type="button" onClick={() => {
+              setView(key);
+              if (settings.rememberSearchTab) storage.set("lastSearchTab", key);
+            }}
               className={cn(
                 "focus-ring inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition active:scale-95",
                 view === key

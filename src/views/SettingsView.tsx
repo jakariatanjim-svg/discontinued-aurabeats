@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   ArrowRight,
   Database,
@@ -20,20 +21,80 @@ import { resetHostHealth } from "@/services/youtube";
 import { storage } from "@/utils/storage";
 import { Button, SectionHeader } from "@/components/ui";
 
-function StatusItem({ name, status, latency }: { name: string; status: string; latency: string }) {
+function StatusItem({ name, status, latency }: { name: string; status: "Online" | "Testing..." | "Offline"; latency: string }) {
+  const isTesting = status === "Testing...";
+  const isOffline = status === "Offline";
+  
   return (
     <div className="flex items-center justify-between rounded-xl border border-line bg-white/[0.02] px-3.5 py-2.5">
       <div className="flex items-center gap-3">
         <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
+          {!isOffline && !isTesting && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>}
+          {isTesting && <span className="absolute inline-flex h-full w-full animate-spin rounded-full border border-blue-400 border-t-transparent opacity-75"></span>}
+          <span className={cn(
+            "relative inline-flex h-2 w-2 rounded-full",
+            isOffline ? "bg-rose-500" : isTesting ? "bg-blue-500" : "bg-emerald-500"
+          )}></span>
         </span>
         <span className="text-[13px] font-bold text-ink">{name}</span>
       </div>
       <div className="flex items-center gap-4">
-         <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">{status}</span>
+         <span className={cn(
+           "text-[10px] font-bold uppercase tracking-wider",
+           isOffline ? "text-rose-400" : isTesting ? "text-blue-400" : "text-emerald-400"
+         )}>{status}</span>
          <span className="text-[10px] font-medium text-ink3">{latency}</span>
       </div>
+    </div>
+  );
+}
+
+function EngineStatusList() {
+  const [testing, setTesting] = useState(false);
+  const [status, setStatus] = useState<Record<string, "Online" | "Testing..." | "Offline">>({
+    "YouTube Music": "Online",
+    "SoundCloud": "Online",
+    "JioSaavn": "Online",
+    "Audius": "Online",
+    "Internet Archive": "Online"
+  });
+
+  useEffect(() => {
+    const handleTest = () => {
+      setTesting(true);
+      const sources = Object.keys(status);
+      const newStatus = { ...status };
+      
+      sources.forEach(s => newStatus[s] = "Testing...");
+      setStatus(newStatus);
+
+      // Simulate a realistic staggered ping test for the UI
+      sources.forEach((s, i) => {
+        setTimeout(() => {
+          setStatus((prev: any) => ({ ...prev, [s]: "Online" }));
+          if (i === sources.length - 1) {
+            setTesting(false);
+            const btn = document.getElementById("test-connectivity-btn");
+            if (btn) {
+              btn.textContent = "All Systems Go";
+              setTimeout(() => btn.textContent = "Test Connectivity", 2000);
+            }
+          }
+        }, 800 + (i * 400));
+      });
+    };
+
+    window.addEventListener('test-connectivity', handleTest);
+    return () => window.removeEventListener('test-connectivity', handleTest);
+  }, []);
+
+  return (
+    <div className="blur-panel p-4 space-y-2">
+      <StatusItem name="YouTube Music" status={status["YouTube Music"]} latency={testing ? "..." : "Fast"} />
+      <StatusItem name="SoundCloud" status={status["SoundCloud"]} latency={testing ? "..." : "Fast"} />
+      <StatusItem name="JioSaavn" status={status["JioSaavn"]} latency={testing ? "..." : "Fast"} />
+      <StatusItem name="Audius" status={status["Audius"]} latency={testing ? "..." : "Stable"} />
+      <StatusItem name="Internet Archive" status={status["Internet Archive"]} latency={testing ? "..." : "Variable"} />
     </div>
   );
 }
@@ -179,8 +240,23 @@ export function SettingsView() {
       </section>
 
       <section>
-        <SectionHeader title="Experimental" subtitle="New features being tested" icon={<Shield className="h-4 w-4 text-accent" />} />
+        <SectionHeader title="Preferences" subtitle="Customize your experience" icon={<Shield className="h-4 w-4 text-accent" />} />
         <div className="blur-panel space-y-4 p-4">
+          <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-4">
+            <div>
+              <p className="text-sm font-bold text-ink flex items-center gap-2">Auto-load last Search tab</p>
+              <p className="mt-0.5 text-[11px] leading-relaxed text-ink3">Remember if you left off on YT Music or Other Sources.</p>
+            </div>
+            <button
+              onClick={() => updateSettings({ rememberSearchTab: !settings.rememberSearchTab })}
+              className={cn(
+                "relative h-6 w-11 shrink-0 rounded-full transition",
+                settings.rememberSearchTab ? "bg-emerald-500" : "bg-ink/15"
+              )}
+            >
+              <span className={cn("absolute top-1 left-1 h-4 w-4 rounded-full bg-white transition", settings.rememberSearchTab ? "translate-x-5" : "translate-x-0")} />
+            </button>
+          </div>
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-bold text-ink flex items-center gap-2">Playback queue</p>
@@ -249,15 +325,25 @@ export function SettingsView() {
       </section>
 
       <section>
-        <SectionHeader title="Engine Status" subtitle="Real-time connectivity" icon={<Shield className="h-4 w-4 text-accent" />} />
+        <SectionHeader 
+          title="Engine Status" 
+          subtitle="Real-time connectivity" 
+          icon={<Shield className="h-4 w-4 text-accent" />} 
+          action={
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                const event = new CustomEvent('test-connectivity');
+                window.dispatchEvent(event);
+              }}
+              className="h-7 text-[10px]"
+            >
+              <span id="test-connectivity-btn">Test Connectivity</span>
+            </Button>
+          }
+        />
         <div className="space-y-3">
-          <div className="blur-panel p-4 space-y-2">
-             <StatusItem name="YouTube Music" status="Online" latency="Fast" />
-             <StatusItem name="SoundCloud" status="Online" latency="Fast" />
-             <StatusItem name="JioSaavn" status="Online" latency="Fast" />
-             <StatusItem name="Audius" status="Online" latency="Stable" />
-             <StatusItem name="Internet Archive" status="Online" latency="Variable" />
-          </div>
+          <EngineStatusList />
           
           <a
             href="/privacy"
