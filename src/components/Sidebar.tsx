@@ -149,10 +149,10 @@ export const Sidebar = memo(function Sidebar({
       {!collapsed && (
         <div className="mx-3 mb-6 animate-fade-in rounded-[1.4rem] border border-line/80 bg-white/[0.03] p-3.5 shadow-[0_18px_40px_-28px_rgba(0,0,0,0.6)] backdrop-blur-xl">
           <p className="flex items-center gap-1.5 text-[11px] font-bold text-ink">
-            <ListMusic className="h-3.5 w-3.5 text-accent" /> Glass Engine
+            <ListMusic className="h-3.5 w-3.5 text-accent" /> Sound Engine
           </p>
           <p className="mt-1 text-[10px] leading-relaxed text-ink3">
-            Aggregating JioSaavn, Audius, Jamendo, Archive and live radio inside a premium glass audio shell.
+            Aggregating YouTube Music, JioSaavn, Audius, Jamendo, Archive and live radio in one player.
           </p>
         </div>
       )}

@@ -1,19 +1,21 @@
-### Quality of Life & UI Optimization Update
+### YouTube True Audio Engine (Zero Cross-Matching)
 
-**1. Mobile Swipe-to-Close**
-- Full-screen player now supports a **swipe down** gesture on mobile to minimize. No more hunting for the close button while listening.
+**1. Actual YouTube Audio Playback (No Cheating)**
+- AuraBeats no longer cross-matches YouTube searches with JioSaavn audio. 
+- When you search for a song on the **YT Music** tab and press play, you are now hearing the **exact audio from that specific YouTube video**.
+- If you search for a specific "Slowed + Reverb" mix, a live performance, or a 1-hour lofi compilation, you will hear exactly that version.
 
-**2. Unified Download Menu**
-- Song context menus (three dots) now clearly separate **"Save for offline"** (in-app playback) from **"Export file"** (MP3/M4A download).
-- Full-screen player now includes a dedicated **Offline Save (Cloud icon)** alongside the Export button for instant local storage management.
+**2. Invisible IFrame Player Implementation**
+- Because all public frontend-only stream extractors (Piped, Cobalt, Invidious companions) are currently dead or auth-locked in 2026, AuraBeats now uses a completely different approach.
+- An **invisible, muted-by-default official YouTube IFrame player** is embedded securely in the app shell.
+- When you play a `yt-resolve:` track, the native HTML5 `<audio>` engine pauses, and the custom AudioEngine seamlessly routes playback control (play, pause, seek, volume) directly to the hidden YouTube player.
+- You get the beautiful, ad-free AuraBeats UI, but the audio comes straight from Google's servers legally.
 
-**3. Performance & Layout Refinement**
-- **Menu Flicker Fix:** Stabilized sidebar and navigation components to prevent flickering during active playback.
-- **Compact Search UI:** Removed the dark background strap from the search bar and optimized "Browse all" cards to be smaller and more professional on PC.
-- **Lazy Loading:** Homepage sections (Fresh, Genre, Personalized) now load only when scrolled into view, making initial startup significantly faster.
+**3. Unified AudioEngine Controls**
+- The global `useAudioEngine` hook has been overhauled to support dual playback targets.
+- Playback queue, visualizer state, and media transport controls automatically sync between the local `<audio>` element (for JioSaavn, Audius, Jamendo) and the hidden YouTube player.
+- Note: The `<Visualizer />` bar animations will pause during YouTube playback because the Web Audio API cannot analyze cross-origin IFrame audio, but all other controls remain fully functional.
 
-**4. Privacy & UI Polish**
-- Updated Privacy Policy date to **September 2026**.
-- Added a direct **Privacy Policy** shortcut in the Settings page under "Sources & Privacy".
-- Simplified mobile navigation and TopBar to reduce clutter and focus on core playback features.
-- Improved color grading and contrast for both **Glassy** and **Modern** themes.
+**4. Performance**
+- The YouTube IFrame API script is lazy-loaded only when needed.
+- No heavy backend extraction APIs are called. No proxy race delays. YouTube playback starts almost instantly.

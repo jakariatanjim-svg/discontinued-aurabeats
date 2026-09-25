@@ -13,6 +13,7 @@ import { useFeed } from "@/hooks/useFeed";
 import {
   ARCHIVE_COLLECTIONS,
   fetchCollection,
+  fetchForYou,
   fetchFresh,
   fetchGenre,
   fetchPopular,
@@ -26,21 +27,7 @@ import type { Track } from "@/types";
 
 
 
-/** Derive the user's top genres from their listening history + favorites. */
-function deriveTopGenres(history: Track[], favorites: Track[]): string[] {
-  const counts = new Map<string, number>();
-  const bump = (t: Track, weight: number) => {
-    const tags = [...(t.tags ?? []), t.genre].filter(Boolean).map((g) => g!.toLowerCase());
-    tags.forEach((g) => counts.set(g, (counts.get(g) ?? 0) + weight));
-  };
-  history.forEach((t) => bump(t, 1));
-  favorites.forEach((t) => bump(t, 3));
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([g]) => g)
-    .filter((g) => GENRE_CHIPS.some((c) => c.value.toLowerCase() === g));
-}
+
 
 function useEnteredViewport<T extends HTMLElement>(rootMargin = "560px 0px") {
   const ref = useRef<T | null>(null);
@@ -73,20 +60,22 @@ function useEnteredViewport<T extends HTMLElement>(rootMargin = "560px 0px") {
 }
 
 export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") => void }) {
-  const { playAll, toast, history, favorites } = usePlayer();
+  const { playAll, toast, favorites } = usePlayer();
   const [genre, setGenre] = useState<string>(GENRE_CHIPS[0].value);
 
   const [forYouRef, forYouReady] = useEnteredViewport<HTMLElement>();
   const [freshRef, freshReady] = useEnteredViewport<HTMLElement>();
   const [genreRef, genreReady] = useEnteredViewport<HTMLElement>();
 
-  // Personalized "For You" — derived from user's listening habits
-  const topGenres = useMemo(() => deriveTopGenres(history, favorites), [history, favorites]);
-  const forYouGenre = topGenres[0] ?? "";
+  // Personalized "For You" — based on favourite artists via YT Music
+  const forYouKey = useMemo(
+    () => favorites.slice(0, 10).map((t) => t.artist).join("|"),
+    [favorites],
+  );
   const forYou = useFeed<Track[]>(
-    `cat:foryou:${forYouGenre}`,
-    (signal) => fetchGenre(forYouGenre, { limit: 12, signal }),
-    { enabled: forYouGenre.length > 0 && forYouReady },
+    `cat:foryou:${forYouKey}`,
+    () => fetchForYou(favorites),
+    { enabled: favorites.length > 0 && forYouReady },
   );
 
   // Keep the first paint light: only the primary chart loads immediately.
@@ -117,10 +106,10 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
       <section className="blur-panel glass-inset overflow-hidden rounded-[1.6rem] px-5 py-7 sm:rounded-[2rem] sm:px-10 sm:py-12" id="home-hero">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-white/[0.05] px-3.5 py-1.5 shadow-sm">
           <Sparkles className="h-3.5 w-3.5 text-accent" />
-          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink2">Free open music player</span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink2">Music player</span>
         </div>
         <h1 className="max-w-3xl text-balance text-3xl font-black tracking-tight text-ink sm:text-5xl lg:text-6xl">
-          Play free open tracks. Jump into live radio. Start instantly.
+          Stream millions of songs. Jump into live radio.
         </h1>
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -132,7 +121,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
               document.getElementById("home-popular")?.scrollIntoView({ behavior: "smooth" });
             }}
           >
-            Play free open tracks
+            Start listening
           </a>
           <a
             href="/radio"
@@ -150,9 +139,9 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
           No sign-up. Full tracks. Works instantly in your browser.
         </p>
         <div className="mt-5 flex flex-wrap gap-2.5 text-[11px] font-semibold text-ink3">
-          <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1">Creative Commons, archive and indie sources</span>
-          <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1">Automatic mirror failover during playback</span>
-          <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1">Favourites, history and playlists stay on-device</span>
+          <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1">YouTube Music + multiple sources</span>
+          <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1">Automatic mirror failover</span>
+          <span className="rounded-full border border-line bg-white/[0.03] px-3 py-1">Favourites, history and playlists on-device</span>
         </div>
       </section>
 
@@ -179,17 +168,17 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <QuickAction
           title="Popular Mix"
-          hint="The hottest open hits"
+          hint="Trending hits"
           tint="bg-accent/15 text-accent"
           icon={<TrendingUp className="h-5 w-5" />}
-          onClick={() => playSection(popular.data, "the open popularity chart")}
+          onClick={() => playSection(popular.data, "the popularity chart")}
         />
         <QuickAction
           title="Fresh Drops"
           hint="Newly released gems"
           tint="bg-accent2/15 text-accent2"
           icon={<Flame className="h-5 w-5" />}
-          onClick={() => playSection(fresh.data, "fresh open releases")}
+          onClick={() => playSection(fresh.data, "fresh releases")}
         />
         <QuickAction
           title="Live Radio"
@@ -207,11 +196,11 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         />
       </div>
 
-      {forYouGenre && (
+      {favorites.length > 0 && (
         <section ref={forYouRef}>
           <SectionHeader
             title="For You"
-            subtitle={`Based on your local listening patterns: ${topGenres.join(", ")}`}
+            subtitle="Based on artists in your favourites"
             icon={<Heart className="h-4 w-4 text-rose-400" />}
             action={
               <button
@@ -245,7 +234,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
       <section id="home-popular">
         <SectionHeader
           title="Popular on AuraBeats"
-          subtitle={popular.data ? `${popular.data.length} full-length tracks · fast first load` : "Connecting to open archives…"}
+          subtitle={popular.data ? `${popular.data.length} full-length tracks · fast first load` : "Connecting to music sources…"}
           icon={<TrendingUp className="h-4 w-4 text-accent" />}
           action={
             <IconButton onClick={popular.refresh} aria-label="Refresh">
@@ -327,7 +316,7 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         ) : genreFeed.error && !genreFeed.data ? (
           <ErrorState message={genreFeed.error} onRetry={genreFeed.refresh} />
         ) : (genreFeed.data ?? []).length === 0 ? (
-          <EmptyState title="No open tracks in that genre right now" hint="Pick another genre chip." />
+          <EmptyState title="No tracks found in that genre right now" hint="Pick another genre chip." />
         ) : (
           <div className="blur-panel overflow-hidden rounded-[1.4rem] p-1.5 sm:p-2.5">
             {(genreFeed.data ?? []).slice(0, 8).map((t, i) => (

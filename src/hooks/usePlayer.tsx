@@ -17,7 +17,7 @@ import {
 } from "react";
 import { useAudioEngine, type AudioEngine } from "@/hooks/useAudioEngine";
 import { reportListen } from "@/services/radio";
-import { resolveStreamUrls } from "@/services/youtube";
+import { resolveStreamUrls as resolveSC } from "@/services/soundcloud";
 import { storage, session } from "@/utils/storage";
 import { db } from "@/utils/db";
 import { shuffleArray, uid } from "@/utils/format";
@@ -25,13 +25,18 @@ import type { RepeatMode, ToastMessage, Track, UserPlaylist, PlayerSettings } fr
 
 /**
  * Resolve a stream URL — if it's a lazy `yt-resolve:ID` placeholder,
- * contact the mirror pool and return fresh playable URLs.
+ * use smart cross-source resolution (JioSaavn → Audius → Piped fallback).
  */
 async function resolveLazyUrl(track: Track): Promise<string[]> {
   const primary = track.streamUrl;
   if (primary.startsWith("yt-resolve:")) {
-    const videoId = primary.slice("yt-resolve:".length);
-    const { urls } = await resolveStreamUrls(videoId);
+    // We don't resolve YT tracks to raw URLs anymore.
+    // The AudioEngine handles 'yt-resolve:' prefix natively using the hidden YouTube IFrame.
+    return [primary];
+  }
+  if (primary.startsWith("sc-resolve:")) {
+    const scId = primary.slice("sc-resolve:".length);
+    const { urls } = await resolveSC(scId);
     return urls;
   }
   return track.fallbackUrls.length > 0 ? track.fallbackUrls : [primary];
@@ -240,19 +245,58 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const downloadTrack = useCallback(async (track: Track) => {
+    // YouTube tracks — In-app download modal using apisyu.com widget
+    if (track.streamUrl.startsWith("yt-resolve:") || track.source === "youtube") {
+      const videoId = track.streamUrl.replace("yt-resolve:", "");
+      
+      // Remove any existing modal
+      document.getElementById("yt-dl-modal")?.remove();
+      
+      // Create modal overlay
+      const overlay = document.createElement("div");
+      overlay.id = "yt-dl-modal";
+      overlay.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);";
+      
+      const card = document.createElement("div");
+      card.style.cssText = "background:#1a1a2e;border-radius:20px;padding:20px;width:min(420px,90vw);max-height:80vh;overflow:auto;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.6);";
+      
+      const closeBtn = document.createElement("button");
+      closeBtn.textContent = "\u2715";
+      closeBtn.style.cssText = "position:absolute;top:12px;right:16px;background:none;border:none;color:#888;font-size:20px;cursor:pointer;z-index:10;";
+      closeBtn.onclick = () => overlay.remove();
+      
+      const titleEl = document.createElement("p");
+      titleEl.textContent = `Download: ${track.title}`;
+      titleEl.style.cssText = "color:#fff;font-weight:bold;font-size:14px;margin-bottom:12px;padding-right:30px;";
+      
+      // Embed converter widget — works inside the app, no new tab
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://apisyu.com/widget/${videoId}?theme=dark`;
+      iframe.style.cssText = "width:100%;height:340px;border:none;border-radius:12px;";
+      iframe.allow = "autoplay; encrypted-media";
+      
+      card.appendChild(closeBtn);
+      card.appendChild(titleEl);
+      card.appendChild(iframe);
+      overlay.appendChild(card);
+      overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+      
+      document.body.appendChild(overlay);
+      toast(`Download panel opened for: ${track.title}`, "info");
+      return;
+    }
+
     const ext = track.codec?.toLowerCase().includes("mp4") || track.streamUrl.includes(".mp4") ? "m4a" : "mp3";
     const filename = `${track.artist} - ${track.title}.${ext}`.replace(/[<>:"/\\|?*]/g, "");
 
     try {
       toast(`Fetching audio for download...`, "info");
       
-      // 1. Try a direct fetch. Works for JioSaavn, Archive which allow CORS.
       const controller = new AbortController();
       let timeoutId = setTimeout(() => controller.abort(), 15000);
       
       let response = await fetch(track.streamUrl, { mode: "cors", signal: controller.signal }).catch(() => null);
       
-      // 2. If direct fetch fails (CORS error from Audius/Jamendo), use a proxy
       if (!response || !response.ok) {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => controller.abort(), 20000);
@@ -265,25 +309,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", filename);
       link.style.display = "none";
       document.body.appendChild(link);
       link.click();
-      
-      // Delay cleanup so the browser has time to start the download
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
       }, 10000);
-      
       toast(`Download complete: ${track.title}`, "success");
     } catch (error) {
       console.warn("Direct fetch failed, falling back to window.open", error);
-      
-      // 3. Absolute Fallback: force the browser to open it if even the proxy fails.
       const link = document.createElement("a");
       link.href = track.streamUrl;
       link.setAttribute("download", filename);
@@ -292,10 +330,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       link.style.display = "none";
       document.body.appendChild(link);
       link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-      }, 5000);
-      
+      setTimeout(() => { document.body.removeChild(link); }, 5000);
       toast(`Download opened in a new tab for: ${track.title}`, "info");
     }
   }, [toast]);

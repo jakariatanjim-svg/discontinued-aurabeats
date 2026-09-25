@@ -6,106 +6,98 @@ const HOSTS = [
   "https://jiosaavn-api-sumit.vercel.app",
 ];
 
-const REQUEST_TIMEOUT = 6000;
-
 async function raceFetch<T>(path: string): Promise<T> {
   const controllers = HOSTS.map(() => new AbortController());
-  const promises = HOSTS.map(async (host, i) => {
-    const url = `${host}${path}`;
-    const res = await fetch(url, {
-      signal: controllers[i].signal,
-      headers: { "Accept": "application/json" }
-    });
-    if (!res.ok) throw new Error(`Failed ${host}`);
-    const data = await res.json();
-    // Cancel others if we win
-    controllers.forEach((c, j) => { if (i !== j) c.abort(); });
-    return data;
-  });
+  const timer = setTimeout(() => controllers.forEach((c) => c.abort()), 7000);
 
-  // Custom race to avoid ES2021 dependency — plus a hard timeout so a hung
-  // mirror never freezes the whole feed.
   return new Promise((resolve, reject) => {
-    let rejected = 0;
     let done = false;
-    const timer = setTimeout(() => {
-      if (done) return;
-      done = true;
-      controllers.forEach((c) => c.abort());
-      reject(new Error("All mirrors timed out"));
-    }, REQUEST_TIMEOUT);
-    promises.forEach((p) => {
-      p.then((v) => {
-        if (done) return;
-        done = true;
-        clearTimeout(timer);
-        resolve(v);
-      }).catch(() => {
-        rejected++;
-        if (rejected === promises.length && !done) {
+    let failed = 0;
+
+    HOSTS.forEach((host, i) => {
+      fetch(`${host}${path}`, {
+        signal: controllers[i].signal,
+        headers: { Accept: "application/json" },
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error(`${res.status}`);
+          const data = await res.json();
+          if (done) return;
           done = true;
           clearTimeout(timer);
-          reject(new Error("All mirrors failed"));
-        }
-      });
+          controllers.forEach((c, j) => { if (j !== i) c.abort(); });
+          resolve(data as T);
+        })
+        .catch(() => {
+          failed++;
+          if (failed >= HOSTS.length && !done) {
+            done = true;
+            clearTimeout(timer);
+            reject(new Error("All JioSaavn mirrors failed"));
+          }
+        });
     });
   });
 }
 
-function normalize(raw: any): Track {
-  const id = raw.id;
-  // Pick best quality artwork
-  const art = raw.image?.[2]?.url || raw.image?.[1]?.url || raw.image?.[0]?.url || "";
-  // Pick best quality download/stream
-  const stream = raw.downloadUrl?.[4]?.url || raw.downloadUrl?.[3]?.url || raw.downloadUrl?.[2]?.url || "";
-  
+function normalize(raw: Record<string, unknown>): Track | null {
+  const id = raw.id as string;
+  if (!id) return null;
+  const images = (raw.image as { url: string }[] | undefined) ?? [];
+  const art = images[2]?.url || images[1]?.url || images[0]?.url || "";
+  const downloads = (raw.downloadUrl as { url: string }[] | undefined) ?? [];
+  const stream = downloads[4]?.url || downloads[3]?.url || downloads[2]?.url || downloads[0]?.url || "";
+  if (!stream) return null;
+
+  const artistsObj = raw.artists as { primary?: { name: string }[] } | undefined;
+  const artist = artistsObj?.primary?.[0]?.name || (raw.subtitle as string) || "Unknown";
+
   return {
     id: `js:${id}`,
-    title: raw.name?.replace(/&quot;/g, '"')?.replace(/&amp;/g, "&") || "Untitled",
-    artist: raw.artists?.primary?.[0]?.name || "JioSaavn Artist",
+    title: ((raw.name || raw.title) as string)?.replace(/&quot;/g, '"').replace(/&amp;/g, "&") || "Unknown",
+    artist,
     artwork: art,
-    artworkLarge: art,
-    duration: parseInt(raw.duration) || 0,
+    artworkLarge: art.replace("150x150", "500x500"),
+    duration: parseInt(raw.duration as string) || 0,
     source: "jiosaavn",
     streamUrl: stream,
-    fallbackUrls: raw.downloadUrl?.map((d: any) => d.url).reverse() || [],
-    homepage: raw.url,
-    album: raw.album?.name,
-    releaseDate: raw.releaseDate,
+    fallbackUrls: downloads.map((d) => d.url).reverse(),
+    homepage: raw.url as string || "",
+    album: (raw.album as { name?: string } | undefined)?.name,
     isLive: false,
   };
 }
 
-export async function searchTracks(query: string, limit = 12): Promise<Track[]> {
+export async function searchTracks(query: string, limit = 20): Promise<Track[]> {
   try {
-    const json = await raceFetch<any>(`/api/search/songs?query=${encodeURIComponent(query)}&limit=${limit}`);
-    const results = json.data?.results || [];
-    return results.map(normalize);
+    const json = await raceFetch<Record<string, unknown>>(
+      `/api/search/songs?query=${encodeURIComponent(query)}&limit=${limit}`
+    );
+    const results = (json.data as { results?: Record<string, unknown>[] } | undefined)?.results ?? [];
+    return results.map(normalize).filter((t): t is Track => t !== null);
   } catch {
     return [];
   }
 }
 
-export async function fetchTrending(limit = 10): Promise<Track[]> {
-  try {
-    const json = await raceFetch<any>(`/api/search/songs?query=latest&limit=${limit}`);
-    const results = json.data?.results || [];
-    return results.map(normalize);
-  } catch {
-    return [];
-  }
+export async function fetchTrending(limit = 12): Promise<Track[]> {
+  return searchTracks("top hindi songs 2026", limit);
 }
 
 export async function fetchSuggestions(query: string, limit = 8): Promise<string[]> {
   try {
-    const json = await raceFetch<any>(`/api/search/songs?query=${encodeURIComponent(query)}&limit=${limit}`);
-    const results = json.data?.results || [];
-    const names: string[] = results.map((r: any) => {
-      const title = r.name?.replace(/&quot;/g, '"')?.replace(/&amp;/g, "&") || "";
-      const artist = r.artists?.primary?.[0]?.name || "";
-      return artist ? `${title} - ${artist}` : title;
-    }).filter(Boolean);
-    return names.slice(0, limit);
+    const json = await raceFetch<Record<string, unknown>>(
+      `/api/search/songs?query=${encodeURIComponent(query)}&limit=${limit}`
+    );
+    const results = (json.data as { results?: Record<string, unknown>[] } | undefined)?.results ?? [];
+    return results
+      .map((r) => {
+        const title = ((r.name || r.title) as string)?.replace(/&quot;/g, '"') || "";
+        const artist = (r.artists as { primary?: { name: string }[] } | undefined)?.primary?.[0]?.name || "";
+        return artist ? `${title} - ${artist}` : title;
+      })
+      .filter(Boolean)
+      .slice(0, limit);
   } catch {
     return [];
   }

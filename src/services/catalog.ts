@@ -1,256 +1,139 @@
 /**
- * Unified live catalogue.
- * ----------------------------------------------------------------------------
- * AuraBeats never uses a paid/official commercial music API and never plays
- * 30-second previews. The feeds below resolve to full-length audio from:
- *
- *   • Internet Archive  — CC / public-domain music, direct MP3, multi-node
- *   • Audius            — open decentralised artist network, direct MP3
- *   • Invidious mirrors — YouTube/YouTube Music mirror search + proxied audio
- *   • Radio Browser     — open live radio directory (Radio section only)
- *
- * Each helper races/merges the providers and degrades gracefully: if one
- * network is unreachable the feed still returns whatever the others produced,
- * so the UI is never empty and never breaks.
+ * Unified catalogue — all sources combined.
  */
-
 import * as archive from "@/services/archive";
 import * as audius from "@/services/audius";
 import * as jiosaavn from "@/services/jiosaavn";
 import * as jamendo from "@/services/jamendo";
 import * as youtube from "@/services/youtube";
+import * as soundcloud from "@/services/soundcloud";
 import { shuffleArray } from "@/utils/format";
 import type { Track } from "@/types";
 
-function normalizeText(value: string): string {
-  if (!value) return "";
-  return value
-    .toLowerCase()
-    .replace(/\([^)]*\)/g, " ")
-    .replace(/\[[^\]]*\]/g, " ")
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+function normalizeText(v: string) {
+  return v.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
 function dedupe(tracks: Track[]): Track[] {
   const seen = new Set<string>();
-  const out: Track[] = [];
-  for (const t of tracks) {
+  return tracks.filter((t) => {
     const key = `${normalizeText(t.title)}|${normalizeText(t.artist)}`;
-    if (seen.has(t.id) || seen.has(key)) continue;
-    seen.add(t.id);
-    seen.add(key);
-    out.push(t);
-  }
-  return out;
-}
-
-function interleaveMany(lists: Track[][]): Track[] {
-  const out: Track[] = [];
-  const max = Math.max(...lists.map((list) => list.length), 0);
-  for (let i = 0; i < max; i += 1) {
-    for (const list of lists) {
-      if (list[i]) out.push(list[i]);
-    }
-  }
-  return out;
-}
-
-function scoreTrack(query: string, track: Track): number {
-  const q = normalizeText(query);
-  if (!q) return 0;
-
-  const title = normalizeText(track.title);
-  const artist = normalizeText(track.artist);
-  const combined = `${title} ${artist}`.trim();
-  const tokens = q.split(" ").filter(Boolean);
-
-  let score = 0;
-  if (title === q) score += 220;
-  if (combined === q) score += 190;
-  if (title.startsWith(q)) score += 140;
-  if (artist.startsWith(q)) score += 90;
-  if (combined.startsWith(q)) score += 75;
-  if (title.includes(q)) score += 60;
-  if (combined.includes(q)) score += 35;
-
-  score += tokens.reduce((acc, token) => acc + (title.includes(token) ? 18 : 0) + (artist.includes(token) ? 10 : 0), 0);
-
-  if (track.source === "jiosaavn") score += 35; // Pure music database
-  if (track.source === "youtube") score += 25;  // YouTube Music mirror
-  if (track.source === "jamendo") score += 20;
-  if (track.source === "audius") score += 15;
-  if (track.source === "archive") score += 8;
-
-  if (track.duration > 0 && track.duration <= 7 * 60) score += 8;
-  if (track.duration > 16 * 60) score -= 18;
-  if (/lyrics|slowed|reverb|nightcore|bass boosted|8d/i.test(track.title)) score -= 20;
-  if (/full album|mix|playlist|compilation|hours?/i.test(track.title)) score -= 30;
-
-  return score;
-}
-
-function uniqueStrings(items: string[]): string[] {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    const key = normalizeText(item);
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
+    if (seen.has(t.id) || seen.has(key)) return false;
+    seen.add(t.id); seen.add(key);
     return true;
   });
 }
 
-/** Hard wall-clock cap per provider — a slow or hung mirror can never stall
- *  the whole feed. Whatever resolved within the window is what we render. */
-const PROVIDER_DEADLINE = 4500;
-
-function deadline<T>(p: Promise<T>, fallback: T): Promise<T> {
-  return Promise.race<T>([
-    p.catch(() => fallback),
-    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), PROVIDER_DEADLINE)),
-  ]);
+function scoreTrack(q: string, t: Track): number {
+  const nq = normalizeText(q);
+  const title = normalizeText(t.title);
+  let s = 0;
+  if (title === nq) s += 200;
+  if (title.startsWith(nq)) s += 100;
+  if (title.includes(nq)) s += 50;
+  if (t.source === "youtube") s += 60;
+  if (t.source === "soundcloud") s += 40;
+  if (t.source === "jiosaavn") s += 35;
+  if (t.source === "audius") s += 15;
+  if (t.playCount && t.playCount > 1_000_000) s += 10;
+  return s;
 }
 
-export interface CatalogQuery {
-  limit?: number;
-  signal?: AbortSignal;
+const TIMEOUT = 5500;
+function cap<T>(p: Promise<T>, fallback: T): Promise<T> {
+  return Promise.race([p.catch(() => fallback), new Promise<T>((r) => setTimeout(() => r(fallback), TIMEOUT))]);
 }
 
-/** Trending full tracks across all active databases. */
+export interface CatalogQuery { limit?: number; signal?: AbortSignal }
+
 export async function fetchPopular(opts: CatalogQuery = {}): Promise<Track[]> {
-  const { limit = 34, signal } = opts;
-  const [js, yt, jam, au, ia] = await Promise.all([
-    deadline(jiosaavn.fetchTrending(Math.ceil(limit / 2)), [] as Track[]),
-    deadline(youtube.searchTracks("popular", 10), [] as Track[]),
-    deadline(jamendo.fetchPopular(Math.ceil(limit / 3)), [] as Track[]),
-    deadline(audius.fetchTrending({ limit: 10, signal }), [] as Track[]),
-    deadline(
-      archive
-        .searchAlbums({ collection: "netlabels", rows: 12, sort: "downloads desc", signal })
-        .then((albums) => archive.tracksFromAlbums(shuffleArray(albums), { perAlbum: 2, max: 10, signal })),
-      [] as Track[],
-    ),
+  const { limit = 40 } = opts;
+  const [yt, js, sc, au] = await Promise.all([
+    cap(youtube.searchTracks("popular music hits 2026", 15), []),
+    cap(jiosaavn.fetchTrending(12), []),
+    cap(soundcloud.searchTracks("trending popular", 10), []),
+    cap(audius.fetchTrending({ limit: 8 }), []),
   ]);
-  const merged = dedupe(interleaveMany([js, yt, jam, au, ia]));
-  return merged.length > 0 ? merged.slice(0, limit) : [];
+  const merged = dedupe([...yt, ...js, ...sc, ...au]);
+  return merged.slice(0, limit);
 }
 
-/** Freshly added releases. */
 export async function fetchFresh(opts: CatalogQuery = {}): Promise<Track[]> {
-  const { limit = 28, signal } = opts;
-  const [au, jam, ia] = await Promise.all([
-    deadline(audius.fetchUnderground({ limit: 12, signal }), [] as Track[]),
-    deadline(jamendo.searchTracks("new", 10), [] as Track[]),
-    deadline(
-      archive
-        .searchAlbums({ collection: "netlabels", rows: 10, sort: "addeddate desc", signal })
-        .then((albums) => archive.tracksFromAlbums(albums, { perAlbum: 2, max: 10, signal })),
-      [] as Track[],
-    ),
+  const { limit = 24 } = opts;
+  const [yt, sc, au] = await Promise.all([
+    cap(youtube.searchTracks("new music 2026", 10), []),
+    cap(soundcloud.searchTracks("new releases", 8), []),
+    cap(audius.fetchUnderground({ limit: 8 }), []),
   ]);
-  return dedupe(interleaveMany([au, jam, ia])).slice(0, limit);
+  return dedupe([...yt, ...sc, ...au]).slice(0, limit);
 }
 
-/** A whole open collection (net labels, live concerts, 78rpm…). */
-export async function fetchCollection(slug: string, opts: CatalogQuery = {}): Promise<Track[]> {
-  const { limit = 30, signal } = opts;
-  const albums = await deadline(archive.searchAlbums({ collection: slug, rows: 26, sort: "downloads desc", signal }), []);
-  return dedupe(await deadline(archive.tracksFromAlbums(shuffleArray(albums), { perAlbum: 3, max: limit, signal }), []));
+export async function searchYTMusic(query: string, limit = 100): Promise<Track[]> {
+  return cap(youtube.searchTracks(query, limit), []);
 }
 
-/** Genre feed — archive subject search merged with the open artist network. */
-export async function fetchGenre(genre: string, opts: CatalogQuery = {}): Promise<Track[]> {
-  const { limit = 30, signal } = opts;
-  const audiusGenre = AUDIUS_GENRE_MAP[genre.toLowerCase()] ?? genre;
-  const [ia, au] = await Promise.all([
-    deadline(
-      archive
-        .searchAlbums({ genre, rows: 22, sort: "downloads desc", signal })
-        .then((albums) => archive.tracksFromAlbums(shuffleArray(albums), { perAlbum: 2, max: limit, signal })),
-      [] as Track[],
-    ),
-    deadline(audius.fetchTracksByGenre(audiusGenre, { limit, signal }), [] as Track[]),
+export async function searchOtherSources(query: string, limit = 60): Promise<Track[]> {
+  const [sc, js, au, ja, ia] = await Promise.all([
+    cap(soundcloud.searchTracks(query, 20), []),
+    cap(jiosaavn.searchTracks(query, 25), []),
+    cap(audius.searchTracks(query, { limit: 15 }), []),
+    cap(jamendo.searchTracks(query, 12), []),
+    cap(archive.searchTracks(query, { limit: 10 }), []),
   ]);
-  return dedupe(interleaveMany([au, ia])).slice(0, limit);
-}
-
-/** Full-text search across all active databases, including YouTube Music mirrors. */
-export async function searchEverything(query: string, opts: CatalogQuery = {}): Promise<Track[]> {
-  const { limit = 60, signal } = opts;
-  const trimmed = query.trim();
-  if (!trimmed) return [];
-
-  // Search across multiple databases — each capped so a hung mirror never
-  // freezes results; the fastest sources paint first.
-  const [js, yt, jam, au, ia] = await Promise.all([
-    deadline(jiosaavn.searchTracks(trimmed, 35), [] as Track[]),
-    deadline(youtube.searchTracks(trimmed, 30), [] as Track[]),
-    deadline(jamendo.searchTracks(trimmed, 25), [] as Track[]),
-    deadline(audius.searchTracks(trimmed, { limit: 25, signal }), [] as Track[]),
-    deadline(archive.searchTracks(trimmed, { limit: 20, signal }), [] as Track[]),
-  ]);
-
-  const all = [...js, ...yt, ...au, ...jam, ...ia];
-  
-  return dedupe(all)
-    .sort((a, b) => scoreTrack(trimmed, b) - scoreTrack(trimmed, a))
+  return dedupe([...sc, ...js, ...au, ...ja, ...ia])
+    .sort((a, b) => scoreTrack(query, b) - scoreTrack(query, a))
     .slice(0, limit);
 }
 
-export async function fetchSearchSuggestions(query: string, opts: CatalogQuery = {}): Promise<string[]> {
-  const { limit = 8, signal } = opts;
-  const trimmed = query.trim();
-  if (!trimmed) return [];
-
-  // Get real suggestions from JioSaavn database (fast, actual song names)
-  const [jsSugg, auSugg] = await Promise.all([
-    deadline(jiosaavn.fetchSuggestions(trimmed, limit), [] as string[]),
-    deadline(
-      audius.searchTracks(trimmed, { limit: 4, signal }).then((tracks) =>
-        tracks.map((t) => `${t.title} - ${t.artist}`)
-      ),
-      [] as string[],
-    ),
+export async function searchEverything(query: string, opts: CatalogQuery = {}): Promise<Track[]> {
+  const { limit = 80 } = opts;
+  const [yt, others] = await Promise.all([
+    searchYTMusic(query, 30),
+    searchOtherSources(query, 50),
   ]);
-
-  return uniqueStrings([...jsSugg, ...auSugg]).slice(0, limit);
+  return dedupe([...yt, ...others])
+    .sort((a, b) => scoreTrack(query, b) - scoreTrack(query, a))
+    .slice(0, limit);
 }
 
-/** Map friendly archive genre words to the artist network's vocabulary. */
-const AUDIUS_GENRE_MAP: Record<string, string> = {
-  "hip hop": "Hip-Hop/Rap",
-  "lo-fi": "Lo-Fi",
-  lofi: "Lo-Fi",
-  electronic: "Electronic",
-  ambient: "Ambient",
-  rock: "Rock",
-  jazz: "Jazz",
-  techno: "Techno",
-  folk: "Folk",
-  classical: "Classical",
-  chiptune: "Electronic",
-  blues: "Blues",
-  punk: "Punk",
-  reggae: "Reggae",
-  soul: "R&B/Soul",
-};
+export async function fetchSearchSuggestions(query: string): Promise<string[]> {
+  const [yt, js] = await Promise.all([
+    cap(youtube.fetchSuggestions(query), [] as string[]),
+    cap(jiosaavn.fetchSuggestions(query), [] as string[]),
+  ]);
+  return [...new Set([...yt, ...js])].slice(0, 10);
+}
 
-export const GENRE_CHIPS: { label: string; value: string }[] = [
-  { label: "Electronic", value: "electronic" },
-  { label: "Lo-Fi", value: "lo-fi" },
-  { label: "Hip Hop", value: "hip hop" },
-  { label: "Ambient", value: "ambient" },
-  { label: "Rock", value: "rock" },
-  { label: "Jazz", value: "jazz" },
-  { label: "Techno", value: "techno" },
-  { label: "Folk", value: "folk" },
-  { label: "Classical", value: "classical" },
-  { label: "Chiptune", value: "chiptune" },
-  { label: "Blues", value: "blues" },
-  { label: "Punk", value: "punk" },
-  { label: "Reggae", value: "reggae" },
-  { label: "Soul", value: "soul" },
-];
+export async function fetchForYou(favorites: Track[]): Promise<Track[]> {
+  if (favorites.length === 0) return [];
+  const artists = [...new Set(favorites.slice(0, 5).map((f) => f.artist))];
+  const pick = artists[Math.floor(Math.random() * artists.length)];
+  return searchEverything(pick, { limit: 16 });
+}
+
+export async function fetchGenre(genre: string, opts: CatalogQuery = {}): Promise<Track[]> {
+  return searchEverything(genre, { limit: opts.limit ?? 30 });
+}
+
+export async function fetchCollection(slug: string, opts: CatalogQuery = {}): Promise<Track[]> {
+  const { limit = 30, signal } = opts;
+  const albums = await cap(archive.searchAlbums({ collection: slug, rows: 26, sort: "downloads desc", signal }), []);
+  return cap(archive.tracksFromAlbums(shuffleArray(albums), { perAlbum: 3, max: limit, signal }), []);
+}
 
 export { ARCHIVE_COLLECTIONS } from "@/services/archive";
+
+export const GENRE_CHIPS = [
+  { label: "Pop", value: "pop hits" },
+  { label: "Hip-Hop", value: "hip hop" },
+  { label: "Bollywood", value: "bollywood" },
+  { label: "Remix", value: "remix" },
+  { label: "Slowed", value: "slowed reverb" },
+  { label: "Lo-Fi", value: "lofi" },
+  { label: "Electronic", value: "electronic" },
+  { label: "Rock", value: "rock" },
+  { label: "Jazz", value: "jazz" },
+  { label: "K-Pop", value: "kpop" },
+  { label: "Funk", value: "funk" },
+  { label: "Classical", value: "classical" },
+];

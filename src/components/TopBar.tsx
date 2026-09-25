@@ -143,7 +143,7 @@ export function TopBar({
           ) : live ? (
             "Open radio archive · live streams"
           ) : (
-            "Pure multi-source streaming engine"
+            "Multi-source streaming engine"
           )}
         </p>
       </div>
@@ -154,7 +154,7 @@ export function TopBar({
         className="focus-ring glass-inset hidden items-center gap-2 rounded-full border border-line/80 bg-white/[0.03] px-4 py-2.5 text-xs text-ink3 transition hover:border-accent hover:text-accent lg:flex"
       >
         <Search className="h-3.5 w-3.5" />
-        Search millions of open tracks
+        Search millions of tracks
         <ChevronDown className="h-3 w-3 -rotate-90 opacity-60" />
       </button>
 

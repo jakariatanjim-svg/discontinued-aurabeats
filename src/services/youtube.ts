@@ -1,132 +1,188 @@
 /**
- * YouTube Music Engine — Piped Instance Pool
- * ---------------------------------------------------------------------------
- * Replaced Invidious with Piped API for better reliability and faster streaming.
- * Features:
- *  - Parallel racing across multiple Piped instances
- *  - Music-only filtering
- *  - Real-time audio stream resolution
+ * YouTube Music search via Invidious public API.
+ * Search works. Playback falls back to JioSaavn cross-match.
  */
-
 import type { Track } from "@/types";
 
-const PIPED_INSTANCES = [
-  "https://pipedapi.kavin.rocks",
-  "https://api-piped.mha.fi",
-  "https://pipedapi.us.to",
-  "https://piped-api.garudalinux.org",
-  "https://pipedapi.roke.host"
+const INVIDIOUS_HOSTS = [
+  "https://invidious.f5.si",
+  "https://inv.nadeko.net",
+  "https://invidious.tiekoetter.com",
 ];
 
-let preferredIndex = Math.floor(Math.random() * PIPED_INSTANCES.length);
+const CORS = [
+  (u: string) => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+  (u: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+];
 
-async function racePiped<T>(path: string, params: Record<string, string>): Promise<{ data: T; host: string }> {
-  const urlParams = new URLSearchParams(params).toString();
-  const instances = [...PIPED_INSTANCES.slice(preferredIndex), ...PIPED_INSTANCES.slice(0, preferredIndex)];
-  const controllers = instances.map(() => new AbortController());
+async function fetchJSON<T>(url: string, timeout = 8000): Promise<T> {
+  // Try direct first
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), Math.min(timeout, 3500));
+    const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: "application/json" } });
+    clearTimeout(t);
+    if (res.ok) return res.json() as Promise<T>;
+  } catch { /* try proxy */ }
 
-  const promises = instances.map(async (host, i) => {
-    try {
-      const res = await fetch(`${host}${path}?${urlParams}`, {
-        signal: controllers[i].signal,
-        headers: { "Accept": "application/json" }
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      controllers.forEach((c, j) => { if (i !== j) c.abort(); });
-      preferredIndex = (preferredIndex + i) % PIPED_INSTANCES.length;
-      return { data, host };
-    } catch {
-      throw new Error("Instance failed");
-    }
-  });
+  // Race CORS proxies
+  const controllers = CORS.map(() => new AbortController());
+  const masterTimer = setTimeout(() => controllers.forEach((c) => c.abort()), timeout);
 
-  return new Promise((resolve, reject) => {
-    let errors = 0;
-    let done = false;
-    // Hard timeout — hung Piped mirrors must never freeze the feed.
-    const timer = setTimeout(() => {
-      if (done) return;
-      done = true;
-      controllers.forEach((c) => c.abort());
-      reject(new Error("All Piped mirrors timed out"));
-    }, 6000);
-    promises.forEach(p => {
-      p.then((v) => {
-        if (done) return;
-        done = true;
-        clearTimeout(timer);
-        resolve(v);
-      }).catch(() => {
-        errors++;
-        if (errors === promises.length && !done) {
-          done = true;
-          clearTimeout(timer);
-          reject(new Error("All Piped mirrors failed"));
-        }
-      });
+  return new Promise<T>((resolve, reject) => {
+    let settled = false;
+    let fails = 0;
+    CORS.forEach((proxy, i) => {
+      fetch(proxy(url), { signal: controllers[i].signal, headers: { Accept: "application/json" } })
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status}`);
+          return res.json() as Promise<T>;
+        })
+        .then((data) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(masterTimer);
+          controllers.forEach((c, j) => { if (j !== i) c.abort(); });
+          resolve(data);
+        })
+        .catch(() => {
+          fails++;
+          if (fails >= CORS.length && !settled) {
+            settled = true;
+            clearTimeout(masterTimer);
+            reject(new Error("All proxies failed"));
+          }
+        });
     });
   });
 }
 
-/** Resolves playable stream URLs from a video ID at play-time */
-export async function resolveStreamUrls(videoId: string): Promise<{ urls: string[], bitrate?: number, codec?: string }> {
-  const instances = [...PIPED_INSTANCES.slice(preferredIndex), ...PIPED_INSTANCES.slice(0, preferredIndex)];
-  
-  for (const host of instances) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 5000);
-    try {
-      const res = await fetch(`${host}/streams/${videoId}`, { signal: ctrl.signal });
-      if (!res.ok) continue;
-      const data = await res.json();
-      
-      // Get highest quality audio stream
-      const audio = (data.audioStreams || [])
-        .filter((s: any) => s.mimeType?.includes("audio"))
-        .sort((a: any, b: any) => (b.bitrate || 0) - (a.bitrate || 0));
-
-      if (audio.length > 0) {
-        return {
-          urls: audio.map((s: any) => s.url),
-          bitrate: Math.round((audio[0].bitrate || 0) / 1024),
-          codec: audio[0].format || "MP3"
-        };
-      }
-    } catch { continue; }
-    finally { clearTimeout(timer); }
-  }
-  throw new Error("Could not resolve Piped stream");
+function thumb(videoId: string) {
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
-function normalize(v: any): Track {
-  const id = v.url.split("v=")[1] || v.url.split("/").pop();
+interface InvItem {
+  type: string;
+  videoId: string;
+  title: string;
+  author: string;
+  lengthSeconds: number;
+  viewCount: number;
+  liveNow?: boolean;
+  isUpcoming?: boolean;
+}
+
+function toTrack(item: InvItem): Track | null {
+  if (item.type !== "video") return null;
+  if (!item.videoId || !item.title) return null;
+  if (item.liveNow || item.isUpcoming) return null;
+  const dur = item.lengthSeconds ?? 0;
+  if (dur < 20 || dur > 45 * 60) return null;
+
   return {
-    id: `yt:${id}`,
-    title: v.title,
-    artist: v.uploaderName,
-    artwork: v.thumbnail,
-    artworkLarge: v.thumbnail,
-    duration: v.duration || 0,
+    id: `yt:${item.videoId}`,
+    title: item.title.trim(),
+    artist: item.author.replace(/ - Topic$/i, "").replace(/ VEVO$/i, "").trim(),
+    artwork: thumb(item.videoId),
+    artworkLarge: `https://i.ytimg.com/vi/${item.videoId}/maxresdefault.jpg`,
+    duration: dur,
     source: "youtube",
-    streamUrl: `yt-resolve:${id}`,
-    fallbackUrls: [`yt-resolve:${id}`],
-    homepage: `https://www.youtube.com/watch?v=${id}`,
+    streamUrl: `yt-resolve:${item.videoId}`,
+    fallbackUrls: [],
+    homepage: `https://music.youtube.com/watch?v=${item.videoId}`,
     isLive: false,
+    playCount: item.viewCount,
   };
 }
 
-export async function searchTracks(query: string, limit = 50): Promise<Track[]> {
-  try {
-    const { data } = await racePiped<any>("/search", {
-      q: query,
-      filter: "music_songs"
+async function searchHost(host: string, query: string): Promise<Track[]> {
+  // Fetch page 1 first — fast and reliable
+  const url = `${host}/api/v1/search?q=${encodeURIComponent(query)}&type=video&sort_by=relevance&page=1`;
+  const data = await fetchJSON<InvItem[]>(url, 9000);
+  const page1 = (Array.isArray(data) ? data : [])
+    .map(toTrack)
+    .filter((t): t is Track => t !== null);
+
+  // Then fetch pages 2 and 3 in parallel (best-effort, won't block page 1)
+  const extraPages = await Promise.allSettled([
+    fetchJSON<InvItem[]>(`${host}/api/v1/search?q=${encodeURIComponent(query)}&type=video&sort_by=relevance&page=2`, 9000),
+    fetchJSON<InvItem[]>(`${host}/api/v1/search?q=${encodeURIComponent(query)}&type=video&sort_by=relevance&page=3`, 9000),
+  ]);
+
+  const seen = new Set(page1.map((t) => t.id));
+  const extra: Track[] = [];
+
+  for (const result of extraPages) {
+    if (result.status === "fulfilled") {
+      const items = (Array.isArray(result.value) ? result.value : [])
+        .map(toTrack)
+        .filter((t): t is Track => t !== null && !seen.has(t.id));
+      for (const t of items) {
+        seen.add(t.id);
+        extra.push(t);
+      }
+    }
+  }
+
+  return [...page1, ...extra];
+}
+
+export async function searchTracks(query: string, limit = 60): Promise<Track[]> {
+  if (!query.trim()) return [];
+
+  // Race the first working host (staggered)
+  return new Promise<Track[]>((resolve) => {
+    let settled = false;
+    let fails = 0;
+
+    INVIDIOUS_HOSTS.forEach((host, i) => {
+      setTimeout(() => {
+        if (settled) return;
+        searchHost(host, query)
+          .then((tracks) => {
+            if (settled || tracks.length === 0) return;
+            settled = true;
+            resolve(tracks.slice(0, limit));
+          })
+          .catch(() => {
+            fails++;
+            if (fails >= INVIDIOUS_HOSTS.length && !settled) {
+              settled = true;
+              resolve([]);
+            }
+          });
+      }, i * 400);
     });
-    
-    return (data.items || [])
-      .slice(0, limit)
-      .map((v: any) => normalize(v));
+
+    // Hard timeout
+    setTimeout(() => {
+      if (!settled) { settled = true; resolve([]); }
+    }, 12000);
+  });
+}
+
+export async function fetchTrending(): Promise<Track[]> {
+  return searchTracks("top songs 2026", 20);
+}
+
+export async function fetchSuggestions(query: string): Promise<string[]> {
+  try {
+    const url = `${INVIDIOUS_HOSTS[0]}/api/v1/suggestions?q=${encodeURIComponent(query)}`;
+    const data = await fetchJSON<{ suggestions: string[] }>(url);
+    return data.suggestions?.slice(0, 8) ?? [];
   } catch {
     return [];
   }
 }
+
+// Playback is now handled natively via the hidden YouTube IFrame player 
+// in the AudioEngine. We just return the yt-resolve marker.
+export async function resolveYTTrack(
+  videoId: string,
+  _title: string,
+  _artist: string,
+): Promise<{ urls: string[] }> {
+  return { urls: [`yt-resolve:${videoId}`] };
+}
+
+export function resetHostHealth() { /* noop */ }

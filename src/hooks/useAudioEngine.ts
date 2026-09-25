@@ -1,18 +1,16 @@
-/**
- * useAudioEngine — the HTML5 Audio core.
- *
- * Deliberately kept "pure": the media element is NEVER given a `crossOrigin`
- * attribute and is NEVER routed through a Web Audio MediaElementSource.
- * Doing either makes the browser enforce a CORS pre-flight on every redirect
- * hop of a stream URL — public archive/CDN mirrors 302 across hosts, so any
- * strict hop silently kills playback (duration stays 0:00 and nothing plays).
- * Plain, un-tainted playback works with every free open source.
- *
- * The visualizer therefore runs on its organic simulation, which looks
- * identical to the user and can never break audio.
- */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  initYouTubePlayer,
+  playYouTubeVideo,
+  pauseYouTubeVideo,
+  seekYouTubeVideo,
+  setYouTubeVolume,
+  muteYouTubeVideo,
+  unMuteYouTubeVideo,
+  getYouTubeTime,
+  getYouTubeDuration,
+  getYouTubeBuffered
+} from "@/services/youtubePlayer";
 
 export interface AudioEngine {
   isPlaying: boolean;
@@ -24,11 +22,8 @@ export interface AudioEngine {
   muted: boolean;
   isLive: boolean;
   error: string | null;
-  /** increments every time the current stream reaches its natural end */
   endTick: number;
-  /** increments every time the current stream raises a hard error */
   errorTick: number;
-  /** increments when the browser blocks autoplay and needs a user gesture */
   blockedTick: number;
   load: (src: string, opts?: LoadOptions) => void;
   play: () => Promise<void>;
@@ -42,12 +37,13 @@ export interface AudioEngine {
 
 export interface LoadOptions {
   autoplay?: boolean;
-  /** hint: endless stream, disables seeking/duration handling */
   live?: boolean;
 }
 
 export function useAudioEngine(): AudioEngine {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isYtMode, setIsYtMode] = useState(false);
+  const currentYtIdRef = useRef<string | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -62,17 +58,19 @@ export function useAudioEngine(): AudioEngine {
   const [errorTick, setErrorTick] = useState(0);
   const [blockedTick, setBlockedTick] = useState(0);
 
+  // Initialize YT Player
+  useEffect(() => {
+    initYouTubePlayer();
+  }, []);
+
   if (!audioRef.current && typeof window !== "undefined") {
     const el = new Audio();
     el.preload = "auto";
     el.volume = 0.85;
-    // Never set crossOrigin — see the file header.
     audioRef.current = el;
   }
 
   const load = useCallback((src: string, opts: LoadOptions = {}) => {
-    const el = audioRef.current;
-    if (!el) return;
     setError(null);
     setCurrentTime(0);
     setDuration(0);
@@ -80,138 +78,201 @@ export function useAudioEngine(): AudioEngine {
     setIsBuffering(true);
     setIsLive(Boolean(opts.live));
 
-    el.pause();
-    el.removeAttribute("crossorigin");
-    el.src = src;
-    el.load();
+    if (src.startsWith("yt-resolve:")) {
+      const videoId = src.replace("yt-resolve:", "");
+      setIsYtMode(true);
+      currentYtIdRef.current = videoId;
+      audioRef.current?.pause(); // Stop native audio
+      
+      initYouTubePlayer().then(() => {
+        playYouTubeVideo(videoId);
+      });
+    } else {
+      setIsYtMode(false);
+      currentYtIdRef.current = null;
+      pauseYouTubeVideo(); // Stop YT player
 
-    if (opts.autoplay !== false) {
-      const p = el.play();
-      if (p && typeof p.catch === "function") {
-        p.catch((err: unknown) => {
-          const name = err instanceof Error ? err.name : "";
-          if (name === "NotAllowedError") {
-            setBlockedTick((n) => n + 1);
-            setError("Tap play to start — your browser blocked autoplay");
+      const el = audioRef.current;
+      if (el) {
+        el.pause();
+        el.removeAttribute("crossorigin");
+        el.src = src;
+        el.load();
+
+        if (opts.autoplay !== false) {
+          const p = el.play();
+          if (p && typeof p.catch === "function") {
+            p.catch((err: unknown) => {
+              if (err instanceof Error && err.name === "NotAllowedError") {
+                setBlockedTick((n) => n + 1);
+                setError("Tap play to start — your browser blocked autoplay");
+              }
+              setIsBuffering(false);
+            });
           }
-          setIsBuffering(false);
-        });
+        }
       }
     }
   }, []);
 
   const play = useCallback(async () => {
-    const el = audioRef.current;
-    if (!el) return;
-    try {
-      await el.play();
-    } catch (err) {
-      const name = err instanceof Error ? err.name : "";
-      if (name === "NotAllowedError") setBlockedTick((n) => n + 1);
-      setError(err instanceof Error ? err.message : "Playback could not start");
+    if (isYtMode && currentYtIdRef.current) {
+      playYouTubeVideo(currentYtIdRef.current);
+    } else {
+      try {
+        await audioRef.current?.play();
+      } catch (err) {
+        if (err instanceof Error && err.name === "NotAllowedError") setBlockedTick((n) => n + 1);
+        setError(err instanceof Error ? err.message : "Playback could not start");
+      }
     }
-  }, []);
+  }, [isYtMode]);
 
   const pause = useCallback(() => {
-    audioRef.current?.pause();
-  }, []);
+    if (isYtMode) pauseYouTubeVideo();
+    else audioRef.current?.pause();
+  }, [isYtMode]);
 
   const toggle = useCallback(() => {
-    const el = audioRef.current;
-    if (!el) return;
-    if (el.paused) void play();
-    else el.pause();
-  }, [play]);
+    if (isYtMode) {
+      if (isPlaying) pauseYouTubeVideo();
+      else playYouTubeVideo(currentYtIdRef.current!);
+    } else {
+      const el = audioRef.current;
+      if (el) {
+        if (el.paused) void play();
+        else el.pause();
+      }
+    }
+  }, [isYtMode, isPlaying, play]);
 
   const seek = useCallback((seconds: number) => {
-    const el = audioRef.current;
-    if (!el || !Number.isFinite(seconds)) return;
-    const d = el.duration;
-    if (!Number.isFinite(d) || d <= 0) return;
-    try {
-      el.currentTime = Math.min(Math.max(0, seconds), d - 0.25);
-      setCurrentTime(el.currentTime);
-    } catch {
-      /* seeking not supported on this stream */
-    }
-  }, []);
-
-  const nudge = useCallback(
-    (delta: number) => {
+    if (isYtMode) {
+      seekYouTubeVideo(seconds);
+      setCurrentTime(seconds);
+    } else {
       const el = audioRef.current;
-      if (!el) return;
-      seek(el.currentTime + delta);
-    },
-    [seek],
-  );
+      if (el && Number.isFinite(seconds) && el.duration > 0) {
+        try {
+          el.currentTime = Math.min(Math.max(0, seconds), el.duration - 0.25);
+          setCurrentTime(el.currentTime);
+        } catch {}
+      }
+    }
+  }, [isYtMode]);
+
+  const nudge = useCallback((delta: number) => seek(currentTime + delta), [seek, currentTime]);
 
   const setVolume = useCallback((v: number) => {
-    const el = audioRef.current;
     const nextV = Math.min(1, Math.max(0, v));
-    if (el) el.volume = nextV;
     setVolumeState(nextV);
-    if (nextV > 0 && el?.muted) {
-      el.muted = false;
-      setMutedState(false);
+    
+    if (isYtMode) {
+      setYouTubeVolume(nextV * 100);
+    } else {
+      const el = audioRef.current;
+      if (el) {
+        el.volume = nextV;
+      }
     }
-  }, []);
+  }, [isYtMode]);
 
   const setMuted = useCallback((m: boolean) => {
-    const el = audioRef.current;
-    if (el) el.muted = m;
     setMutedState(m);
+    if (isYtMode) {
+      if (m) muteYouTubeVideo();
+      else unMuteYouTubeVideo();
+    } else {
+      if (audioRef.current) audioRef.current.muted = m;
+    }
+  }, [isYtMode]);
+
+  // Sync YouTube time
+  useEffect(() => {
+    if (!isYtMode) return;
+    const interval = setInterval(() => {
+      if (isPlaying) {
+        setCurrentTime(getYouTubeTime());
+        setDuration(getYouTubeDuration());
+        setBufferedAhead(getYouTubeBuffered());
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [isYtMode, isPlaying]);
+
+  // Handle YouTube Events
+  useEffect(() => {
+    const handleStateChange = (e: any) => {
+      const state = e.detail;
+      // YT.PlayerState: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued).
+      if (state === 1) {
+        setIsPlaying(true);
+        setIsBuffering(false);
+        setError(null);
+      } else if (state === 2) {
+        setIsPlaying(false);
+      } else if (state === 3) {
+        setIsBuffering(true);
+      } else if (state === 0) {
+        setIsPlaying(false);
+        setEndTick((n) => n + 1);
+      }
+    };
+
+    const handleError = () => {
+      setIsBuffering(false);
+      setIsPlaying(false);
+      setErrorTick((n) => n + 1);
+      setError("This YouTube track cannot be played (region blocked or restricted).");
+    };
+
+    window.addEventListener("yt-state-change", handleStateChange);
+    window.addEventListener("yt-error", handleError);
+    return () => {
+      window.removeEventListener("yt-state-change", handleStateChange);
+      window.removeEventListener("yt-error", handleError);
+    };
   }, []);
 
+  // Native audio event listeners
   useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
 
     const syncDuration = () => {
+      if (isYtMode) return;
       const d = el.duration;
       const live = !Number.isFinite(d) || d === 0 || d > 60 * 60 * 6;
       setIsLive(live);
       setDuration(live ? 0 : d);
     };
 
-    const onPlay = () => {
-      setIsPlaying(true);
-      setError(null);
-    };
-    const onPause = () => setIsPlaying(false);
-    const onPlaying = () => {
-      setIsBuffering(false);
-      setIsPlaying(true);
-      setError(null);
-    };
-    const onCanPlay = () => setIsBuffering(false);
-    const onWaiting = () => setIsBuffering(true);
+    const onPlay = () => { if (!isYtMode) { setIsPlaying(true); setError(null); } };
+    const onPause = () => { if (!isYtMode) setIsPlaying(false); };
+    const onPlaying = () => { if (!isYtMode) { setIsBuffering(false); setIsPlaying(true); setError(null); } };
+    const onCanPlay = () => { if (!isYtMode) setIsBuffering(false); };
+    const onWaiting = () => { if (!isYtMode) setIsBuffering(true); };
     const onTime = () => {
-      setCurrentTime(el.currentTime);
-      if (el.currentTime > 0) setIsBuffering(false);
-    };
-    const onProgress = () => {
-      try {
-        if (el.buffered.length > 0) setBufferedAhead(el.buffered.end(el.buffered.length - 1));
-      } catch {
-        /* ignore */
+      if (!isYtMode) {
+        setCurrentTime(el.currentTime);
+        if (el.currentTime > 0) setIsBuffering(false);
       }
     };
-    const onEnded = () => {
-      setIsPlaying(false);
-      setEndTick((n) => n + 1);
+    const onProgress = () => {
+      if (!isYtMode) {
+        try {
+          if (el.buffered.length > 0) setBufferedAhead(el.buffered.end(el.buffered.length - 1));
+        } catch {}
+      }
     };
+    const onEnded = () => { if (!isYtMode) { setIsPlaying(false); setEndTick((n) => n + 1); } };
     const onError = () => {
-      setIsBuffering(false);
-      setIsPlaying(false);
-      setErrorTick((n) => n + 1);
-      const code = el.error?.code;
-      const messages: Record<number, string> = {
-        1: "Loading aborted",
-        2: "Network error while fetching the stream",
-        3: "Stream could not be decoded",
-        4: "Stream unavailable in this format",
-      };
-      setError(code && messages[code] ? messages[code] : "This open stream could not be reached");
+      if (!isYtMode) {
+        setIsBuffering(false);
+        setIsPlaying(false);
+        setErrorTick((n) => n + 1);
+        setError("This open stream could not be reached");
+      }
     };
 
     el.addEventListener("play", onPlay);
@@ -227,6 +288,7 @@ export function useAudioEngine(): AudioEngine {
     el.addEventListener("progress", onProgress);
     el.addEventListener("ended", onEnded);
     el.addEventListener("error", onError);
+
     return () => {
       el.removeEventListener("play", onPlay);
       el.removeEventListener("pause", onPause);
@@ -242,9 +304,12 @@ export function useAudioEngine(): AudioEngine {
       el.removeEventListener("ended", onEnded);
       el.removeEventListener("error", onError);
     };
-  }, []);
+  }, [isYtMode]);
 
-  useEffect(() => () => audioRef.current?.pause(), []);
+  useEffect(() => () => {
+    audioRef.current?.pause();
+    pauseYouTubeVideo();
+  }, []);
 
   return useMemo(
     () => ({
@@ -290,6 +355,6 @@ export function useAudioEngine(): AudioEngine {
       nudge,
       setVolume,
       setMuted,
-    ],
+    ]
   );
 }
