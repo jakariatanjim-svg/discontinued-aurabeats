@@ -18,6 +18,7 @@ import { ACCENTS, useTheme } from "@/hooks/useTheme";
 import { usePlayer } from "@/hooks/usePlayer";
 import { invalidateFeeds } from "@/hooks/useFeed";
 import { resetHostHealth } from "@/services/youtube";
+import { APP_VERSION } from "@/constants";
 import { storage } from "@/utils/storage";
 import { Button, SectionHeader } from "@/components/ui";
 
@@ -379,7 +380,7 @@ export function SettingsView() {
       </section>
 
       <div className="text-center pt-6 pb-2">
-        <p className="text-[10px] font-bold text-ink3 uppercase tracking-widest">AuraBeats v5.0</p>
+        <p className="text-[10px] font-bold text-ink3 uppercase tracking-widest">AuraBeats v{APP_VERSION}</p>
         <p className="text-[9px] text-ink2 mt-1">Open-source browser music player</p>
       </div>
     </div>
