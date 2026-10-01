@@ -1,0 +1,32 @@
+{
+  "name": "AuraBeats — Open Music Player",
+  "short_name": "AuraBeats",
+  "description": "Stream open music, artist-approved releases, and live radio. No sign-up required.",
+  "start_url": "/home",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#090413",
+  "theme_color": "#3b82f6",
+  "categories": ["music", "entertainment"],
+  "icons": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en" data-theme="glassy" data-mode="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#3b82f6" />
+    <!-- Critical CSS: paints background + skeleton instantly before JS -->
+    <style>
+      *,::before,::after{box-sizing:border-box}
+      html,body,#root{height:100%;margin:0}
+      body{
+        background-color:#03010a;
+        background-image:radial-gradient(circle at 15% 30%,rgba(59,130,246,.18) 0%,transparent 45%),
+          radial-gradient(circle at 85% 70%,rgba(34,211,238,.14) 0%,transparent 50%),
+          radial-gradient(circle at 50% 100%,rgba(255,0,128,.09) 0%,transparent 60%);
+        font-family:Outfit,system-ui,-apple-system,sans-serif;
+        overflow:hidden;
+        color:#f8f5ff;
+        -webkit-font-smoothing:antialiased;
+      }
+      #root{display:flex;align-items:center;justify-content:center}
+      #app-loading{
+        display:flex;flex-direction:column;align-items:center;gap:20px;
+        position:fixed;inset:0;background:inherit;
+        z-index:999;align-items:center;justify-content:center;
+        transition:opacity .3s ease;
+      }
+      .app-logo{
+        width:56px;height:56px;border-radius:16px;
+        background:linear-gradient(135deg,#3b82f6,#22d3ee);
+        /* same as tab favicon */
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 0 30px rgba(59,130,246,.5);
+        animation:pulse 1.6s ease-in-out infinite;
+      }
+      @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+      .app-loading-text{font-size:13px;font-weight:600;opacity:.45;letter-spacing:.12em;text-transform:uppercase}
+    </style>
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta
+      name="description"
+      content="Stream millions of songs and live radio in a sleek browser player. YouTube Music, JioSaavn, Audius, Jamendo, Archive and more — no sign-up required."
+    />
+    <link rel="canonical" href="https://aurabeats.pages.dev/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aurabeats.pages.dev/" />
+    <meta property="og:title" content="AuraBeats — Music Player" />
+    <meta property="og:description" content="Stream millions of songs and live radio in a sleek browser player. YouTube Music, JioSaavn, Audius, Jamendo, Archive and more — no sign-up required." />
+    <meta property="og:image" content="https://aurabeats.pages.dev/og-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AuraBeats — Music Player" />
+    <meta name="twitter:description" content="Stream millions of songs and live radio in a sleek browser player — no sign-up required." />
+    <meta name="twitter:image" content="https://aurabeats.pages.dev/og-card.svg" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": ["WebSite", "WebApplication"],
+        "name": "AuraBeats",
+        "url": "https://aurabeats.pages.dev/",
+        "description": "Stream millions of songs and live radio in a sleek browser player — no sign-up required.",
+        "applicationCategory": "MusicApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+    <title>AuraBeats — Music Player</title>
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AuraBeats" />
+    <!-- DNS prefetch & preconnect — fastest possible connection setup -->
+    <!-- Primary music APIs (preconnect = DNS + TCP + TLS upfront) -->
+    <link rel="preconnect" href="https://saavn.sumit.co" crossorigin />
+    <link rel="preconnect" href="https://api.jamendo.com" crossorigin />
+    <link rel="preconnect" href="https://archive.org" crossorigin />
+    <link rel="preconnect" href="https://discoveryprovider.audius.co" crossorigin />
+    <!-- Secondary mirrors (dns-prefetch only — lighter, covers fallbacks) -->
+    <link rel="dns-prefetch" href="https://discoveryprovider2.audius.co" />
+    <link rel="dns-prefetch" href="https://discoveryprovider3.audius.co" />
+    <link rel="dns-prefetch" href="https://api.audius.co" />
+    <link rel="dns-prefetch" href="https://jiosaavn-api-liart-three.vercel.app" />
+    <link rel="dns-prefetch" href="https://jiosaavn-api-sumit.vercel.app" />
+    <link rel="dns-prefetch" href="https://pipedapi.kavin.rocks" />
+    <link rel="dns-prefetch" href="https://de1.api.radio-browser.info" />
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Favicon: blue-to-cyan waveform logo — same on tab, PWA, homescreen -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
+  </head>
+  <body>
+    <div id="app-loading" aria-hidden="true">
+      <div class="app-logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="12" width="3" height="10" rx="1.5" fill="white"/><rect x="10" y="8" width="3" height="14" rx="1.5" fill="white"/><rect x="16" y="10" width="3" height="12" rx="1.5" fill="white"/><rect x="22" y="14" width="3" height="8" rx="1.5" fill="white"/></svg>
+      </div>
+      <span class="app-loading-text">AuraBeats</span>
+    </div>
+    <div id="root">
+      <main style="max-width:1100px;margin:0 auto;padding:32px 20px;color:#fff;font-family:Outfit,system-ui,sans-serif;line-height:1.6;">
+        <h1 style="font-size:clamp(2rem,5vw,4rem);line-height:1.05;margin:0 0 12px;font-weight:900;letter-spacing:-0.04em;">Stream millions of songs and live radio in one player</h1>
+        <p style="max-width:760px;margin:0 0 18px;color:#c9bfe6;font-size:1rem;">
+          AuraBeats is a multi-source music player that aggregates YouTube Music, JioSaavn, Audius, Jamendo, Internet Archive and live radio into one premium browser experience.
+        </p>
+        <nav style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:22px;">
+          <a href="/home" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;background:#7c5cff;font-weight:700;">Start listening</a>
+          <a href="/search" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.18);">Search tracks</a>
+          <a href="/radio" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.18);">Live radio</a>
+          <a href="/library" style="color:#fff;text-decoration:none;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.18);">Your library</a>
+        </nav>
+        <section style="max-width:820px;margin-bottom:30px;">
+          <strong style="display:block;margin-bottom:8px;">Why trust AuraBeats?</strong>
+          <p style="margin:0 0 16px;color:#c9bfe6;">
+            AuraBeats pulls music from YouTube Music and multiple other sources including JioSaavn, Audius, Jamendo and Internet Archive. Nothing requires an account, and the app keeps your playlists, favourites and listening history in your own browser.
+          </p>
+          <ul style="list-style:none;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;color:#c9bfe6;font-size:0.9rem;">
+            <li><strong>Multiple Sources:</strong> JioSaavn, Audius, Jamendo, Archive.org.</li>
+            <li><strong>Live Radio:</strong> Global network of thousands of radio stations.</li>
+            <li><strong>Full Privacy:</strong> No accounts, no data collection, local storage only.</li>
+            <li><strong>100% Ad-Free:</strong> No banners, no pop-ups, no interruptions — ever.</li>
+            <li><strong>High Quality:</strong> Streaming at up to 320kbps for crystal clear audio.</li>
+            <li><strong>YouTube Music:</strong> Millions of songs from the world.s largest music catalog.</li>
+            <li><strong>Smart Search:</strong> Deep-scan across all supported databases instantly.</li>
+          </ul>
+        </section>
+        <footer style="border-top:1px solid rgba(255,255,255,.1);padding-top:20px;font-size:0.8rem;color:#857ca1;">
+          <p>&copy; 2025 AuraBeats Music Player. Built for performance and privacy. All rights to music belong to their respective owners.</p>
+        </footer>
+      </main>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
