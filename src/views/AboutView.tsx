@@ -1,4 +1,4 @@
-import { Archive, Globe, Heart, Mic2, Music2, Radio, Shield, Github } from "lucide-react";
+import { Archive, Globe, Heart, Mic2, Music2, Radio, Shield, GitBranch } from "lucide-react";
 import { SectionHeader, WaveformLogo } from "@/components/ui";
 
 const SOURCES = [
@@ -141,7 +141,7 @@ export function AboutView() {
             rel="noopener noreferrer"
             className="focus-ring shrink-0 rounded-full bg-accent px-6 py-3 text-sm font-bold text-white shadow-[0_14px_34px_-16px_var(--c-accent)] transition hover:brightness-110 flex items-center gap-2"
           >
-            <Github className="h-4 w-4" /> View on GitHub
+            <GitBranch className="h-4 w-4" /> View on GitHub
           </a>
         </div>
       </section>

@@ -43,7 +43,7 @@ jobs:
         run: npm ci
 
       - name: TypeScript check
-        run: npx tsc --noEmit
+        run: npx typescript@latest tsc --noEmit
 
       - name: Production build
         run: npm run build
