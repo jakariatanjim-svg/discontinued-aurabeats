@@ -41,7 +41,7 @@ jobs:
           fi
 
           echo "version=$VER" >> "$GITHUB_OUTPUT"
-          echo "Built: $(date -u '+%Y-%m-%d %H:%M UTC')" >> "$GITHUB_OUTPUT"
+          echo "build=manual" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: npm ci
@@ -64,7 +64,7 @@ jobs:
         with:
           tag_name: ${{ steps.ver.outputs.version }}
           name: "AuraBeats ${{ steps.ver.outputs.version }}"
-          body: "Manual build - ${{ steps.ver.outputs.Built }}"
+          body: "Manual build - ${{ steps.ver.outputs.build }}"
           files: |
             index.html
             aurabeats-dist.zip

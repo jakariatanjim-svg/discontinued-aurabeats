@@ -31,13 +31,14 @@ jobs:
 
           if [[ "$TAG_VER" == v* ]]; then
             VER="$TAG_VER"
-          elif [ -n "$PKG_VER" ] && [ "$PKG_VER" != "0.0.0" ] && [ "$PKG_VER" != "" ]; then
+          elif [[ -n "$PKG_VER" ]] && [[ "$PKG_VER" != "0.0.0" ]] && [[ "$PKG_VER" != "" ]]; then
             VER="v${PKG_VER}"
           else
             VER="build-${{ github.run_number }}"
           fi
 
           echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "build=production" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: npm ci
