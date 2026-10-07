@@ -13,7 +13,17 @@ self.addEventListener("install", (e) => {
   // Force installing the new worker immediately
   self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(SHELL))
+    caches.open(CACHE).then(async (c) => {
+      // Fetch each shell file individually so a single 404 (like a missing icon) 
+      // doesn't cause the entire Service Worker installation to fail and get stuck.
+      for (const req of SHELL) {
+        try {
+          await c.add(req);
+        } catch (err) {
+          console.warn(`[SW] Failed to cache shell asset: ${req}`, err);
+        }
+      }
+    })
   );
 });
 
@@ -61,4 +71,11 @@ self.addEventListener("fetch", (e) => {
         return caches.match(e.request);
       })
   );
+});
+
+// Immediately notify clients when a new service worker is installed
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

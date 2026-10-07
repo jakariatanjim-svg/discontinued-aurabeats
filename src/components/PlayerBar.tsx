@@ -182,12 +182,7 @@ export function PlayerBar({ onOpenQueue }: { onOpenQueue: () => void }) {
             <Visualizer variant="wave" barCount={28} active={isPlaying} />
           </div>
           {current && (
-            <IconButton
-              size="sm"
-              onClick={() => downloadTrack(current)}
-              aria-label="Download track"
-              className="shrink-0"
-            >
+            <IconButton size="sm" onClick={() => downloadTrack(current)} aria-label="Download">
               <Download className="h-4 w-4" />
             </IconButton>
           )}

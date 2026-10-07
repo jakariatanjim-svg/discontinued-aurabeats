@@ -23,9 +23,7 @@ async function fetchJSON<T>(url: string, timeout = 8000): Promise<T> {
     const res = await fetch(url, { signal: ctrl.signal, headers: { Accept: "application/json" } });
     clearTimeout(t);
     if (res.ok) return res.json() as Promise<T>;
-  } catch {
-    // Proxy fetch failed, try next proxy
-  }
+  } catch { /* try proxy */ }
 
   // Race CORS proxies
   const controllers = CORS.map(() => new AbortController());

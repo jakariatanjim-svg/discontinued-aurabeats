@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#3b82f6" />
+    <meta name="theme-color" content="#06030f" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#7c5cff" media="(prefers-color-scheme: light)" />
     <!-- Critical CSS: paints background + skeleton instantly before JS -->
     <style>
       *,::before,::after{box-sizing:border-box}
@@ -71,10 +72,19 @@
     </script>
     <title>AuraBeats — Music Player</title>
     <link rel="manifest" href="/manifest.json" />
+    <!-- PWA Install — mobile (Android + iOS) -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="AuraBeats" />
+    <meta name="application-name" content="AuraBeats" />
+    <meta name="msapplication-TileImage" content="/icon-512.png" />
+    <meta name="msapplication-TileColor" content="#06030f" />
+    <!-- Multiple Apple touch icon sizes for better iOS compatibility -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-512.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-512.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/icon-512.png" />
+    <link rel="apple-touch-startup-image" href="/icon-512.png" />
     <!-- DNS prefetch & preconnect — fastest possible connection setup -->
     <!-- Primary music APIs (preconnect = DNS + TCP + TLS upfront) -->
     <link rel="preconnect" href="https://saavn.sumit.co" crossorigin />

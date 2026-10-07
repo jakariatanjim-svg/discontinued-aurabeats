@@ -29,7 +29,6 @@ export function MobileNav({
               key={key}
               type="button"
               onClick={() => onNavigate(key)}
-              aria-label={label}
               className={cn(
                 "focus-ring relative flex min-h-[4.1rem] flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-semibold transition-all",
                 active ? "bg-accent/14 text-accent shadow-[0_12px_28px_-20px_var(--c-accent)]" : "text-ink3 hover:bg-white/[0.04] hover:text-ink",

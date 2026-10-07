@@ -97,7 +97,7 @@ export async function proxyFetch(
         if (settled) return;
         settled = true;
         // Abort all other in-flight requests
-        controllers.forEach((c) => { try { c.abort(); } catch { /* ignore abort errors */ } });
+        controllers.forEach((c) => { try { c.abort(); } catch {} });
         resolve(res);
       }).catch(() => {
         failures++;

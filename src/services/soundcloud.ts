@@ -27,9 +27,7 @@ async function fetchViaProxy<T>(url: string): Promise<T> {
         headers: { Accept: "application/json" },
       });
       if (res.ok) return res.json() as Promise<T>;
-    } catch {
-      // Proxy failed, try next one
-    }
+    } catch { /* next proxy */ }
   }
   throw new Error("All proxies failed");
 }
@@ -71,9 +69,7 @@ export async function searchTracks(query: string, limit = 15): Promise<Track[]> 
       const data = await fetchViaProxy<{ collection: SCTrack[] }>(url);
       const tracks = (data.collection ?? []).map(toTrack);
       if (tracks.length > 0) return tracks;
-    } catch {
-      // Try next client_id
-    }
+    } catch { /* try next client_id */ }
   }
   return [];
 }
@@ -89,9 +85,7 @@ export async function resolveStreamUrls(scId: string): Promise<{ urls: string[] 
 
       const streamData = await fetchViaProxy<{ url: string }>(`${progressive.url}?client_id=${cid}`);
       if (streamData.url) return { urls: [streamData.url] };
-    } catch {
-      // Try next client_id
-    }
+    } catch { /* next cid */ }
   }
   throw new Error("SoundCloud stream resolve failed");
 }

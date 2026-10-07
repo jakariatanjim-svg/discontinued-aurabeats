@@ -156,9 +156,7 @@ export function useAudioEngine(): AudioEngine {
         try {
           el.currentTime = Math.min(Math.max(0, seconds), el.duration - 0.25);
           setCurrentTime(el.currentTime);
-        } catch {
-          // Ignore seek errors (e.g., for live streams)
-        }
+        } catch {}
       }
     }
   }, [isYtMode]);
@@ -264,9 +262,7 @@ export function useAudioEngine(): AudioEngine {
       if (!isYtMode) {
         try {
           if (el.buffered.length > 0) setBufferedAhead(el.buffered.end(el.buffered.length - 1));
-        } catch {
-          // Ignore buffer errors
-        }
+        } catch {}
       }
     };
     const onEnded = () => { if (!isYtMode) { setIsPlaying(false); setEndTick((n) => n + 1); } };

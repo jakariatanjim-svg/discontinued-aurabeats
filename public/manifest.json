@@ -1,14 +1,16 @@
 {
-  "name": "AuraBeats — Open Music Player",
+  "name": "AuraBeats — Music Player",
   "short_name": "AuraBeats",
-  "description": "Stream open music, artist-approved releases, and live radio. No sign-up required.",
+  "description": "Stream millions of songs and live radio. YouTube Music, JioSaavn, Audius and more. No sign-up required.",
   "start_url": "/home",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#090413",
-  "theme_color": "#3b82f6",
+  "background_color": "#06030f",
+  "theme_color": "#7c5cff",
   "categories": ["music", "entertainment"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icon-512.png",
@@ -27,6 +29,34 @@
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-card.svg",
+      "sizes": "1200x630",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Search Music",
+      "short_name": "Search",
+      "url": "/search",
+      "description": "Search millions of songs"
+    },
+    {
+      "name": "Live Radio",
+      "short_name": "Radio",
+      "url": "/radio",
+      "description": "Browse live radio stations"
+    },
+    {
+      "name": "Your Library",
+      "short_name": "Library",
+      "url": "/library",
+      "description": "Your playlists and favourites"
     }
   ]
 }

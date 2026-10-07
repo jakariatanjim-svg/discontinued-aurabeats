@@ -18,7 +18,6 @@ import { ACCENTS, useTheme } from "@/hooks/useTheme";
 import { usePlayer } from "@/hooks/usePlayer";
 import { invalidateFeeds } from "@/hooks/useFeed";
 import { resetHostHealth } from "@/services/youtube";
-import { APP_VERSION } from "@/constants";
 import { storage } from "@/utils/storage";
 import { Button, SectionHeader } from "@/components/ui";
 
@@ -61,8 +60,6 @@ function EngineStatusList() {
   });
 
   useEffect(() => {
-    const timeoutIds: NodeJS.Timeout[] = [];
-    let labelTimeoutId: NodeJS.Timeout | undefined;
     const handleTest = () => {
       setTesting(true);
       const sources = Object.keys(status);
@@ -73,28 +70,22 @@ function EngineStatusList() {
 
       // Simulate a realistic staggered ping test for the UI
       sources.forEach((s, i) => {
-        const timeoutId = setTimeout(() => {
+        setTimeout(() => {
           setStatus((prev: any) => ({ ...prev, [s]: "Online" }));
           if (i === sources.length - 1) {
             setTesting(false);
             const btn = document.getElementById("test-connectivity-btn");
             if (btn) {
               btn.textContent = "All Systems Go";
-              labelTimeoutId = setTimeout(() => btn.textContent = "Test Connectivity", 2000);
+              setTimeout(() => btn.textContent = "Test Connectivity", 2000);
             }
           }
         }, 800 + (i * 400));
-        timeoutIds.push(timeoutId);
       });
     };
 
     window.addEventListener('test-connectivity', handleTest);
-    return () => {
-      window.removeEventListener('test-connectivity', handleTest);
-      // Cleanup any pending timeouts
-      timeoutIds.forEach((id) => clearTimeout(id));
-      if (labelTimeoutId) clearTimeout(labelTimeoutId);
-    };
+    return () => window.removeEventListener('test-connectivity', handleTest);
   }, []);
 
   return (
@@ -378,11 +369,6 @@ export function SettingsView() {
           />
         </div>
       </section>
-
-      <div className="text-center pt-6 pb-2">
-        <p className="text-[10px] font-bold text-ink3 uppercase tracking-widest">AuraBeats v{APP_VERSION}</p>
-        <p className="text-[9px] text-ink2 mt-1">Open-source browser music player</p>
-      </div>
     </div>
   );
 }
