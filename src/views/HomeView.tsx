@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  Disc3,
   Flame,
   Heart,
   Radio,
@@ -11,8 +10,6 @@ import {
 } from "lucide-react";
 import { useFeed } from "@/hooks/useFeed";
 import {
-  ARCHIVE_COLLECTIONS,
-  fetchCollection,
   fetchForYou,
   fetchFresh,
   fetchGenre,
@@ -326,18 +323,6 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
         )}
       </section>
 
-      <section id="home-collections">
-        <SectionHeader
-          title="Open Collections"
-          subtitle="Archive playlists are loaded only when you tap them"
-          icon={<Disc3 className="h-4 w-4 text-accent" />}
-        />
-        <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
-          {ARCHIVE_COLLECTIONS.map((c) => (
-            <CollectionRow key={c.slug} slug={c.slug} label={c.label} blurb={c.blurb} />
-          ))}
-        </div>
-      </section>
     </div>
   );
 }
@@ -379,41 +364,3 @@ function DeferredNotice({ title, body }: { title: string; body: string }) {
   );
 }
 
-function CollectionRow({ slug, label, blurb }: { slug: string; label: string; blurb: string }) {
-  const { playAll, toast } = usePlayer();
-  const [pending, setPending] = useState(false);
-
-  const go = async () => {
-    setPending(true);
-    try {
-      const tracks = await fetchCollection(slug, { limit: 40 });
-      if (tracks.length === 0) {
-        toast(`No playable items in ${label} right now`, "error");
-      } else {
-        playAll(tracks, 0);
-        toast(`${label} — ${tracks.length} full tracks queued`, "success");
-      }
-    } catch {
-      toast("Open archive unreachable — retrying another mirror next time", "error");
-    } finally {
-      setPending(false);
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      onClick={go}
-      disabled={pending}
-      className="blur-panel group flex items-center gap-3 rounded-[1.45rem] p-4 text-left transition-transform duration-200 hover:-translate-y-0.5 disabled:opacity-60"
-    >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent">
-        <Disc3 className={pending ? "h-5 w-5 animate-spin" : "h-5 w-5"} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-bold text-ink">{label}</span>
-        <span className="block text-[11px] leading-5 text-ink3">{pending ? "Loading full tracks…" : blurb}</span>
-      </span>
-    </button>
-  );
-}

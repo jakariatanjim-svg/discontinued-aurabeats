@@ -125,7 +125,7 @@ export function TopBar({
         className="focus-ring flex min-w-0 shrink items-center gap-2.5 rounded-2xl md:hidden"
         aria-label="AuraBeats — go to home"
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-lg shadow-blue-500/30">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#3b82f6] to-[#22d3ee] text-white shadow-[0_8px_20px_-6px_rgba(59,130,246,0.5)]">
           <WaveformLogo className="h-5 w-5" />
         </span>
         <span className="min-w-0 flex flex-col items-start leading-tight">

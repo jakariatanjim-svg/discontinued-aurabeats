@@ -6,9 +6,9 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <!-- Waveform bars — same design as tab icon -->
-  <rect x="108" y="228" width="52" height="144" rx="26" fill="white"/>
-  <rect x="196" y="156" width="52" height="216" rx="26" fill="white"/>
-  <rect x="284" y="196" width="52" height="176" rx="26" fill="white"/>
-  <rect x="372" y="268" width="52" height="104" rx="26" fill="white"/>
+  <!-- Waveform bars — small tall tall small (matches icon-512.png) -->
+  <rect x="100" y="200" width="58" height="148" rx="29" fill="white"/>
+  <rect x="188" y="110" width="58" height="292" rx="29" fill="white"/>
+  <rect x="276" y="110" width="58" height="292" rx="29" fill="white"/>
+  <rect x="364" y="200" width="58" height="148" rx="29" fill="white"/>
 </svg>

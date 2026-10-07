@@ -116,7 +116,7 @@ export const Sidebar = memo(function Sidebar({
     >
       <div className={cn("relative flex items-center pt-6 pb-4", collapsed ? "justify-center px-0" : "justify-between px-5")}>
         <div className={cn("flex items-center gap-3 min-w-0", collapsed && "hidden")}>
-          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-[0_8px_20px_-6px_#3b82f6]">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#3b82f6] to-[#22d3ee] text-white shadow-[0_8px_20px_-6px_rgba(59,130,246,0.5)]">
             <WaveformLogo className="h-5 w-5" />
             <div className="absolute inset-0 rounded-2xl ring-1 ring-white/20" />
           </div>
