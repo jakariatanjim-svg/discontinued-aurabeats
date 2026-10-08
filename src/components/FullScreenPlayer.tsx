@@ -221,167 +221,70 @@ export function FullScreenPlayer() {
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto scroll-area px-4 pt-4 pb-6 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10">
-          {/* left: art + controls */}
-          <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-5">
-            {showLyrics ? (
-              <div className="flex w-full flex-1 flex-col items-center justify-center overflow-hidden">
-                <LyricsViewer trackName={current.title} artistName={current.artist} />
-              </div>
-            ) : (
-              <>
-            <div className="relative w-[min(70vw,18rem)] sm:w-[min(46vh,22rem)]">
-              <div
-                className={cn(
-                  "absolute -inset-8 -z-10 rounded-full blur-[60px] transition-opacity duration-1000",
-                  isPlaying ? "opacity-60" : "opacity-20",
-                )}
-                style={{ backgroundImage: gradientFrom(current.title) }}
-              />
-              {/* CD vinyl ring effect */}
-              <div className={cn(
-                "absolute inset-0 flex items-center justify-center rounded-full transition-all duration-700",
-                isPlaying ? "opacity-100" : "opacity-0",
-              )}>
-                <span className="pointer-events-none absolute inset-[-8px] rounded-full border-[3px] border-white/[0.08]" />
-                <span className="pointer-events-none absolute inset-[-16px] rounded-full border border-white/[0.04]" />
-                <span className={cn(
-                  "pointer-events-none absolute inset-[-12px] rounded-full border border-dashed border-white/15",
-                  isPlaying && "animate-spin-slow",
-                )} />
-              </div>
-              <div className={cn(
-                "transition-all duration-700",
-                isPlaying && "animate-spin-slow",
-              )}>
-                <Artwork
-                  src={current.artworkLarge || current.artwork || undefined}
-                  fallbackSrc={current.artworkFallback}
-                  alt={current.title}
-                  className={cn(
-                    "aspect-square w-full shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] ring-[6px] ring-black/30",
-                  )}
-                  rounded="rounded-full"
-                />
-                {/* CD center hole */}
-                <div className="absolute top-1/2 left-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/20 bg-black/60 shadow-inner sm:h-8 sm:w-8" />
-              </div>
-            </div>
+        <div className="flex min-h-0 flex-1 flex-col px-4 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10">
+          {/* Main area — splits into lyrics (top) + controls (bottom) */}
+          <div className="flex min-w-0 flex-1 flex-col items-center">
 
-            <div className="w-full max-w-xl text-center">
-              <h2 className="truncate text-2xl font-black tracking-tight text-white sm:text-4xl">
-                {current.title}
-              </h2>
-              <p className="mt-1.5 truncate text-sm text-white/70 sm:text-base">
-                {current.artist}
-                {current.genre ? ` • ${current.genre}` : ""}
-                {current.mood ? ` • ${current.mood}` : ""}
-              </p>
-              {current.tags && current.tags.length > 0 && (
-                <div className="mt-3 flex flex-wrap justify-center gap-1.5">
-                  {current.tags.slice(0, 4).map((t) => (
-                    <span key={t} className="rounded-full border border-white/20 px-2 py-0.5 text-[10px] text-white/70">
-                      #{t}
-                    </span>
-                  ))}
-                </div>
+            {/* Upper half: artwork OR lyrics */}
+            <div className={cn(
+              "flex w-full items-center justify-center transition-all duration-300",
+              showLyrics ? "flex-1 overflow-hidden pt-4" : "flex-1 flex-col gap-5 justify-center pt-4"
+            )}>
+              {showLyrics ? (
+                <LyricsViewer trackName={current.title} artistName={current.artist} currentTime={currentTime} />
+              ) : (
+                <>
+                  <div className="relative w-[min(60vw,16rem)] sm:w-[min(40vh,20rem)]">
+                    <div className={cn("absolute -inset-8 -z-10 rounded-full blur-[60px] transition-opacity duration-1000", isPlaying ? "opacity-60" : "opacity-20")} style={{ backgroundImage: gradientFrom(current.title) }} />
+                    <div className={cn("absolute inset-0 flex items-center justify-center rounded-full transition-all duration-700", isPlaying ? "opacity-100" : "opacity-0")}>
+                      <span className="pointer-events-none absolute inset-[-8px] rounded-full border-[3px] border-white/[0.08]" />
+                      <span className="pointer-events-none absolute inset-[-16px] rounded-full border border-white/[0.04]" />
+                      <span className={cn("pointer-events-none absolute inset-[-12px] rounded-full border border-dashed border-white/15", isPlaying && "animate-spin-slow")} />
+                    </div>
+                    <div className={cn("transition-all duration-700", isPlaying && "animate-spin-slow")}>
+                      <Artwork src={current.artworkLarge || current.artwork || undefined} fallbackSrc={current.artworkFallback} alt={current.title} className="aspect-square w-full shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] ring-[6px] ring-black/30" rounded="rounded-full" />
+                      <div className="absolute top-1/2 left-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/20 bg-black/60 shadow-inner sm:h-8 sm:w-8" />
+                    </div>
+                  </div>
+                  <div className="w-full max-w-xl text-center">
+                    <h2 className="truncate text-2xl font-black tracking-tight text-white sm:text-4xl">{current.title}</h2>
+                    <p className="mt-1.5 truncate text-sm text-white/70 sm:text-base">{current.artist}{current.genre ? ` • ${current.genre}` : ""}</p>
+                  </div>
+                  <div className="h-10 w-full max-w-xl">
+                    <Visualizer variant="mirror" barCount={48} active={isPlaying} />
+                  </div>
+                </>
               )}
             </div>
 
-            <div className="h-14 w-full max-w-xl">
-              <Visualizer variant="mirror" barCount={56} active={isPlaying} />
-            </div>
-
-            <div className="w-full max-w-xl">
-              <Slider
-                ariaLabel="Seek"
-                value={isLive ? 0 : currentTime}
-                max={isLive ? 0 : duration}
-                buffered={bufferedAhead}
-                onChange={() => {}}
-                onCommit={seek}
-                height="h-1.5"
-                disabled={isLive}
-              />
-              <div className="flex justify-between text-[11px] tabular-nums text-white/60">
-                <span>{isLive ? "LIVE" : formatTime(currentTime)}</span>
-                <span>{isLive ? "uninterrupted stream" : formatTime(duration)}</span>
+            {/* Lower half: controls — ALWAYS visible */}
+            <div className="w-full max-w-xl flex-shrink-0 space-y-3 pb-6 pt-3">
+              <div className="w-full">
+                <Slider ariaLabel="Seek" value={isLive ? 0 : currentTime} max={isLive ? 0 : duration} buffered={bufferedAhead} onChange={() => {}} onCommit={seek} height="h-1.5" disabled={isLive} />
+                <div className="flex justify-between text-[11px] tabular-nums text-white/60">
+                  <span>{isLive ? "LIVE" : formatTime(currentTime)}</span>
+                  <span>{isLive ? "uninterrupted stream" : formatTime(duration)}</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-center gap-3 sm:gap-5">
+                <IconButton active={shuffle} onClick={toggleShuffle} aria-label="Shuffle" className="text-white/70 hover:text-white"><Shuffle className="h-[18px] w-[18px]" /></IconButton>
+                <IconButton onClick={previous} aria-label="Previous" className="text-white hover:bg-white/10"><SkipBack className="h-7 w-7 fill-current" /></IconButton>
+                <button type="button" onClick={toggle} aria-label={isPlaying ? "Pause" : "Play"} className={cn("focus-ring flex h-16 w-16 items-center justify-center rounded-full bg-white text-black shadow-2xl transition-transform hover:scale-105 active:scale-95", isPlaying && "shadow-[0_0_44px_-6px_var(--c-accent)]")}>
+                  {isBuffering ? <Loader2 className="h-7 w-7 animate-spin" /> : isPlaying ? <Pause className="h-7 w-7 fill-current" /> : <Play className="h-7 w-7 translate-x-[2px] fill-current" />}
+                </button>
+                <IconButton onClick={next} aria-label="Next" className="text-white hover:bg-white/10"><SkipForward className="h-7 w-7 fill-current" /></IconButton>
+                <IconButton active={repeat === "one"} onClick={cycleRepeat} aria-label={repeat === "one" ? "Repeat ON" : "Repeat OFF"} className={cn("transition-colors", repeat === "one" ? "text-accent" : "text-white/40 hover:text-white")}>
+                  {repeat === "one" ? <Repeat1 className="h-[18px] w-[18px]" /> : <Repeat className="h-[18px] w-[18px]" />}
+                </IconButton>
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <IconButton aria-label="Favourite" onClick={() => toggleFavorite(current)} className={cn("text-white/70 hover:text-white", fav && "text-accent")}><Heart className={cn("h-5 w-5", fav && "fill-current")} /></IconButton>
+                <IconButton aria-label={offline ? "Remove from offline" : "Save for offline"} onClick={() => offline ? removeOffline(current.id) : saveOffline(current)} className={cn("text-white/70 hover:text-white", offline && "text-cyan-400")}>{offline ? <Trash2 className="h-5 w-5" /> : <DownloadCloud className="h-5 w-5" />}</IconButton>
+                <IconButton aria-label="Export file" onClick={() => downloadTrack(current)} className="text-white/70 hover:text-white"><Download className="h-5 w-5" /></IconButton>
+                <IconButton onClick={toggleMute} aria-label="Mute" className="text-white/70 hover:text-white"><VolumeIcon className="h-5 w-5" /></IconButton>
+                <div className="w-24 sm:w-36"><Slider ariaLabel="Volume" value={muted ? 0 : volume * 100} max={100} onChange={(v) => setVolume(v / 100)} height="h-1" /></div>
               </div>
             </div>
-
-            <div className="flex w-full max-w-xl items-center justify-center gap-3 sm:gap-5">
-              <IconButton
-                active={shuffle}
-                onClick={toggleShuffle}
-                aria-label="Shuffle"
-                className="text-white/70 hover:text-white"
-              >
-                <Shuffle className="h-[18px] w-[18px]" />
-              </IconButton>
-              <IconButton onClick={previous} aria-label="Previous" className="text-white hover:bg-white/10">
-                <SkipBack className="h-7 w-7 fill-current" />
-              </IconButton>
-              <button
-                type="button"
-                onClick={toggle}
-                aria-label={isPlaying ? "Pause" : "Play"}
-                className={cn(
-                  "focus-ring flex h-16 w-16 items-center justify-center rounded-full bg-white text-black shadow-2xl transition-transform hover:scale-105 active:scale-95",
-                  isPlaying && "shadow-[0_0_44px_-6px_var(--c-accent)]",
-                )}
-              >
-                {isBuffering ? (
-                  <Loader2 className="h-7 w-7 animate-spin" />
-                ) : isPlaying ? (
-                  <Pause className="h-7 w-7 fill-current" />
-                ) : (
-                  <Play className="h-7 w-7 translate-x-[2px] fill-current" />
-                )}
-              </button>
-              <IconButton onClick={next} aria-label="Next" className="text-white hover:bg-white/10">
-                <SkipForward className="h-7 w-7 fill-current" />
-              </IconButton>
-              <IconButton
-                active={repeat === "one"}
-                onClick={cycleRepeat}
-                aria-label={repeat === "one" ? "Repeat is ON" : "Repeat is OFF"}
-                className={cn("transition-colors", repeat === "one" ? "text-accent drop-shadow-[0_0_8px_var(--c-accent)]" : "text-white/40 hover:text-white")}
-              >
-                {repeat === "one" ? <Repeat1 className="h-[18px] w-[18px]" /> : <Repeat className="h-[18px] w-[18px]" />}
-              </IconButton>
-            </div>
-
-            <div className="flex w-full max-w-xl items-center justify-center gap-3">
-              <IconButton
-                aria-label="Favourite"
-                onClick={() => toggleFavorite(current)}
-                className={cn("text-white/70 hover:text-white", fav && "text-accent")}
-              >
-                <Heart className={cn("h-5 w-5", fav && "fill-current")} />
-              </IconButton>
-              <IconButton
-                aria-label={offline ? "Remove from offline" : "Save for offline"}
-                onClick={() => offline ? removeOffline(current.id) : saveOffline(current)}
-                className={cn("text-white/70 hover:text-white", offline && "text-cyan-400 hover:text-cyan-300")}
-              >
-                {offline ? <Trash2 className="h-5 w-5" /> : <DownloadCloud className="h-5 w-5" />}
-              </IconButton>
-              <IconButton
-                aria-label="Export file"
-                onClick={() => downloadTrack(current)}
-                className="text-white/70 hover:text-white"
-              >
-                <Download className="h-5 w-5" />
-              </IconButton>
-              <IconButton onClick={toggleMute} aria-label="Mute" className="text-white/70 hover:text-white">
-                <VolumeIcon className="h-5 w-5" />
-              </IconButton>
-              <div className="w-32 sm:w-44">
-                <Slider ariaLabel="Volume" value={muted ? 0 : volume * 100} max={100} onChange={(v) => setVolume(v / 100)} height="h-1" />
-              </div>
-            </div>
-            </>
-            )}
           </div>
 
           {/* right: up next */}

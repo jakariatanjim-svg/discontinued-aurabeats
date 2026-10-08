@@ -29,7 +29,7 @@ function parseLRC(raw: string): SyncLine[] {
   return out;
 }
 
-export function LyricsViewer({ trackName, artistName }: { trackName: string; artistName: string }) {
+export function LyricsViewer({ trackName, artistName, currentTime: _currentTime }: { trackName: string; artistName: string; currentTime?: number }) {
   const [plainLines, setPlainLines] = useState<string[]>([]);
   const [syncLines, setSyncLines] = useState<SyncLine[]>([]);
   const [loading, setLoading] = useState(true);
