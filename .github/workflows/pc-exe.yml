@@ -1,0 +1,44 @@
+name: PC-EXE Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Tauri CLI
+        run: npm install -g @tauri-apps/cli
+
+      - name: Build EXE
+        run: npx tauri build --verbose
+
+      - name: Collect build output
+        run: |
+          $outDir = "src-tauri/target/release/bundle"
+          if (-Not (Test-Path $outDir)) { $outDir = "src-tauri/target/x86_64-pc-windows-msvc/bundle" }
+          Get-ChildItem -Path $outDir -Recurse -File | Where-Object { $_.Name -like "*.exe" -or $_.Name -like "*.msi" } | Select-Object -ExpandProperty FullName
+
+      - name: Upload EXE to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: src-tauri/target/release/bundle/*.exe
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
