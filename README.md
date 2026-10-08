@@ -1,8 +1,6 @@
-# AuraBeats · Open Sound Engine
+# AuraBeats · Streaming Engine
 
-An ultra-modern, production-ready music web application that streams **live** from multiple free
-public music networks. No API keys, no accounts, no subscriptions, no rate limits, no hardcoded
-song lists.
+An ultra-modern, production-ready music streaming application that aggregates the world's largest audio catalogs into one seamless web experience. No API keys, no accounts, no subscriptions, no rate limits.
 
 [![Website](https://img.shields.io/badge/Website-aurabeats.pages.dev-7c5cff?style=for-the-badge)](https://aurabeats.pages.dev/)
 
@@ -11,67 +9,45 @@ song lists.
 ![stack](https://img.shields.io/badge/Vite_7-React_19-646cff)
 ![style](https://img.shields.io/badge/Tailwind_CSS_v4-dual_theme-38bdf8)
 ![cost](https://img.shields.io/badge/cost-100%25_free-22c55e)
-![sources](https://img.shields.io/badge/sources-5_databases-ff6b6b)
+![sources](https://img.shields.io/badge/sources-7_engines-ff6b6b)
 
 ---
 
 ## ✨ Features
 
-### Crawlability & sharing ready
-- Canonical URL, Open Graph tags, Twitter card, JSON-LD, `robots.txt`, and `sitemap.xml`
-- Raw HTML fallback hero content for crawlers and rich link preview tools
-- Social preview image included for consistent sharing across apps
+### Hybrid Playback Engine
+- **Dual Core**: Seamlessly switches between a native HTML5 Audio engine (for direct MP3 sources) and a hidden, ad-free YouTube IFrame player.
+- **Unified Controls**: Play, pause, seek, and volume work identically across all sources.
+- **Smart Failover**: Automatically races multiple mirrors and fallback sources if a stream fails.
 
-### Homepage onboarding & trust
-- Hero CTAs rewritten around real user intent: **play free open tracks** or **browse live radio**
-- Plain-language **"Where the music comes from"** explainer covering JioSaavn, Audius, Jamendo, Internet Archive and live radio
-- Simple **"How AuraBeats works"** 3-step section for first-time visitors
-- Below-the-fold home sections load on demand for a lighter first paint
-- Mobile home layout and navigation polished for cleaner one-hand use
+### Multi-source Aggregation
+Every song is a complete, full-length recording streamed from multiple public networks.
 
-### Multi-source streaming engine
+| Source | What it provides | Quality |
+| --- | --- | --- |
+| **YouTube Music** | World's largest catalog: Official, remixes, slowed, live. | High |
+| **JioSaavn** | Massive mainstream database: Bollywood, regional, international. | 320 kbps |
+| **SoundCloud** | Indie, underground, remixes, and user-uploaded hits. | Variable |
+| **Audius** | Decentralised artist catalogue: charts, releases, genre feeds. | 320 kbps |
+| **Jamendo** | Creative-Commons indie library: mood & genre filters. | Full |
+| **Internet Archive** | Historical recordings, net labels, live concerts, classics. | Full |
+| **Radio Browser** | Worldwide live radio directory: tag/country filters. | Endless |
 
-Every song is a complete, full-length recording streamed from free, open
-music networks with automatic multi-source racing and failover.
+### Smart Search & Discovery
+- **Two-Tab Search**: Dedicated filters for **YT Music** ( lyrics-friendly, fuzzy matching) and **Other Sources** (consolidated database results).
+- **Favourites-First Personalization**: The "For You" section learns from your **Favourites only**, ensuring your daily mix isn't polluted by random test listens or play history.
+- **Engine Status**: Real-time connectivity monitoring in Settings with a manual "Test Connectivity" suite.
 
-| Source | What it provides | Auth | Quality |
-| --- | --- | --- | --- |
-| **JioSaavn** | Massive database: Bollywood, regional, international. Direct MP3. | None | 320 kbps |
-| **Jamendo** | Creative-Commons indie library: mood & genre filters. | None | Full |
-| **Audius** | Decentralised artist catalogue: charts, releases, genre feeds. | None | 320 kbps |
-| **Internet Archive** | CC & public-domain: net labels, live concerts, restored classics. | None | Full |
-| **Radio Browser** | Worldwide live radio directory: tag/country filters. | None | Endless |
+### Player Experience
+- **Sticky Bottom Player** + polished mobile navigation.
+- **Rotating Vinyl CD Artwork** in the full-screen player.
+- **Swipe-to-Minimize**: Easily minimize the full-screen player on mobile with a simple downward swipe.
+- **Canvas Audio Visualizer**: (Note: analyzed only for native audio sources).
+- **In-App Downloads**: Save tracks for offline use ( native sources) or use the one-click prefilled downloader modal (YouTube).
 
-- Zero hardcoded tracks — every URL fetched at runtime
-- Sources **race in parallel** — fastest response wins, no manual selection
-- Automatic failover across mirrors if one network goes down
-- **One-click MP3 downloads** for offline listening
-- Two-level cache (memory + localStorage) for instant section returns
-
-### Stream fail-over engine
-```
-stream error ─┐
-stalled 12s  ─┼─► next mirror ─► CORS proxy ─► auto-hop to next track
-```
-
-### Smart search
-- Real-time autocomplete from JioSaavn's database (actual song names, not generic hints)
-- Results ranked by relevance across all 5 databases simultaneously
-- 180ms debounce for near-instant feedback
-
-### Player
-- Sticky bottom player + mobile bottom navigation
-- Play/pause, seek bar (properly synced), volume + mute, shuffle, repeat one
-- **Mouse wheel volume control** — scroll anywhere to adjust
-- **Rotating vinyl CD artwork** in the full-screen player
-- Canvas audio visualizer (bars / wave / mirror modes)
-- One-click download button on every track
-- Favourites, playlists, listening history — all local
-
-### Dual core theme engine
-1. **Glassy** — frosted glassmorphism, neon borders, animated glowing gradients
-2. **Modern** — flat, high-contrast, premium dark/light modes
-
+### Dual Core Theme Engine
+1. **Glassy** — frosted glassmorphism, neon borders, animated glowing gradients.
+2. **Modern** — flat, high-contrast, premium dark/light modes.
 Plus 8 accent colour presets or any custom colour via CSS custom properties.
 
 ---
@@ -98,101 +74,40 @@ To enable automated builds and releases:
 3. Copy the raw code from [GITHUB_WORKFLOW.md](GITHUB_WORKFLOW.md) and paste it there.
 4. Click **Commit changes**.
 
-Every push to `main` will now build the project, and every version tag (e.g., `v1.0.0`) will create a GitHub Release with the ready-to-host ZIP.
-
-Clean section URLs (no hash): the app uses the History API, so `/home`, `/search`, `/radio`, `/library`, `/favorites`, `/history`, `/settings`, `/about` and `/playlist/<id>` are real, deep-linkable paths — handy for sharing links and running audits per section. Everything still ships as one self-contained `index.html`; the SPA fallback is declared in **`public/_redirects`** (auto-generated by `scripts/gen-redirects.mjs` from the route list in `src/config/routes.ts` — never edit it by hand) and **`public/_headers`** adds the standard security headers. When uploading manually to Cloudflare Pages, upload the whole `dist/` folder as-is — both files go along automatically.
-
-**Live:** [aurabeats.pages.dev](https://aurabeats.pages.dev/)
+Every push to `main` will now build the project and create a unique, timestamped GitHub Release (e.g., `2026.09.25-42`) with the ready-to-host ZIP.
 
 ---
 
 ## 📱 Install as App (PWA)
 
 AuraBeats is a fully installable Progressive Web App — works like a native app on all platforms.
-No App Store, no Play Store, no login required.
 
-### Android (Chrome / Edge)
-1. Open [aurabeats.pages.dev](https://aurabeats.pages.dev/) in Chrome or Edge.
-2. Tap the **three-dot menu (⋮)** in the top-right corner.
-3. Tap **"Add to Home screen"** or **"Install app"**.
-4. Tap **Install** on the confirmation prompt.
-5. AuraBeats icon appears on your home screen — tap to open in full-screen, no browser bar.
+### Android / PC (Chrome / Edge)
+1. Open [aurabeats.pages.dev](https://aurabeats.pages.dev/).
+2. Tap the **three-dot menu (⋮)** or the **install icon (⊕)** in the address bar.
+3. Tap **"Install app"** or **"Add to Home screen"**.
 
-### PC — Chrome / Edge (Windows, Mac, Linux)
-1. Open [aurabeats.pages.dev](https://aurabeats.pages.dev/) in Chrome or Edge.
-2. Look for the **install icon (⊕)** in the address bar (right side).
-3. Click it → click **Install**.
-4. AuraBeats opens in its own window like a desktop app.
-5. Find it in Start Menu (Windows) or Applications (Mac/Linux).
+### iOS (Safari)
+1. Open [aurabeats.pages.dev](https://aurabeats.pages.dev/) in **Safari**.
+2. Tap the **Share button** and scroll down to **"Add to Home Screen"**.
 
-> **Tip:** In Chrome you can also go to **Menu (⋮) → Cast, save and share → Install page as app**.
-
-### iOS — Safari (iPhone / iPad)
-1. Open [aurabeats.pages.dev](https://aurabeats.pages.dev/) in **Safari** (must be Safari — Chrome on iOS does not support PWA install).
-2. Tap the **Share button** (the box with an arrow pointing up) at the bottom of the screen.
-3. Scroll down and tap **"Add to Home Screen"**.
-4. Edit the name if you want → tap **Add**.
-5. AuraBeats icon appears on your home screen. Tap it — opens full-screen, no Safari bar.
-
-> **iOS Notes:**
-> - Works on iOS 16.4+ (full PWA support including service worker caching).
-> - iOS 15 and below will add the icon but opens in Safari — no full-screen mode.
-> - Audio continues playing when you switch apps on iOS 17+.
-
----
-
-## 🔄 How PWA Updates Work
-
-AuraBeats uses a **Service Worker** for caching and offline support. Here is exactly how updates reach you:
-
-### What happens when a new version is deployed
-
-| Step | What happens |
-|------|-------------|
-| 1 | You open the app |
-| 2 | Service worker checks for an updated `sw.js` file in the background |
-| 3 | If a new version is found, it downloads silently |
-| 4 | On your **next visit** (or next app reopen), the new version activates automatically |
-
-### So — Auto or Manual?
-
-- ✅ **Fully automatic** — you don't need to do anything.
-- Updates happen silently in the background while you use the app.
-- The new version kicks in the **next time you open the app** (close and reopen, or close the tab and come back).
-- You will **never** need to uninstall and reinstall.
-
-### Edge cases
-
-| Situation | Behaviour |
-|-----------|-----------|
-| App open for a long time (hours) | Old version stays active until you close/reopen |
-| No internet connection | App loads from cache (offline mode) |
-| Major update with breaking cache | Service worker clears old cache automatically on activation |
-| iOS Safari | Same behaviour — updates on next open |
-
-> **In short:** Just use it normally. Updates install themselves. No manual steps needed on any platform.
+### 🔄 Auto-Updates
+The app checks for updates silently in the background every time it is opened. When a new version is found, it will automatically refresh the app shell to ensure you are always on the latest version.
 
 ---
 
 ## ☁️ Hosting
 
 ### Cloudflare Pages (recommended)
-
 | Setting | Value |
 | --- | --- |
 | Build command | `npm run build` |
 | Build output directory | `dist` |
 | Node version | 20 |
 
-### Any static host
-Upload the contents of `dist/` to Netlify, Vercel, GitHub Pages, nginx, S3, or any CDN. No server needed.
-
-> **Zero-build option:** every [GitHub Release](../../releases) ships `aurabeats-dist.zip` — the complete `dist/` folder (`index.html` + `robots.txt` + `sitemap.xml` + `og-card.svg`). Extract it and upload as-is to any static host. The separate `index.html` release file is a fully self-contained single-file build that even runs locally by double-click.
-
 ---
 
 ## ⌨️ Keyboard shortcuts
-
 | Key | Action |
 | --- | --- |
 | `Space` | Play / pause |
@@ -203,47 +118,11 @@ Upload the contents of `dist/` to Netlify, Vercel, GitHub Pages, nginx, S3, or a
 
 ---
 
-## 🗂 Project structure
-
-```
-.github/workflows/
-  build.yml                CI/CD pipeline
-src/
-  components/
-    FullScreenPlayer.tsx   Expanded player with vinyl CD
-    MobileNav.tsx          Mobile bottom navigation
-    PlayerBar.tsx          Sticky transport bar
-    Sidebar.tsx            Collapsible desktop navigation
-    TopBar.tsx             Theme / mode / accent switchers
-    TrackList.tsx          Rows, cards, carousel, context menus
-    Visualizer.tsx         Canvas organic visualizer
-    states.tsx             Error & empty states
-    ui.tsx                 Artwork, sliders, modal, toaster
-  hooks/
-    useAudioEngine.ts      HTML5 Audio core
-    useFeed.ts             Cached live-feed fetching
-    usePlayer.tsx          Queue / library / persistence / downloads
-    useTheme.tsx           Dual core theme + accent engine
-  services/
-    archive.ts             Internet Archive client
-    audius.ts              Audius network client (racing mirrors)
-    catalog.ts             Merges + interleaves + ranks all sources
-    jamendo.ts             Jamendo CC library client
-    jiosaavn.ts            JioSaavn database client (racing mirrors)
-    radio.ts               Live radio directory client
-  utils/                   cn, formatting, storage
-  views/                   Home, Search, Radio, Library, Settings
-```
-
----
-
 ## 🔊 Playback notes
-
-- Only **direct HTTPS audio** endpoints are used; HLS containers are filtered out
-- Archive items filtered to real songs (25s – 45min)
-- Live radio streams are endless (`duration = ∞`), seeking is disabled
-- Content remains the property of its creators — AuraBeats stores nothing remotely
-- Downloads use direct fetch + CORS proxy fallback for maximum compatibility
+- Content remains the property of its respective creators — AuraBeats stores nothing remotely.
+- YouTube playback is routed through an invisible IFrame player for seamless integration.
+- Downloads use direct fetch or a prefilled external converter for maximum mobile compatibility.
+- Built for performance, speed, and privacy.
 
 ---
 
