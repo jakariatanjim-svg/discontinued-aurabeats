@@ -115,12 +115,14 @@ export function LyricsViewer({ trackName, artistName, currentTime: _currentTime 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden relative">
       {hasNonLatin && (
-        <div className="absolute top-0 right-2 z-10 pt-1">
+        <div className="flex justify-center px-4 pt-1 pb-2 z-20">
           <button
             onClick={() => setRomanized((v) => !v)}
             className={cn(
-              "rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition shadow",
-              romanized ? "bg-accent text-white" : "border border-white/20 bg-black/50 text-white/60 backdrop-blur-md hover:text-white"
+              "rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] transition shadow-lg",
+              romanized
+                ? "bg-accent text-white"
+                : "border border-white/20 bg-black/50 text-white/70 backdrop-blur-md hover:text-white hover:bg-black/60"
             )}
           >
             {romanized ? "Original" : "Romanized"}
@@ -128,7 +130,7 @@ export function LyricsViewer({ trackName, artistName, currentTime: _currentTime 
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24 pt-10 mask-edges">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24 pt-4 mask-edges">
         <div className="flex flex-col gap-5 text-center min-h-[40vh]">
           {isSynced
             ? syncLines.map((line, i) => {
