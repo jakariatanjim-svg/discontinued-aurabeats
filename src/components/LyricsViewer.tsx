@@ -115,23 +115,24 @@ export function LyricsViewer({ trackName, artistName, currentTime: _currentTime 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden relative">
       {hasNonLatin && (
-        <div className="flex justify-center px-4 pt-1 pb-2 z-20">
+        <div className="relative z-50 flex shrink-0 justify-center px-4 pt-2 pb-3">
           <button
-            onClick={() => setRomanized((v) => !v)}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setRomanized((v) => !v); }}
             className={cn(
-              "rounded-full px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] transition shadow-lg",
+              "pointer-events-auto rounded-full px-5 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-all shadow-lg cursor-pointer select-none active:scale-95",
               romanized
-                ? "bg-accent text-white"
-                : "border border-white/20 bg-black/50 text-white/70 backdrop-blur-md hover:text-white hover:bg-black/60"
+                ? "bg-accent text-white shadow-[0_0_20px_-4px_var(--c-accent)]"
+                : "border border-white/25 bg-black/60 text-white/80 backdrop-blur-xl hover:text-white hover:bg-black/70"
             )}
           >
-            {romanized ? "Original" : "Romanized"}
+            {romanized ? "Show Original" : "Romanize"}
           </button>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-24 pt-4 mask-edges">
-        <div className="flex flex-col gap-5 text-center min-h-[40vh]">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-6 pb-24 pt-4 mask-edges">
+        <div className="flex flex-col gap-7 text-center min-h-[40vh] py-6">
           {isSynced
             ? syncLines.map((line, i) => {
                 const active = i === activeIdx;
@@ -140,11 +141,15 @@ export function LyricsViewer({ trackName, artistName, currentTime: _currentTime 
                   <p
                     key={i}
                     ref={active ? activeRef : undefined}
+                    style={{ fontFamily: "'Plus Jakarta Sans', 'Outfit', sans-serif" }}
                     className={cn(
-                      "text-xl sm:text-2xl font-black leading-snug transition-all duration-300",
-                      active && "text-white scale-[1.04] drop-shadow-[0_0_14px_rgba(255,255,255,0.5)]",
-                      past && "text-white/35",
-                      !active && !past && "text-white/20 blur-[0.5px]",
+                      "transition-all duration-500 ease-out select-none",
+                      "text-[1.15rem] sm:text-[1.35rem] leading-[1.65] tracking-[0.01em]",
+                      active
+                        ? "font-bold text-white scale-[1.07] drop-shadow-[0_0_22px_rgba(255,255,255,0.55)]"
+                        : past
+                        ? "font-semibold text-white/30 scale-[0.97]"
+                        : "font-semibold text-white/18 scale-[0.95] blur-[0.3px]",
                     )}
                   >
                     {transform(line.text)}
@@ -152,7 +157,11 @@ export function LyricsViewer({ trackName, artistName, currentTime: _currentTime 
                 );
               })
             : plainLines.map((text, i) => (
-                <p key={i} className="text-xl font-bold text-white/80 leading-relaxed sm:text-2xl">
+                <p
+                  key={i}
+                  style={{ fontFamily: "'Plus Jakarta Sans', 'Outfit', sans-serif" }}
+                  className="text-[1.1rem] sm:text-[1.3rem] font-semibold text-white/85 leading-[1.8] tracking-[0.012em]"
+                >
                   {transform(text)}
                 </p>
               ))}
