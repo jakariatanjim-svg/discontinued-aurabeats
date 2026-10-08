@@ -16,8 +16,6 @@ import {
 import { cn } from "@/utils/cn";
 import { ACCENTS, useTheme } from "@/hooks/useTheme";
 import { usePlayer } from "@/hooks/usePlayer";
-import { invalidateFeeds } from "@/hooks/useFeed";
-import { resetHostHealth } from "@/services/youtube";
 import { storage } from "@/utils/storage";
 import { Button, SectionHeader } from "@/components/ui";
 
@@ -286,28 +284,59 @@ export function SettingsView() {
               </div>
             ))}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
             <Button
               variant="outline"
               onClick={() => {
-                resetHostHealth();
-                invalidateFeeds();
-                toast("Refreshing mirrors…", "success");
-                window.setTimeout(() => window.location.reload(), 550);
+                if (navigator.serviceWorker) {
+                  navigator.serviceWorker.getRegistration().then(reg => {
+                    if (reg) {
+                      reg.update();
+                      toast("Checking for updates...", "info");
+                    } else {
+                      toast("No updater found in this browser", "error");
+                    }
+                  });
+                }
               }}
-              className="justify-start"
+              className="justify-start w-full"
             >
-              <RefreshCw className="h-3.5 w-3.5" /> Refresh engine
+              <RefreshCw className="h-3.5 w-3.5" /> Check for update
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!window.confirm("Force reinstall? This fixes missing logos/bugs by clearing app cache. Your playlists and history will be safe.")) return;
+                window.caches.keys().then((keys) => {
+                  Promise.all(keys.map((k) => window.caches.delete(k))).then(() => {
+                    if (navigator.serviceWorker) {
+                      navigator.serviceWorker.getRegistrations().then((regs) => {
+                        regs.forEach(reg => reg.unregister());
+                        toast("Cache cleared! Reinstalling app...", "success");
+                        setTimeout(() => window.location.reload(), 800);
+                      });
+                    } else {
+                      window.location.reload();
+                    }
+                  });
+                });
+              }}
+              className="justify-start w-full border-sky-500/30 text-sky-400 hover:border-sky-500 hover:text-sky-300"
+            >
+              <DownloadCloud className="h-3.5 w-3.5" /> Force Reinstall
+            </Button>
+            <p className="text-[10px] text-ink3 leading-relaxed sm:col-span-2 -mt-1">
+              If installed as PWA, uninstall the app from your device and reinstall it to update the home screen icon. Your data (playlists, history) will stay safe in the browser.
+            </p>
             <Button
               variant="outline"
               onClick={() => {
                 if (!window.confirm("Delete all downloaded music?")) return;
                 clearOffline();
               }}
-              className="justify-start border-rose-500/30 text-rose-400"
+              className="justify-start w-full border-rose-500/30 text-rose-400 sm:col-span-full"
             >
-              <DownloadCloud className="h-3.5 w-3.5" /> Clear offline
+              <Trash2 className="h-3.5 w-3.5" /> Clear offline
             </Button>
             <Button
               variant="outline"
@@ -316,7 +345,7 @@ export function SettingsView() {
                 storage.clearAll();
                 window.location.reload();
               }}
-              className="justify-start border-rose-500/40 text-rose-400 col-span-full"
+              className="justify-start w-full border-rose-500/40 text-rose-400 sm:col-span-full"
             >
               <Trash2 className="h-3.5 w-3.5" /> Full reset
             </Button>

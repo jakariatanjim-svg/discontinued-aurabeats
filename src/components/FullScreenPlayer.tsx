@@ -67,6 +67,7 @@ export function FullScreenPlayer() {
 
   const [showLyrics, setShowLyrics] = useState(false);
   const [showTimerMenu, setShowTimerMenu] = useState(false);
+  const [romanized, setRomanized] = useState(false);
 
   useEffect(() => {
     if (!expanded) return;
@@ -153,8 +154,22 @@ export function FullScreenPlayer() {
           </IconButton>
           
           <div className="flex items-center gap-2 relative">
+            {showLyrics && (
+              <button
+                type="button"
+                onClick={() => setRomanized((v) => !v)}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all",
+                  romanized
+                    ? "bg-accent text-white shadow-[0_0_12px_var(--c-accent)]"
+                    : "bg-white/10 text-white/70 backdrop-blur-xl hover:bg-white/20 hover:text-white"
+                )}
+              >
+                {romanized ? "Original" : "Aa"}
+              </button>
+            )}
             <IconButton 
-              onClick={() => setShowLyrics((v) => !v)} 
+              onClick={() => { setShowLyrics((v) => !v); if (showLyrics) setRomanized(false); }}
               aria-label="Show lyrics" 
               className={cn("bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:text-white transition-colors", showLyrics ? "text-accent bg-white/20 shadow-[0_0_15px_var(--c-accent)]" : "text-white/80")}
             >
@@ -231,7 +246,7 @@ export function FullScreenPlayer() {
               showLyrics ? "flex-1 overflow-hidden pt-4" : "flex-1 flex-col gap-5 justify-center pt-4"
             )}>
               {showLyrics ? (
-                <LyricsViewer trackName={current.title} artistName={current.artist} currentTime={currentTime} />
+                <LyricsViewer trackName={current.title} artistName={current.artist} currentTime={currentTime} romanized={romanized} />
               ) : (
                 <>
                   <div className="relative w-[min(60vw,16rem)] sm:w-[min(40vh,20rem)]">

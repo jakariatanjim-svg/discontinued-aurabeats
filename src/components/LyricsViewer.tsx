@@ -29,20 +29,17 @@ function parseLRC(raw: string): SyncLine[] {
   return out;
 }
 
-export function LyricsViewer({ trackName, artistName, currentTime: _currentTime }: { trackName: string; artistName: string; currentTime?: number }) {
+export function LyricsViewer({ trackName, artistName, currentTime: _currentTime, romanized = false }: { trackName: string; artistName: string; currentTime?: number; romanized?: boolean }) {
   const [plainLines, setPlainLines] = useState<string[]>([]);
   const [syncLines, setSyncLines] = useState<SyncLine[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [romanized, setRomanized] = useState(false);
-  const [hasNonLatin, setHasNonLatin] = useState(false);
   const activeRef = useRef<HTMLParagraphElement>(null);
   const { currentTime } = usePlaybackClock();
 
   // ALL hooks ABOVE any conditional returns
 
-  // Reset on track change
-  useEffect(() => { setRomanized(false); }, [trackName]);
+  // Reset on track change — no-op now, parent controls romanized
 
   // Fetch lyrics
   useEffect(() => {
@@ -51,7 +48,6 @@ export function LyricsViewer({ trackName, artistName, currentTime: _currentTime 
     setNotFound(false);
     setPlainLines([]);
     setSyncLines([]);
-    setHasNonLatin(false);
 
     const clean = cleanTitle(trackName);
     const artist = artistName.replace(/ - Topic$/i, "").replace(/ VEVO$/i, "").trim();
@@ -69,7 +65,6 @@ export function LyricsViewer({ trackName, artistName, currentTime: _currentTime 
         const hit = Array.isArray(data) ? data.find((d: any) => d.plainLyrics || d.syncedLyrics) : null;
         if (hit) {
           const raw = hit.plainLyrics || hit.syncedLyrics || "";
-          setHasNonLatin(/[^\x00-\x7F]/.test(raw));
           if (hit.syncedLyrics) setSyncLines(parseLRC(hit.syncedLyrics));
           setPlainLines(raw.split("\n").map((l: string) => l.replace(/\[\d{2}:\d{2}\.\d{2,3}\]/g, "").trim()).filter(Boolean));
           setLoading(false);
@@ -113,24 +108,7 @@ export function LyricsViewer({ trackName, artistName, currentTime: _currentTime 
   }
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden relative">
-      {hasNonLatin && (
-        <div className="relative z-50 flex shrink-0 justify-center px-4 pt-2 pb-3">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setRomanized((v) => !v); }}
-            className={cn(
-              "pointer-events-auto rounded-full px-5 py-2 text-[11px] font-bold uppercase tracking-[0.14em] transition-all shadow-lg cursor-pointer select-none active:scale-95",
-              romanized
-                ? "bg-accent text-white shadow-[0_0_20px_-4px_var(--c-accent)]"
-                : "border border-white/25 bg-black/60 text-white/80 backdrop-blur-xl hover:text-white hover:bg-black/70"
-            )}
-          >
-            {romanized ? "Show Original" : "Romanize"}
-          </button>
-        </div>
-      )}
-
+    <div className="flex h-full w-full flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto no-scrollbar px-6 pb-24 pt-4 mask-edges">
         <div className="flex flex-col gap-7 text-center min-h-[40vh] py-6">
           {isSynced
