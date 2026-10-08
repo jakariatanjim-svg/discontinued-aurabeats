@@ -9,7 +9,8 @@ import {
   unMuteYouTubeVideo,
   getYouTubeTime,
   getYouTubeDuration,
-  getYouTubeBuffered
+  getYouTubeBuffered,
+  resetYTCurrentId,
 } from "@/services/youtubePlayer";
 
 export interface AudioEngine {
@@ -83,10 +84,11 @@ export function useAudioEngine(): AudioEngine {
       setIsYtMode(true);
       currentYtIdRef.current = videoId;
       audioRef.current?.pause(); // Stop native audio
-      
-      initYouTubePlayer().then(() => {
-        playYouTubeVideo(videoId);
-      });
+
+      // playYouTubeVideo handles the case where player isn't ready yet (queues it)
+      // We call initYouTubePlayer in parallel to ensure the API script is loaded
+      initYouTubePlayer().catch(() => {});
+      playYouTubeVideo(videoId);
     } else {
       setIsYtMode(false);
       currentYtIdRef.current = null;
@@ -219,11 +221,24 @@ export function useAudioEngine(): AudioEngine {
       }
     };
 
-    const handleError = () => {
+    const handleError = (e: any) => {
       setIsBuffering(false);
       setIsPlaying(false);
+      // Reset currentVideoId so that retrying the same video triggers a fresh load
+      resetYTCurrentId();
       setErrorTick((n) => n + 1);
-      setError("This YouTube track cannot be played (region blocked or restricted).");
+      const code = e?.detail;
+      const message =
+        code === 2
+          ? "Invalid YouTube video ID."
+          : code === 5
+            ? "HTML5 playback error (YouTube player rejected this embed)."
+            : code === 100
+              ? "Video unavailable or private."
+              : code === 101 || code === 150
+                ? "Embedding blocked by YouTube / uploader settings."
+                : `Unknown YouTube playback error${code ? ` (code ${code})` : ""}.`;
+      setError(message);
     };
 
     window.addEventListener("yt-state-change", handleStateChange);

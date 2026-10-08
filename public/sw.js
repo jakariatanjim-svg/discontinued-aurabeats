@@ -1,5 +1,6 @@
 // AuraBeats Service Worker — Offline-First PWA Shell
-const CACHE = "aurabeats-v3";
+// Bump this on deploys that must invalidate stale hosted JS aggressively.
+const CACHE = "aurabeats-v4";
 const SHELL = [
   "/",
   "/index.html",

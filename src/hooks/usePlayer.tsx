@@ -245,14 +245,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const downloadTrack = useCallback(async (track: Track) => {
-    // YouTube tracks — one-click prefilled downloader (no broken iframe/embed)
+    // YouTube tracks — direct MZ shortcut for faster conversion
     if (track.streamUrl.startsWith("yt-resolve:") || track.source === "youtube") {
       const videoId = track.streamUrl.replace("yt-resolve:", "");
-      const ytUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      const downloaderUrl = `https://onlymp3.to/en/youtube-to-mp3/?url=${encodeURIComponent(ytUrl)}`;
+      const downloaderUrl = `https://www.youtubemz.com/watch?v=${videoId}`;
 
-      toast(`Opening downloader for: ${track.title}`, "info");
-      window.open(downloaderUrl, "_blank", "noopener,noreferrer");
+      toast(`Opening converter for: ${track.title}`, "info");
+      const win = window.open(downloaderUrl, "_blank", "noopener,noreferrer");
+      if (!win) toast("Pop-up blocked! Please allow pop-ups for this site.", "error");
       return;
     }
 
@@ -479,6 +479,18 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (!engine.errorTick) return;
     const track = queueRef.current[indexRef.current];
     if (!track) return;
+
+    // YouTube IFrame tracks — NO fallback.
+    // If YouTube embed fails, do NOT switch to JioSaavn/Audius.
+    // Just skip or stop so the wrong song never plays.
+    if (track.source === "youtube" || track.streamUrl.startsWith("yt-resolve:")) {
+      consecutiveFailuresRef.current += 1;
+      const reason = engine.error || "Playback blocked by uploader";
+      toast(`${track.title} — ${reason}`, "error");
+      engine.pause();
+      return;
+    }
+
     const nextAttempt = attemptRef.current + 1;
     const maxAttempts = Math.max(2, track.fallbackUrls?.length || 0);
     if (nextAttempt < maxAttempts) {
