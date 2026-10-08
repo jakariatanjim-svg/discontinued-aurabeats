@@ -59,9 +59,14 @@ export function FullScreenPlayer() {
     isOffline,
     saveOffline,
     removeOffline,
+    updateSettings,
+    toast,
   } = usePlayer();
 
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const [showLyrics, setShowLyrics] = useState(false);
+  const [showTimerMenu, setShowTimerMenu] = useState(false);
 
   useEffect(() => {
     if (!expanded) return;
@@ -72,9 +77,8 @@ export function FullScreenPlayer() {
     return () => window.removeEventListener("keydown", onKey);
   }, [expanded, setExpanded]);
 
-  if (!expanded || !current) return null;
-  const fav = isFavorite(current.id);
-  const offline = isOffline(current.id);
+  const fav = current ? isFavorite(current.id) : false;
+  const offline = current ? isOffline(current.id) : false;
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -98,10 +102,6 @@ export function FullScreenPlayer() {
     touchStartRef.current = null;
   };
 
-  const [showLyrics, setShowLyrics] = useState(false);
-  const [showTimerMenu, setShowTimerMenu] = useState(false);
-  const { updateSettings, toast } = usePlayer();
-
   const setTimer = (mins: number) => {
     if (mins === 0) {
       updateSettings({ sleepTimer: undefined });
@@ -112,6 +112,8 @@ export function FullScreenPlayer() {
     }
     setShowTimerMenu(false);
   };
+
+  if (!expanded || !current) return null;
 
   return (
     <div 
