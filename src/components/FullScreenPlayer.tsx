@@ -106,11 +106,16 @@ export function FullScreenPlayer() {
     if (mins === 0) {
       updateSettings({ sleepTimer: undefined });
       toast("Sleep timer cancelled", "info");
+      setShowTimerMenu(false);
+    } else if (settings.sleepTimer && settings.sleepTimer > Date.now()) {
+      // Add time to existing timer
+      updateSettings({ sleepTimer: settings.sleepTimer + mins * 60000 });
+      toast(`Added ${mins} minutes to sleep timer`, "success");
     } else {
       updateSettings({ sleepTimer: Date.now() + mins * 60000 });
-      toast(`Sleep timer set for ${mins} minutes`, "success");
+      toast(`Sleep timer: ${mins} minutes`, "success");
+      setShowTimerMenu(false);
     }
-    setShowTimerMenu(false);
   };
 
   if (!expanded || !current) return null;
@@ -149,38 +154,68 @@ export function FullScreenPlayer() {
           
           <div className="flex items-center gap-2 relative">
             <IconButton 
-              onClick={() => setShowLyrics(!showLyrics)} 
+              onClick={() => setShowLyrics((v) => !v)} 
               aria-label="Show lyrics" 
-              className={cn("bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:text-white", showLyrics ? "text-accent" : "text-white/80")}
+              className={cn("bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:text-white transition-colors", showLyrics ? "text-accent bg-white/20 shadow-[0_0_15px_var(--c-accent)]" : "text-white/80")}
             >
               <AlignLeft className="h-4 w-4" />
             </IconButton>
             <IconButton 
-              onClick={() => setShowTimerMenu(!showTimerMenu)} 
+              onClick={() => setShowTimerMenu((v) => !v)} 
               aria-label="Sleep timer" 
-              className={cn("bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:text-white", settings.sleepTimer ? "text-accent" : "text-white/80")}
+              className={cn("bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:text-white transition-colors", settings.sleepTimer ? "text-accent bg-white/20 shadow-[0_0_15px_var(--c-accent)]" : "text-white/80")}
             >
               <Moon className="h-4 w-4" />
             </IconButton>
             
             {showTimerMenu && (
-              <div className="absolute top-full right-0 mt-2 w-40 rounded-xl bg-black/80 p-2 shadow-2xl backdrop-blur-2xl border border-white/10">
-                <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/50">Sleep Timer</p>
-                {[
-                  { label: "15 minutes", val: 15 },
-                  { label: "30 minutes", val: 30 },
-                  { label: "45 minutes", val: 45 },
-                  { label: "1 hour", val: 60 },
-                  { label: "Off", val: 0 },
-                ].map((o) => (
-                  <button
-                    key={o.label}
-                    onClick={() => setTimer(o.val)}
-                    className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white"
-                  >
-                    {o.label}
-                  </button>
-                ))}
+              <div className="absolute top-full right-0 mt-2 w-52 rounded-xl bg-black/90 p-3 shadow-2xl backdrop-blur-2xl border border-white/10 z-[100]">
+                <p className="px-1 pb-2 text-[10px] font-bold uppercase tracking-wider text-white/50">Sleep Timer</p>
+                
+                {settings.sleepTimer ? (
+                  <div className="space-y-2">
+                    <div className="rounded-lg bg-white/5 px-3 py-2 text-center">
+                      <p className="text-[10px] text-white/50">Time remaining</p>
+                      <p className="text-lg font-black text-accent tabular-nums">
+                        {Math.max(0, Math.ceil((settings.sleepTimer - Date.now()) / 60000))} min
+                      </p>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <button onClick={() => setTimer(5)} className="flex-1 rounded-lg bg-white/8 px-2 py-1.5 text-[11px] font-bold text-white/80 hover:bg-white/15">+5 min</button>
+                      <button onClick={() => setTimer(15)} className="flex-1 rounded-lg bg-white/8 px-2 py-1.5 text-[11px] font-bold text-white/80 hover:bg-white/15">+15 min</button>
+                      <button onClick={() => setTimer(30)} className="flex-1 rounded-lg bg-white/8 px-2 py-1.5 text-[11px] font-bold text-white/80 hover:bg-white/15">+30 min</button>
+                    </div>
+                    <button onClick={() => setTimer(0)} className="w-full rounded-lg bg-rose-500/20 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-500/30">Cancel Timer</button>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {[15, 30, 45, 60, 90, 120].map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => setTimer(m)}
+                        className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white"
+                      >
+                        {m < 60 ? `${m} minutes` : `${m / 60} hour${m > 60 ? "s" : ""}`}
+                      </button>
+                    ))}
+                    <div className="flex items-center gap-2 pt-1 border-t border-white/10 mt-1">
+                      <input
+                        type="number"
+                        min="1"
+                        max="480"
+                        placeholder="Custom"
+                        className="w-full rounded-lg bg-white/10 px-3 py-2 text-xs text-white outline-none placeholder:text-white/40"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            const val = parseInt((e.target as HTMLInputElement).value);
+                            if (val > 0) setTimer(val);
+                          }
+                        }}
+                      />
+                      <span className="text-[10px] text-white/40 shrink-0">min</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
