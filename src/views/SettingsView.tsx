@@ -14,6 +14,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
+import { APP_VERSION } from "@/config/app";
 import { ACCENTS, useTheme } from "@/hooks/useTheme";
 import { usePlayer } from "@/hooks/usePlayer";
 import { storage } from "@/utils/storage";
@@ -396,6 +397,21 @@ export function SettingsView() {
             title="AuraBeats Sound Engine"
             body="Aggregates millions of songs from global networks. Uses multi-resolver racing to ensure playback stability without tracking."
           />
+        </div>
+      </section>
+
+      <section className="pb-2">
+        <SectionHeader title="Version" subtitle="Current build" />
+        <div className="blur-panel p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-ink">AuraBeats</p>
+              <p className="text-[11px] text-ink3">Bangla-friendly build</p>
+            </div>
+            <span className="shrink-0 rounded-full border border-line bg-white/[0.02] px-3 py-1 text-[12px] font-bold text-ink">
+              v{APP_VERSION}
+            </span>
+          </div>
         </div>
       </section>
     </div>
