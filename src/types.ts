@@ -9,6 +9,7 @@ export type TrackSource = "archive" | "audius" | "radio" | "jiosaavn" | "jamendo
 export interface PlayerSettings {
   queueEnabled: boolean;
   rememberSearchTab: boolean;
+  sleepTimer?: number; // timestamp when it should stop
 }
 
 export interface Track {

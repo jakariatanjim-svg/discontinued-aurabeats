@@ -201,6 +201,19 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // Sleep Timer Logic
+  useEffect(() => {
+    if (!settings.sleepTimer) return;
+    const interval = setInterval(() => {
+      if (Date.now() >= settings.sleepTimer!) {
+        engine.pause();
+        updateSettings({ sleepTimer: undefined });
+        toast("Sleep timer finished. Playback paused.", "info");
+      }
+    }, 10000); // Check every 10s
+    return () => clearInterval(interval);
+  }, [settings.sleepTimer, engine, updateSettings, toast]);
+
   const saveOffline = useCallback(async (track: Track) => {
     if (offlineTracks.some((t) => t.id === track.id)) return;
     try {

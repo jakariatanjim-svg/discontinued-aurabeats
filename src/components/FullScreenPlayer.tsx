@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
   Heart,
@@ -16,6 +16,8 @@ import {
   Download,
   DownloadCloud,
   Trash2,
+  Moon,
+  AlignLeft,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { formatTime, gradientFrom } from "@/utils/format";
@@ -23,6 +25,7 @@ import { usePlaybackClock, usePlayer } from "@/hooks/usePlayer";
 import { Artwork, IconButton, Slider } from "@/components/ui";
 import { Visualizer } from "@/components/Visualizer";
 import { TrackRow } from "@/components/TrackList";
+import { LyricsViewer } from "@/components/LyricsViewer";
 
 export function FullScreenPlayer() {
   const { currentTime, duration, bufferedAhead } = usePlaybackClock();
@@ -95,6 +98,21 @@ export function FullScreenPlayer() {
     touchStartRef.current = null;
   };
 
+  const [showLyrics, setShowLyrics] = useState(false);
+  const [showTimerMenu, setShowTimerMenu] = useState(false);
+  const { updateSettings, toast } = usePlayer();
+
+  const setTimer = (mins: number) => {
+    if (mins === 0) {
+      updateSettings({ sleepTimer: undefined });
+      toast("Sleep timer cancelled", "info");
+    } else {
+      updateSettings({ sleepTimer: Date.now() + mins * 60000 });
+      toast(`Sleep timer set for ${mins} minutes`, "success");
+    }
+    setShowTimerMenu(false);
+  };
+
   return (
     <div 
       className="fixed inset-0 z-[85] animate-fade-in overflow-hidden touch-pan-y"
@@ -118,7 +136,7 @@ export function FullScreenPlayer() {
 
       <div className="relative z-10 flex h-full flex-col">
         {/* floating close button — no bar, no header */}
-        <div className="absolute top-4 left-4 z-50 sm:top-6 sm:left-6">
+        <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between sm:top-6 sm:left-6 sm:right-6">
           <IconButton 
             onClick={() => setExpanded(false)} 
             aria-label="Close full screen" 
@@ -126,11 +144,55 @@ export function FullScreenPlayer() {
           >
             <ChevronDown className="h-5 w-5" />
           </IconButton>
+          
+          <div className="flex items-center gap-2 relative">
+            <IconButton 
+              onClick={() => setShowLyrics(!showLyrics)} 
+              aria-label="Show lyrics" 
+              className={cn("bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:text-white", showLyrics ? "text-accent" : "text-white/80")}
+            >
+              <AlignLeft className="h-4 w-4" />
+            </IconButton>
+            <IconButton 
+              onClick={() => setShowTimerMenu(!showTimerMenu)} 
+              aria-label="Sleep timer" 
+              className={cn("bg-white/10 backdrop-blur-xl hover:bg-white/20 hover:text-white", settings.sleepTimer ? "text-accent" : "text-white/80")}
+            >
+              <Moon className="h-4 w-4" />
+            </IconButton>
+            
+            {showTimerMenu && (
+              <div className="absolute top-full right-0 mt-2 w-40 rounded-xl bg-black/80 p-2 shadow-2xl backdrop-blur-2xl border border-white/10">
+                <p className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white/50">Sleep Timer</p>
+                {[
+                  { label: "15 minutes", val: 15 },
+                  { label: "30 minutes", val: 30 },
+                  { label: "45 minutes", val: 45 },
+                  { label: "1 hour", val: 60 },
+                  { label: "Off", val: 0 },
+                ].map((o) => (
+                  <button
+                    key={o.label}
+                    onClick={() => setTimer(o.val)}
+                    className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-white/80 hover:bg-white/10 hover:text-white"
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto scroll-area px-4 pt-4 pb-6 sm:px-8 lg:flex-row lg:items-stretch lg:gap-10">
           {/* left: art + controls */}
           <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-5">
+            {showLyrics ? (
+              <div className="flex w-full flex-1 flex-col items-center justify-center overflow-hidden">
+                <LyricsViewer trackName={current.title} artistName={current.artist} />
+              </div>
+            ) : (
+              <>
             <div className="relative w-[min(70vw,18rem)] sm:w-[min(46vh,22rem)]">
               <div
                 className={cn(
@@ -281,6 +343,8 @@ export function FullScreenPlayer() {
                 <Slider ariaLabel="Volume" value={muted ? 0 : volume * 100} max={100} onChange={(v) => setVolume(v / 100)} height="h-1" />
               </div>
             </div>
+            </>
+            )}
           </div>
 
           {/* right: up next */}
