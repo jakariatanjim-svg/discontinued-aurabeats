@@ -1,0 +1,54 @@
+name: "Auto: Android APK"
+
+on:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    name: Build APK & Upload to Latest Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - run: npm ci
+      - run: npm run build
+
+      # Generate android project from scratch (no local android/ folder needed)
+      - name: Setup Capacitor Android
+        run: |
+          npx cap add android
+          npx cap sync android
+
+      - name: Build APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Collect APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk AuraBeats.apk
+
+      # Find latest release and upload APK to it (no new release created)
+      - name: Upload APK to latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No existing release found, skipping APK upload."
+            exit 0
+          fi
+          echo "Uploading APK to release: $LATEST_TAG"
+          gh release upload "$LATEST_TAG" AuraBeats.apk --clobber

@@ -1,0 +1,40 @@
+name: "Manual: Web Build"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    name: Manual Web Build → Overwrite Latest Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run build
+
+      - name: Package
+        run: |
+          cp dist/index.html aurabeats-app.html
+          cd dist && zip -r ../aurabeats-web.zip . && cd ..
+
+      - name: Overwrite latest release files
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No existing release found."
+            exit 1
+          fi
+          echo "Overwriting web files in release: $LATEST_TAG"
+          gh release upload "$LATEST_TAG" aurabeats-app.html --clobber
+          gh release upload "$LATEST_TAG" aurabeats-web.zip --clobber

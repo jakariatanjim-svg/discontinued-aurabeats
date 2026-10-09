@@ -121,11 +121,12 @@ export function PlayerBar({ onOpenQueue }: { onOpenQueue: () => void }) {
               active={shuffle}
               onClick={toggleShuffle}
               aria-label="Shuffle"
+              tooltip="Shuffle"
               className="hidden sm:inline-flex"
             >
               <Shuffle className="h-4 w-4" />
             </IconButton>
-            <IconButton onClick={previous} aria-label="Previous track" size="sm">
+            <IconButton onClick={previous} aria-label="Previous track" tooltip="Previous" size="sm">
               <SkipBack className="h-4 w-4 fill-current sm:h-[18px] sm:w-[18px]" />
             </IconButton>
             <button
@@ -145,7 +146,7 @@ export function PlayerBar({ onOpenQueue }: { onOpenQueue: () => void }) {
                 <Play className="h-4 w-4 translate-x-[1px] fill-current sm:h-5 sm:w-5" />
               )}
             </button>
-            <IconButton onClick={next} aria-label="Next track" size="sm">
+            <IconButton onClick={next} aria-label="Next track" tooltip="Next" size="sm">
               <SkipForward className="h-4 w-4 fill-current sm:h-[18px] sm:w-[18px]" />
             </IconButton>
             <IconButton 
@@ -153,6 +154,7 @@ export function PlayerBar({ onOpenQueue }: { onOpenQueue: () => void }) {
               active={repeat === "one"} 
               onClick={cycleRepeat} 
               aria-label={repeat === "one" ? "Repeat is ON" : "Repeat is OFF"} 
+              tooltip={repeat === "one" ? "Repeat: On" : "Repeat: Off"}
               className="hidden sm:inline-flex"
             >
               {repeat === "one" ? <Repeat1 className="h-4 w-4 text-accent" /> : <Repeat className="h-4 w-4 opacity-40 hover:opacity-100" />}

@@ -1,0 +1,52 @@
+name: "Manual: Windows EXE (Portable)"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  exe:
+    name: Manual EXE Build → Overwrite Latest Release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2"
+
+      - name: Build Portable EXE
+        run: cargo tauri build --bundles none
+
+      - name: Collect EXE
+        shell: bash
+        run: |
+          EXE_PATH=$(find src-tauri/target/release -maxdepth 1 -name "*.exe" -not -name "*.pdb" | head -1)
+          if [ -z "$EXE_PATH" ]; then
+            echo "EXE not found, listing target/release:"
+            ls -la src-tauri/target/release/
+            exit 1
+          fi
+          cp "$EXE_PATH" AuraBeats-Portable.exe
+
+      - name: Overwrite EXE in latest release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No existing release found."
+            exit 1
+          fi
+          echo "Overwriting EXE in release: $LATEST_TAG"
+          gh release upload "$LATEST_TAG" AuraBeats-Portable.exe --clobber

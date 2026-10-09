@@ -167,13 +167,18 @@ export function HomeView({ onNavigate }: { onNavigate: (r: "radio" | "search") =
             subtitle="Based on your favourites"
             icon={<Heart className="h-4 w-4 text-rose-400" />}
             action={
-              <button
-                type="button"
-                onClick={() => playSection(forYou.data, "your personalised mix")}
-                className="rounded-full border border-line px-3.5 py-1.5 text-[11px] font-bold text-ink3 transition hover:border-accent hover:text-accent"
-              >
-                Play all
-              </button>
+              <div className="flex items-center gap-2">
+                <IconButton onClick={forYou.refresh} aria-label="Refresh">
+                  <RefreshCw className="h-4 w-4" />
+                </IconButton>
+                <button
+                  type="button"
+                  onClick={() => playSection(forYou.data, "your personalised mix")}
+                  className="rounded-full border border-line px-3.5 py-1.5 text-[11px] font-bold text-ink3 transition hover:border-accent hover:text-accent"
+                >
+                  Play all
+                </button>
+              </div>
             }
           />
           {!forYouReady ? (

@@ -90,15 +90,17 @@ export function IconButton({
   active,
   className,
   size = "md",
+  tooltip,
   ref,
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   active?: boolean;
   size?: "sm" | "md" | "lg";
+  tooltip?: string;
   ref?: Ref<HTMLButtonElement>;
 }) {
   const sizes = { sm: "h-8 w-8", md: "h-10 w-10", lg: "h-12 w-12" } as const;
-  return (
+  const btn = (
     <button
       ref={ref}
       type="button"
@@ -115,6 +117,11 @@ export function IconButton({
       {children}
     </button>
   );
+
+  if (tooltip) {
+    return <Tooltip content={tooltip}>{btn}</Tooltip>;
+  }
+  return btn;
 }
 
 /* -------------------------------- Button ---------------------------------- */
@@ -148,6 +155,32 @@ export function Spinner({ className }: { className?: string }) {
 
 export function Skeleton({ className }: { className?: string }) {
   return <div className={cn("skeleton rounded-xl", className)} />;
+}
+
+/* -------------------------------- Tooltip --------------------------------- */
+export function Tooltip({ children, content, position = "top" }: { children: ReactNode; content: ReactNode; position?: "top" | "bottom" | "left" | "right" }) {
+  const posClasses = {
+    top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
+    bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
+    left: "right-full top-1/2 -translate-y-1/2 mr-2",
+    right: "left-full top-1/2 -translate-y-1/2 ml-2",
+  };
+
+  return (
+    <div className="group relative inline-flex items-center justify-center">
+      {children}
+      <div
+        className={cn(
+          "pointer-events-none absolute z-[100] scale-95 opacity-0 transition-all duration-200 group-hover:scale-100 group-hover:opacity-100",
+          posClasses[position]
+        )}
+      >
+        <div className="whitespace-nowrap rounded-lg bg-black/90 border border-white/10 px-2.5 py-1.5 text-[11px] font-bold tracking-wide text-white shadow-xl backdrop-blur-md">
+          {content}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /* --------------------------------- Chip ----------------------------------- */

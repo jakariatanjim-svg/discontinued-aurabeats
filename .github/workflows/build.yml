@@ -1,67 +1,44 @@
-name: Build & Release
+name: "Auto: Web Build & Release"
 
 on:
   push:
     branches: [main, master]
-    tags: ["v*"]
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build
+  web:
+    name: Build Web & Create Release
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Generate unique release tag
+      - name: Generate tag
         id: ver
+        run: echo "version=$(date -u +%Y.%m.%d)-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run build
+
+      - name: Package
         run: |
-          # Always generate a unique tag using date + run number
-          # Format: YYYY.MM.DD-<run_number>  e.g.  2026.09.25-42
-          DATE_TAG=$(date -u +"%Y.%m.%d")
-          UNIQUE_TAG="${DATE_TAG}-${{ github.run_number }}"
-          echo "version=${UNIQUE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "Generated tag: ${UNIQUE_TAG}"
+          cp dist/index.html aurabeats-app.html
+          cd dist && zip -r ../aurabeats-web.zip . && cd ..
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: TypeScript check
-        run: npx tsc --noEmit
-
-      - name: Production build
-        run: npm run build
-
-      - name: Prepare release files
-        run: |
-          # Standalone single-file build
-          cp dist/index.html "aurabeats-app.html"
-
-          # Full dist folder as zip for Cloudflare Pages / static hosts
-          cd dist
-          zip -r "../aurabeats-dist.zip" .
-          cd ..
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.ver.outputs.version }}
           name: "AuraBeats — ${{ steps.ver.outputs.version }}"
           body_path: LATEST_RELEASE.md
           files: |
             aurabeats-app.html
-            aurabeats-dist.zip
+            aurabeats-web.zip
           make_latest: true
-          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

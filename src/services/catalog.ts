@@ -106,9 +106,45 @@ export async function fetchSearchSuggestions(query: string): Promise<string[]> {
 
 export async function fetchForYou(favorites: Track[]): Promise<Track[]> {
   if (favorites.length === 0) return [];
-  const artists = [...new Set(favorites.slice(0, 5).map((f) => f.artist))];
-  const pick = artists[Math.floor(Math.random() * artists.length)];
-  return searchEverything(pick, { limit: 16 });
+  
+  // Aggregate all artists to find the most common ones
+  const artistCounts = new Map<string, number>();
+  favorites.forEach((f) => {
+    if (f.artist) {
+      artistCounts.set(f.artist, (artistCounts.get(f.artist) || 0) + 1);
+    }
+  });
+  
+  // Pick the top 3 most favorited artists
+  const topArtists = [...artistCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map((e) => e[0])
+    .slice(0, 3);
+
+  if (topArtists.length === 0) {
+    const randomPick = favorites[Math.floor(Math.random() * favorites.length)].title;
+    return searchEverything(randomPick, { limit: 16 });
+  }
+
+  // Search for the top artists and interleave the results
+  const results = await Promise.all(
+    topArtists.map((artist) => searchEverything(artist, { limit: 12 }))
+  );
+  
+  // Interleave logic
+  const interleaved: Track[] = [];
+  const maxLen = Math.max(...results.map(r => r.length));
+  for (let i = 0; i < maxLen; i++) {
+    for (const list of results) {
+      if (list[i]) interleaved.push(list[i]);
+    }
+  }
+
+  // Exclude tracks already in favorites
+  const favIds = new Set(favorites.map((f) => f.id));
+  const merged = dedupe(interleaved).filter((t) => !favIds.has(t.id));
+  
+  return merged.slice(0, 16);
 }
 
 export async function fetchGenre(genre: string, opts: CatalogQuery = {}): Promise<Track[]> {
