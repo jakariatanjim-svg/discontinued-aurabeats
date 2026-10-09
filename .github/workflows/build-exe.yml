@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   exe:
-    name: Build Portable EXE & Upload to Latest Release
+    name: Build Portable EXE
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,41 +18,38 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Build web app
+      - name: Build Web App
         run: |
           npm ci
           npm run build
 
-      - name: Install Electron deps
-        working-directory: electron
-        run: npm install
-
-      - name: Build Portable EXE
-        working-directory: electron
-        run: npx electron-builder --win portable
-        env:
-          NODE_ENV: production
-
-      - name: Collect EXE
+      - name: Prepare Assets
         shell: bash
         run: |
-          EXE=$(find electron/output -name "AuraBeats-Portable.exe" 2>/dev/null | head -1)
-          if [ -z "$EXE" ]; then
-            echo "Looking for any .exe..."
-            find electron/output -name "*.exe" 2>/dev/null || echo "No exe found"
-            exit 1
-          fi
-          cp "$EXE" AuraBeats-Portable.exe
-          echo "Found EXE: $EXE"
+          rm -rf electron/app-bundle
+          mkdir -p electron/app-bundle
+          cp -r dist/* electron/app-bundle/
 
-      - name: Upload EXE to latest release
+      - name: Build EXE
+        working-directory: electron
+        run: |
+          npm install
+          npx electron-builder --win portable
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload EXE
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
-          if [ -z "$LATEST_TAG" ]; then
-            echo "No existing release found, skipping."
-            exit 0
+          EXE_FILE="electron/dist-exe/AuraBeats-Portable.exe"
+          if [ -f "$EXE_FILE" ]; then
+            echo "Uploading $EXE_FILE to $LATEST_TAG"
+            gh release upload "$LATEST_TAG" "$EXE_FILE" --clobber
+          else
+            echo "Error: EXE not found at $EXE_FILE"
+            ls -R electron/dist-exe/ || true
+            exit 1
           fi
-          gh release upload "$LATEST_TAG" AuraBeats-Portable.exe --clobber

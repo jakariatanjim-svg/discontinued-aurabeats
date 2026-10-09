@@ -1,7 +1,6 @@
 {
   "name": "aurabeats",
   "version": "1.0.0",
-  "description": "AuraBeats Streaming Engine",
   "main": "main.js",
   "author": "jakariatanjim-svg",
   "license": "MIT",
@@ -9,31 +8,24 @@
     "appId": "dev.pages.aurabeats",
     "productName": "AuraBeats",
     "directories": {
-      "output": "output",
-      "app": "."
+      "output": "dist-exe"
     },
-    "extraFiles": [
-      {
-        "from": "../dist",
-        "to": "dist"
-      }
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json",
+      "app-bundle/**/*"
     ],
     "win": {
-      "target": [
-        {
-          "target": "portable",
-          "arch": ["x64"]
-        }
-      ]
+      "target": "portable",
+      "icon": "app-bundle/icon-512.png"
     },
     "portable": {
       "artifactName": "AuraBeats-Portable.exe"
     }
   },
-  "dependencies": {
-    "electron": "^33.0.0"
-  },
   "devDependencies": {
+    "electron": "^33.0.0",
     "electron-builder": "^25.0.0"
   }
 }

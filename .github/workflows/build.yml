@@ -35,7 +35,7 @@ jobs:
         with:
           tag_name: ${{ steps.ver.outputs.version }}
           name: "AuraBeats — ${{ steps.ver.outputs.version }}"
-          body_path: LATEST_RELEASE.md
+          body: "Auto build · ${{ github.sha }}"
           files: |
             aurabeats-app.html
             aurabeats-web.zip
