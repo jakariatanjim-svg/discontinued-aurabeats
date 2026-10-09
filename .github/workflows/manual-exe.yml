@@ -17,8 +17,10 @@ jobs:
           node-version: 20
           cache: npm
 
-      - run: npm ci
-      - run: npm run build
+      - name: Build web app
+        run: |
+          npm ci
+          npm run build
 
       - name: Install Electron deps
         working-directory: electron
@@ -27,13 +29,15 @@ jobs:
       - name: Build Portable EXE
         working-directory: electron
         run: npx electron-builder --win portable
+        env:
+          NODE_ENV: production
 
       - name: Collect EXE
         shell: bash
         run: |
-          EXE=$(find electron/output -name "*.exe" | head -1)
+          EXE=$(find electron/output -name "AuraBeats-Portable.exe" 2>/dev/null | head -1)
           if [ -z "$EXE" ]; then
-            find electron/ -name "*.exe" || true
+            find electron/output -name "*.exe" 2>/dev/null || echo "No exe found"
             exit 1
           fi
           cp "$EXE" AuraBeats-Portable.exe

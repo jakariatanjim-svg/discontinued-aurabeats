@@ -9,11 +9,14 @@
     "appId": "dev.pages.aurabeats",
     "productName": "AuraBeats",
     "directories": {
-      "output": "output"
+      "output": "output",
+      "app": "."
     },
-    "files": [
-      "main.js",
-      "../dist/**/*"
+    "extraFiles": [
+      {
+        "from": "../dist",
+        "to": "dist"
+      }
     ],
     "win": {
       "target": [

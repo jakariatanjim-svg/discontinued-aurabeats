@@ -30,6 +30,23 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      # Fix duplicate Kotlin stdlib conflict that Capacitor generates
+      - name: Patch Kotlin version conflict in build.gradle
+        run: |
+          cat >> android/build.gradle << 'EOF'
+
+          // Fix duplicate Kotlin stdlib classes conflict
+          subprojects {
+              configurations.all {
+                  resolutionStrategy {
+                      force "org.jetbrains.kotlin:kotlin-stdlib:1.9.0"
+                      force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0"
+                      force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0"
+                  }
+              }
+          }
+          EOF
+
       - name: Build APK
         working-directory: android
         run: |
