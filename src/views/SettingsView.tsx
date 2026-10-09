@@ -12,12 +12,21 @@ import {
   Trash2,
   Volume2,
   Check,
+  Smartphone,
+  Monitor,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { ACCENTS, useTheme } from "@/hooks/useTheme";
 import { usePlayer } from "@/hooks/usePlayer";
 import { storage } from "@/utils/storage";
 import { Button, SectionHeader } from "@/components/ui";
+
+const GITHUB_REPO = "jakariatanjim-svg/aurabeats";
+
+/** Environment Detection */
+const isElectron = typeof window !== "undefined" && Boolean((window as any).electronAPI);
+const isCapacitor = typeof window !== "undefined" && Boolean((window as any).Capacitor?.isNativePlatform?.());
+const isApp = isElectron || isCapacitor;
 
 function StatusItem({ name, status, latency }: { name: string; status: "Online" | "Testing..." | "Offline"; latency: string }) {
   const isTesting = status === "Testing...";
@@ -285,56 +294,99 @@ export function SettingsView() {
             ))}
           </div>
           <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (navigator.serviceWorker) {
-                  navigator.serviceWorker.getRegistration().then(reg => {
-                    if (reg) {
-                      reg.update();
-                      toast("Checking for updates...", "info");
-                    } else {
-                      toast("No updater found in this browser", "error");
-                    }
-                  });
-                }
-              }}
-              className="justify-start w-full"
-            >
-              <RefreshCw className="h-3.5 w-3.5" /> Check for update
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (!window.confirm("Force reinstall? This fixes missing logos/bugs by clearing app cache. Your playlists and history will be safe.")) return;
-                window.caches.keys().then((keys) => {
-                  Promise.all(keys.map((k) => window.caches.delete(k))).then(() => {
+            {!isApp ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
                     if (navigator.serviceWorker) {
-                      navigator.serviceWorker.getRegistrations().then((regs) => {
-                        regs.forEach(reg => reg.unregister());
-                        toast("Cache cleared! Reinstalling app...", "success");
-                        setTimeout(() => window.location.reload(), 800);
+                      navigator.serviceWorker.getRegistration().then(reg => {
+                        if (reg) {
+                          reg.update();
+                          toast("Checking for web updates...", "info");
+                        } else {
+                          toast("No updater found in this browser", "error");
+                        }
                       });
-                    } else {
-                      window.location.reload();
                     }
-                  });
-                });
-              }}
-              className="justify-start w-full border-sky-500/30 text-sky-400 hover:border-sky-500 hover:text-sky-300"
-            >
-              <DownloadCloud className="h-3.5 w-3.5" /> Force Reinstall
-            </Button>
-            <p className="text-[10px] text-ink3 leading-relaxed sm:col-span-2 -mt-1">
-              If installed as PWA, uninstall the app from your device and reinstall it to update the home screen icon. Your data (playlists, history) will stay safe in the browser.
-            </p>
+                  }}
+                  className="justify-start w-full"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" /> Check Web Update
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (!window.confirm("Force reinstall? This fixes missing logos/bugs by clearing app cache. Your playlists and history will be safe.")) return;
+                    window.caches.keys().then((keys) => {
+                      Promise.all(keys.map((k) => window.caches.delete(k))).then(() => {
+                        if (navigator.serviceWorker) {
+                          navigator.serviceWorker.getRegistrations().then((regs) => {
+                            regs.forEach(reg => reg.unregister());
+                            toast("Cache cleared! Reinstalling web app...", "success");
+                            setTimeout(() => window.location.reload(), 800);
+                          });
+                        } else {
+                          window.location.reload();
+                        }
+                      });
+                    });
+                  }}
+                  className="justify-start w-full border-sky-500/30 text-sky-400 hover:border-sky-500 hover:text-sky-300"
+                >
+                  <DownloadCloud className="h-3.5 w-3.5" /> Force Web Reinstall
+                </Button>
+                <p className="text-[10px] text-ink3 leading-relaxed sm:col-span-2 -mt-1">
+                  If installed as PWA, uninstall the app from your device and reinstall it to update the home screen icon. Your data (playlists, history) will stay safe in the browser.
+                </p>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  toast("Checking for app updates...", "info");
+                  try {
+                    const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`);
+                    const release = await res.json();
+                    
+                    if (isElectron) {
+                      // Desktop Update Flow (handled by preload.js)
+                      const exeAsset = release.assets?.find((a: any) => a.name === "AuraBeats-Portable.exe");
+                      if (exeAsset) {
+                        toast(`New version found: ${release.name}. Downloading...`, "success");
+                        (window as any).electronAPI.downloadUpdate(exeAsset.browser_download_url);
+                      } else {
+                        toast("No desktop update found", "info");
+                      }
+                    } else if (isCapacitor) {
+                      // Android APK Update Flow
+                      const apkAsset = release.assets?.find((a: any) => a.name === "AuraBeats.apk");
+                      if (apkAsset) {
+                        if (window.confirm(`New version (${release.name}) is available! Download now?`)) {
+                          window.open(apkAsset.browser_download_url, "_system");
+                        }
+                      } else {
+                        toast("You are on the latest version", "info");
+                      }
+                    }
+                  } catch (e) {
+                    toast("Failed to check for updates", "error");
+                  }
+                }}
+                className="justify-start w-full sm:col-span-2 border-sky-500/30 text-sky-400 hover:border-sky-500 hover:text-sky-300"
+              >
+                {isElectron ? <Monitor className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
+                Check App Update
+              </Button>
+            )}
+
             <Button
               variant="outline"
               onClick={() => {
                 if (!window.confirm("Delete all downloaded music?")) return;
                 clearOffline();
               }}
-              className="justify-start w-full border-rose-500/30 text-rose-400 sm:col-span-full"
+              className="justify-start w-full border-rose-500/30 text-rose-400 sm:col-span-full mt-2"
             >
               <Trash2 className="h-3.5 w-3.5" /> Clear offline
             </Button>
