@@ -4,6 +4,7 @@
   "main": "main.js",
   "author": "jakariatanjim-svg",
   "license": "MIT",
+  "repository": "github:jakariatanjim-svg/aurabeats",
   "build": {
     "appId": "dev.pages.aurabeats",
     "productName": "AuraBeats",
