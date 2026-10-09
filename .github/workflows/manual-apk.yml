@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   apk:
-    name: Manual APK Build → Overwrite Latest Release
+    name: Manual APK → Overwrite Latest Release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - run: npm ci
       - run: npm run build
@@ -33,7 +33,7 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Collect APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk AuraBeats.apk
@@ -47,5 +47,4 @@ jobs:
             echo "No existing release found."
             exit 1
           fi
-          echo "Overwriting APK in release: $LATEST_TAG"
           gh release upload "$LATEST_TAG" AuraBeats.apk --clobber

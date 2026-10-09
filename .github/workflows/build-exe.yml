@@ -1,4 +1,4 @@
-name: "Auto: Windows EXE Portable (Electron)"
+name: "Auto: Windows EXE Portable"
 
 on:
   push:
@@ -18,33 +18,25 @@ jobs:
           node-version: 20
           cache: npm
 
-      # 1. Build web app
       - run: npm ci
       - run: npm run build
 
-      # 2. Install electron & electron-builder in electron/ folder
       - name: Install Electron deps
         working-directory: electron
         run: npm install
 
-      - name: Install electron-builder
-        working-directory: electron
-        run: npm install --save-dev electron-builder
-
-      # 3. Build portable exe using electron-builder
       - name: Build Portable EXE
         working-directory: electron
-        run: |
-          npx electron-builder --win portable --dir ../dist
-        env:
-          NODE_ENV: production
+        run: npx electron-builder --win portable
 
       - name: Collect EXE
         shell: bash
         run: |
-          EXE=$(find electron/dist -name "*.exe" | head -1)
+          EXE=$(find electron/output -name "*.exe" | head -1)
           if [ -z "$EXE" ]; then
-            ls -la electron/dist/ || true
+            echo "EXE not found!"
+            find electron/ -name "*.exe" || true
+            ls -la electron/output/ || true
             exit 1
           fi
           cp "$EXE" AuraBeats-Portable.exe
@@ -59,5 +51,4 @@ jobs:
             echo "No existing release found, skipping."
             exit 0
           fi
-          echo "Uploading EXE to: $LATEST_TAG"
           gh release upload "$LATEST_TAG" AuraBeats-Portable.exe --clobber

@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
 
       - run: npm ci
       - run: npm run build
@@ -48,5 +48,4 @@ jobs:
             echo "No existing release found, skipping."
             exit 0
           fi
-          echo "Uploading APK to: $LATEST_TAG"
           gh release upload "$LATEST_TAG" AuraBeats.apk --clobber

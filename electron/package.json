@@ -5,10 +5,32 @@
   "main": "main.js",
   "author": "jakariatanjim-svg",
   "license": "MIT",
+  "build": {
+    "appId": "dev.pages.aurabeats",
+    "productName": "AuraBeats",
+    "directories": {
+      "output": "output"
+    },
+    "files": [
+      "main.js",
+      "../dist/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "portable": {
+      "artifactName": "AuraBeats-Portable.exe"
+    }
+  },
   "dependencies": {
     "electron": "^33.0.0"
   },
-  "scripts": {
-    "start": "electron ."
+  "devDependencies": {
+    "electron-builder": "^25.0.0"
   }
 }

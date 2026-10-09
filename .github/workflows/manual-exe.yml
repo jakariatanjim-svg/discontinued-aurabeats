@@ -1,4 +1,4 @@
-name: "Manual: Windows EXE Portable (Electron)"
+name: "Manual: Windows EXE Portable"
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   exe:
-    name: Manual EXE Build → Overwrite Latest Release
+    name: Manual EXE → Overwrite Latest Release
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,23 +24,16 @@ jobs:
         working-directory: electron
         run: npm install
 
-      - name: Install electron-builder
-        working-directory: electron
-        run: npm install --save-dev electron-builder
-
       - name: Build Portable EXE
         working-directory: electron
-        run: |
-          npx electron-builder --win portable --dir ../dist
-        env:
-          NODE_ENV: production
+        run: npx electron-builder --win portable
 
       - name: Collect EXE
         shell: bash
         run: |
-          EXE=$(find electron/dist -name "*.exe" | head -1)
+          EXE=$(find electron/output -name "*.exe" | head -1)
           if [ -z "$EXE" ]; then
-            ls -la electron/dist/ || true
+            find electron/ -name "*.exe" || true
             exit 1
           fi
           cp "$EXE" AuraBeats-Portable.exe
@@ -55,5 +48,4 @@ jobs:
             echo "No existing release found."
             exit 1
           fi
-          echo "Overwriting EXE in: $LATEST_TAG"
           gh release upload "$LATEST_TAG" AuraBeats-Portable.exe --clobber
