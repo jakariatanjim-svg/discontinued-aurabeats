@@ -25,7 +25,6 @@ jobs:
       - run: npm ci
       - run: npm run build
 
-      # Generate android project from scratch (no local android/ folder needed)
       - name: Setup Capacitor Android
         run: |
           npx cap add android
@@ -35,20 +34,19 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Collect APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk AuraBeats.apk
 
-      # Find latest release and upload APK to it (no new release created)
       - name: Upload APK to latest release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
           if [ -z "$LATEST_TAG" ]; then
-            echo "No existing release found, skipping APK upload."
+            echo "No existing release found, skipping."
             exit 0
           fi
-          echo "Uploading APK to release: $LATEST_TAG"
+          echo "Uploading APK to: $LATEST_TAG"
           gh release upload "$LATEST_TAG" AuraBeats.apk --clobber

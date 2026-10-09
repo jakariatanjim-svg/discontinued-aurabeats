@@ -1,4 +1,4 @@
-name: "Manual: Windows EXE (Portable)"
+name: "Manual: Windows EXE Portable (Electron)"
 
 on:
   workflow_dispatch:
@@ -16,27 +16,34 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - uses: dtolnay/rust-toolchain@stable
 
       - run: npm ci
       - run: npm run build
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2"
+      - name: Install Electron deps
+        working-directory: electron
+        run: npm install
+
+      - name: Install electron-builder
+        working-directory: electron
+        run: npm install --save-dev electron-builder
 
       - name: Build Portable EXE
-        run: cargo tauri build --bundles none
+        working-directory: electron
+        run: |
+          npx electron-builder --win portable --dir ../dist
+        env:
+          NODE_ENV: production
 
       - name: Collect EXE
         shell: bash
         run: |
-          EXE_PATH=$(find src-tauri/target/release -maxdepth 1 -name "*.exe" -not -name "*.pdb" | head -1)
-          if [ -z "$EXE_PATH" ]; then
-            echo "EXE not found, listing target/release:"
-            ls -la src-tauri/target/release/
+          EXE=$(find electron/dist -name "*.exe" | head -1)
+          if [ -z "$EXE" ]; then
+            ls -la electron/dist/ || true
             exit 1
           fi
-          cp "$EXE_PATH" AuraBeats-Portable.exe
+          cp "$EXE" AuraBeats-Portable.exe
 
       - name: Overwrite EXE in latest release
         shell: bash
@@ -48,5 +55,5 @@ jobs:
             echo "No existing release found."
             exit 1
           fi
-          echo "Overwriting EXE in release: $LATEST_TAG"
+          echo "Overwriting EXE in: $LATEST_TAG"
           gh release upload "$LATEST_TAG" AuraBeats-Portable.exe --clobber

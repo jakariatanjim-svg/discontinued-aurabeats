@@ -1,0 +1,16 @@
+appId: dev.pages.aurabeats
+productName: AuraBeats
+copyright: "jakariatanjim-svg"
+
+directories:
+  output: dist
+  buildResources: .
+
+win:
+  target:
+    - target: portable
+      arch:
+        - x64
+
+portable:
+  artifactName: AuraBeats-Portable.exe

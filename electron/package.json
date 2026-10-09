@@ -1,0 +1,14 @@
+{
+  "name": "aurabeats",
+  "version": "1.0.0",
+  "description": "AuraBeats Streaming Engine",
+  "main": "main.js",
+  "author": "jakariatanjim-svg",
+  "license": "MIT",
+  "dependencies": {
+    "electron": "^33.0.0"
+  },
+  "scripts": {
+    "start": "electron ."
+  }
+}
