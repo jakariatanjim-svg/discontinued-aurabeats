@@ -54,15 +54,13 @@ Plus 8 accent colour presets or any custom colour via CSS custom properties.
 
 ## 🚀 Getting started
 
-```bash
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # -> dist/
-npm run preview  # serve the production build
-```
+No builds, no installs — AuraBeats is already live:
 
-### Windows one-click build
-Double-click **`build.bat`** — it checks your environment, installs dependencies, type-checks, and builds the web bundle into `dist/` (the same as `npm run build`).
+1. **Website** — open [aurabeats.pages.dev](https://aurabeats.pages.dev) in any browser, on PC or mobile.
+2. **PWA** — install it from the browser menu for a native-app feel (see below).
+3. **Android APK** — grab `AuraBeats.apk` from the [latest GitHub Release](https://github.com/jakariatanjim-svg/aurabeats/releases/latest); afterwards the app updates itself from Settings.
+
+New versions are built, packaged and published automatically by GitHub Actions on every push to `main` — there is nothing to compile by hand.
 
 ---
 
@@ -106,17 +104,6 @@ AuraBeats is a fully installable Progressive Web App — works like a native app
 
 ### 🔄 Auto-Updates
 The app checks for updates silently in the background every time it is opened. When a new version is found, it will automatically refresh the app shell to ensure you are always on the latest version.
-
----
-
-## ☁️ Hosting
-
-### Cloudflare Pages (recommended)
-| Setting | Value |
-| --- | --- |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Node version | 20 |
 
 ---
 

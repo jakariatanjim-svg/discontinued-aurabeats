@@ -128,6 +128,8 @@ function SourceCard({ icon, title, body, tags }: { icon: React.ReactNode; title:
 export function SettingsView() {
   const { volume, setVolume, toast, favorites, history, playlists, settings, updateSettings, clearOffline } = usePlayer();
   const { theme, setTheme, mode, toggleMode, accent, setAccent } = useTheme();
+  const [apkDownloading, setApkDownloading] = useState(false);
+  const [apkProgress, setApkProgress] = useState<number | null>(null);
 
   const stats = [
     { label: "Favourites", value: favorites.length },
@@ -339,23 +341,81 @@ export function SettingsView() {
                 </p>
               </>
             ) : (
+              <>
               <Button
                 variant="outline"
+                disabled={apkDownloading}
                 onClick={async () => {
+                  if (apkDownloading) return;
                   toast("Checking for app updates...", "info");
                   try {
                     const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`);
                     const release = await res.json();
 
                     if (isCapacitor) {
-                      // Android APK Update Flow
+                      // Android APK update flow
                       const apkAsset = release.assets?.find((a: any) => a.name === "AuraBeats.apk");
-                      if (apkAsset) {
-                        if (window.confirm(`New version (${release.name}) is available! Download now?`)) {
-                          window.open(apkAsset.browser_download_url, "_system");
-                        }
-                      } else {
+                      if (!apkAsset) {
+                        toast("No update package found", "info");
+                        return;
+                      }
+
+                      // Version gate: every release body carries the commit SHA it
+                      // was built from ("Auto build · <sha>"), and the same SHA is
+                      // baked into this bundle at build time. If they match, the
+                      // installed app already is the latest release.
+                      const releaseSha =
+                        typeof release.body === "string"
+                          ? (release.body.match(/Auto build · ([0-9a-f]{7,40})/) || [])[1]
+                          : undefined;
+                      if (
+                        releaseSha &&
+                        __APP_BUILD_SHA__ &&
+                        releaseSha.slice(0, 7) === __APP_BUILD_SHA__.slice(0, 7)
+                      ) {
                         toast("You are on the latest version", "info");
+                        return;
+                      }
+
+                      if (!window.confirm(`New version (${release.name}) is available! Download now?`)) return;
+
+                      // In-app download with live progress, then hand the APK to
+                      // the system package installer. No browser hop.
+                      setApkDownloading(true);
+                      setApkProgress(0);
+                      try {
+                        const { Filesystem, Directory } = await import("@capacitor/filesystem");
+                        const { FileTransfer } = await import("@capacitor/file-transfer");
+                        const { FileOpener } = await import("@capacitor-community/file-opener");
+
+                        const apkPath = "AuraBeats-update.apk";
+                        await Filesystem.deleteFile({ directory: Directory.Data, path: apkPath }).catch(() => {});
+                        const target = await Filesystem.getUri({ directory: Directory.Data, path: apkPath });
+
+                        const listener = await FileTransfer.addListener("progress", (p: { bytes: number; contentLength: number }) => {
+                          if (p && p.contentLength > 0) setApkProgress(p.bytes / p.contentLength);
+                        });
+                        try {
+                          await FileTransfer.downloadFile({
+                            url: apkAsset.browser_download_url,
+                            path: target.uri,
+                            progress: true,
+                          });
+                        } finally {
+                          listener.remove();
+                        }
+                        setApkProgress(1);
+                        toast("Download complete — starting installer", "success");
+                        await FileOpener.open({
+                          filePath: target.uri,
+                          contentType: "application/vnd.android.package-archive",
+                        });
+                      } catch {
+                        // Last resort if the in-app pipeline fails on this device
+                        window.open(apkAsset.browser_download_url, "_system");
+                      } finally {
+                        setApkDownloading(false);
+                        setApkProgress(null);
                       }
                     }
                   } catch (e) {
@@ -365,8 +425,19 @@ export function SettingsView() {
                 className="justify-start w-full sm:col-span-2 border-sky-500/30 text-sky-400 hover:border-sky-500 hover:text-sky-300"
               >
                 <Smartphone className="h-3.5 w-3.5" />
-                Check App Update
+                {apkDownloading
+                  ? `Downloading update… ${apkProgress !== null ? `${Math.round(apkProgress * 100)}%` : ""}`
+                  : "Check App Update"}
               </Button>
+              {apkProgress !== null && (
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10 sm:col-span-2">
+                  <div
+                    className="h-full rounded-full bg-sky-400 transition-all duration-200"
+                    style={{ width: `${Math.round(apkProgress * 100)}%` }}
+                  />
+                </div>
+              )}
+              </>
             )}
 
             <Button
