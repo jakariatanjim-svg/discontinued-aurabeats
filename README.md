@@ -62,19 +62,32 @@ npm run preview  # serve the production build
 ```
 
 ### Windows one-click build
-Double-click **`build.bat`** — it checks your environment, installs, type-checks, and builds.
+Double-click **`build.bat`** — it checks your environment, installs dependencies, type-checks, and builds the web bundle into `dist/` (the same as `npm run build`).
 
 ---
 
-## 🔄 GitHub Actions Setup
+## 📦 Distribution
 
-To enable automated builds and releases:
-1. Go to your GitHub Repository **Actions** tab.
-2. Click **New workflow** -> **set up a workflow yourself**.
-3. Copy the raw code from [GITHUB_WORKFLOW.md](GITHUB_WORKFLOW.md) and paste it there.
-4. Click **Commit changes**.
+- **Website / PWA** — the primary target. Host `dist/` anywhere static (Cloudflare Pages recommended) and install it as a PWA on Android, iOS, or any desktop browser.
+- **Android APK** — built by the APK workflows and attached to GitHub Releases; the in-app **Check App Update** button picks new versions up.
+- **No desktop installer** — the project is web-first by design. On PC, use the website directly or install the PWA from Chrome/Edge.
 
-Every push to `main` will now build the project and create a unique, timestamped GitHub Release (e.g., `2026.09.25-42`) with the ready-to-host ZIP.
+---
+
+## 🔄 GitHub Actions
+
+Builds and releases are automated; the workflows live in `.github/workflows/`:
+
+| Workflow | Trigger | What it does |
+| --- | --- | --- |
+| `build.yml` — Auto: Web Build & Release | push to `main` | type-check, build, create a timestamped GitHub Release (e.g. `2026.09.25-42`) with the ready-to-host ZIP |
+| `build-apk.yml` — Auto: Android APK | push to `main` | build a debug APK and upload it into the latest release |
+| `manual-web.yml` — Manual: Web Build | `workflow_dispatch` | rebuild the web bundle and overwrite the files in the latest release |
+| `manual-apk.yml` — Manual: Android APK | `workflow_dispatch` | rebuild the APK and overwrite it in the latest release |
+| `branch-web.yml` — Branch: Web Build | push to any other branch | test build; output is saved as a run artifact and never touches releases |
+| `branch-apk.yml` — Branch: Android APK | push to any other branch | test build; output is saved as a run artifact and never touches releases |
+
+Branch builds exist for testing work-in-progress code: download the ZIP/APK from the run's **Artifacts** section. Releases are only ever created or updated by the `main` pipelines or a manual dispatch.
 
 ---
 
