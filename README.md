@@ -126,4 +126,8 @@ The app checks for updates silently in the background every time it is opened. W
 
 ---
 
+## 🧑‍💻 About
+
+AuraBeats is a solo project: designed, built and operated by one person, with GitHub Actions doing the release engineering. No servers, no API keys, no accounts, no bills — just a static bundle, a hidden YouTube player and a lot of glue.
+
 **Built with Vite, React 19, TypeScript, Tailwind CSS v4 and Lucide.**
