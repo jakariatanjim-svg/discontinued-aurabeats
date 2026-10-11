@@ -13,7 +13,6 @@ import {
   Volume2,
   Check,
   Smartphone,
-  Monitor,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { ACCENTS, useTheme } from "@/hooks/useTheme";
@@ -23,10 +22,9 @@ import { Button, SectionHeader } from "@/components/ui";
 
 const GITHUB_REPO = "jakariatanjim-svg/aurabeats";
 
-/** Environment Detection */
-const isElectron = typeof window !== "undefined" && Boolean((window as any).electronAPI);
+/** Environment detection */
 const isCapacitor = typeof window !== "undefined" && Boolean((window as any).Capacitor?.isNativePlatform?.());
-const isApp = isElectron || isCapacitor;
+const isApp = isCapacitor;
 
 function StatusItem({ name, status, latency }: { name: string; status: "Online" | "Testing..." | "Offline"; latency: string }) {
   const isTesting = status === "Testing...";
@@ -348,17 +346,8 @@ export function SettingsView() {
                   try {
                     const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`);
                     const release = await res.json();
-                    
-                    if (isElectron) {
-                      // Desktop Update Flow (handled by preload.js)
-                      const exeAsset = release.assets?.find((a: any) => a.name === "AuraBeats-Portable.exe");
-                      if (exeAsset) {
-                        toast(`New version found: ${release.name}. Downloading...`, "success");
-                        (window as any).electronAPI.downloadUpdate(exeAsset.browser_download_url);
-                      } else {
-                        toast("No desktop update found", "info");
-                      }
-                    } else if (isCapacitor) {
+
+                    if (isCapacitor) {
                       // Android APK Update Flow
                       const apkAsset = release.assets?.find((a: any) => a.name === "AuraBeats.apk");
                       if (apkAsset) {
@@ -375,7 +364,7 @@ export function SettingsView() {
                 }}
                 className="justify-start w-full sm:col-span-2 border-sky-500/30 text-sky-400 hover:border-sky-500 hover:text-sky-300"
               >
-                {isElectron ? <Monitor className="h-3.5 w-3.5" /> : <Smartphone className="h-3.5 w-3.5" />}
+                <Smartphone className="h-3.5 w-3.5" />
                 Check App Update
               </Button>
             )}
