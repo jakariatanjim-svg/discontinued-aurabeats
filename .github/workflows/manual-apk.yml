@@ -73,3 +73,13 @@ jobs:
             exit 1
           fi
           gh release upload "$LATEST_TAG" AuraBeats.apk --clobber
+
+      # Keep the release body's build stamp truthful: after an overwrite the
+      # release contains THIS commit's APK, and the in-app update check
+      # compares that stamp against the SHA baked into each build.
+      - name: Stamp release body with built commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          gh release edit "$LATEST_TAG" --body "Auto build · ${{ github.sha }}"

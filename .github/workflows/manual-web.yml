@@ -38,3 +38,13 @@ jobs:
           echo "Overwriting web files in release: $LATEST_TAG"
           gh release upload "$LATEST_TAG" aurabeats-app.html --clobber
           gh release upload "$LATEST_TAG" aurabeats-web.zip --clobber
+
+      # Keep the release body's build stamp truthful: after an overwrite the
+      # release contains THIS commit's bundle, and the in-app update check
+      # compares that stamp against the SHA baked into each build.
+      - name: Stamp release body with built commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          gh release edit "$LATEST_TAG" --body "Auto build · ${{ github.sha }}"
