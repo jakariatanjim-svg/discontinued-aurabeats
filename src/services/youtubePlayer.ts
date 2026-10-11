@@ -64,7 +64,12 @@ function createPlayer(resolve: () => void) {
       rel: 0,
       iv_load_policy: 3,
       enablejsapi: 1,
-      origin: window.location.origin,
+      // On file:// (desktop EXE) the page origin is opaque, so passing it here makes
+      // the YT widget drop every postMessage command and playback never starts.
+      // Only send origin from real http(s) hosts (web / Capacitor).
+      ...(window.location.protocol === "https:" || window.location.protocol === "http:"
+        ? { origin: window.location.origin }
+        : {}),
     },
     events: {
       onReady: () => {
