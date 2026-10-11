@@ -82,10 +82,10 @@ Builds and releases are automated; the workflows live in `.github/workflows/`:
 | `build-apk.yml` — Auto: Android APK | push to `main` | build a debug APK and upload it into the latest release |
 | `manual-web.yml` — Manual: Web Build | `workflow_dispatch` | rebuild the web bundle and overwrite the files in the latest release |
 | `manual-apk.yml` — Manual: Android APK | `workflow_dispatch` | rebuild the APK and overwrite it in the latest release |
-| `branch-web.yml` — Branch: Web Build | push to any other branch | test build; output is saved as a run artifact and never touches releases |
-| `branch-apk.yml` — Branch: Android APK | push to any other branch | test build; output is saved as a run artifact and never touches releases |
+| `branch-web.yml` — Manual: Branch Web Build | `workflow_dispatch` (pick any branch) | test build; output is saved as a run artifact and never touches releases |
+| `branch-apk.yml` — Manual: Branch APK Build | `workflow_dispatch` (pick any branch) | test build; output is saved as a run artifact and never touches releases |
 
-Branch builds exist for testing work-in-progress code: download the ZIP/APK from the run's **Artifacts** section. Releases are only ever created or updated by the `main` pipelines or a manual dispatch.
+Branch builds exist for testing work-in-progress code without any automatic trigger: pick the branch in the run dialog, then download the ZIP/APK from the run's **Artifacts** section. Releases are only ever created or updated by the `main` pipelines or a manual dispatch.
 
 ---
 
