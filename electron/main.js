@@ -3,17 +3,25 @@ const path = require("path");
 const https = require("https");
 const fs = require("fs");
 const { execFile } = require("child_process");
+const { startLocalServer } = require("./local-server");
 
 const GITHUB_REPO = "jakariatanjim-svg/aurabeats";
 const CURRENT_VERSION = app.getVersion();
 
-// The app is loaded from file://, where user-gesture propagation to the hidden
-// YouTube iframe is unreliable. Let JS commands start playback with sound.
+// Loopback ports used to serve the web bundle. Kept fixed (with two spare
+// fallbacks) so the renderer origin — and therefore its localStorage — stays
+// stable across launches.
+const LOCAL_PORTS = [46821, 46822, 46823];
+
+// The hidden YouTube iframe must be able to start playback with sound from a
+// JS command, without a user gesture reaching the off-screen player.
 app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
 
 let mainWindow;
+let localServer = null;
+let localPort = null;
 
-function createWindow() {
+async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -29,8 +37,25 @@ function createWindow() {
     autoHideMenuBar: true,
   });
 
-  const indexPath = path.join(__dirname, "app-bundle", "index.html");
-  mainWindow.loadFile(indexPath);
+  // Serve the bundle over loopback http instead of file://. The YouTube
+  // IFrame player needs a real origin: the web build has https and the
+  // Android build runs on Capacitor's https://localhost, while file:// gives
+  // an opaque origin that breaks the widget's postMessage handshake. With a
+  // loopback server the desktop build behaves exactly like those two.
+  if (!localServer) {
+    const started = await startLocalServer(path.join(__dirname, "app-bundle"), LOCAL_PORTS);
+    if (started) {
+      localServer = started.server;
+      localPort = started.port;
+    }
+  }
+
+  if (localServer) {
+    mainWindow.loadURL(`http://127.0.0.1:${localPort}/`);
+  } else {
+    // Last-resort fallback if no loopback port could be bound at all.
+    mainWindow.loadFile(path.join(__dirname, "app-bundle", "index.html"));
+  }
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
@@ -100,10 +125,27 @@ ipcMain.handle("download-update", async (_event, downloadUrl) => {
   });
 });
 
-app.whenReady().then(createWindow);
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});
+// Only one instance may run: a second copy would steal the loopback port
+// and split the renderer's localStorage across two origins.
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
+  });
+
+  app.whenReady().then(createWindow);
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") app.quit();
+  });
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
+  app.on("will-quit", () => {
+    if (localServer) localServer.close();
+  });
+}
