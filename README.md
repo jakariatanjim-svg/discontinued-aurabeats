@@ -54,27 +54,38 @@ Plus 8 accent colour presets or any custom colour via CSS custom properties.
 
 ## 🚀 Getting started
 
-```bash
-npm install
-npm run dev      # http://localhost:5173
-npm run build    # -> dist/
-npm run preview  # serve the production build
-```
+No builds, no installs — AuraBeats is already live:
 
-### Windows one-click build
-Double-click **`build.bat`** — it checks your environment, installs, type-checks, and builds.
+1. **Website** — open [aurabeats.pages.dev](https://aurabeats.pages.dev) in any browser, on PC or mobile.
+2. **PWA** — install it from the browser menu for a native-app feel (see below).
+3. **Android APK** — grab `AuraBeats.apk` from the [latest GitHub Release](https://github.com/jakariatanjim-svg/aurabeats/releases/latest); afterwards the app updates itself from Settings.
+
+New versions are built, packaged and published automatically by GitHub Actions on every push to `main` — there is nothing to compile by hand.
 
 ---
 
-## 🔄 GitHub Actions Setup
+## 📦 Distribution
 
-To enable automated builds and releases:
-1. Go to your GitHub Repository **Actions** tab.
-2. Click **New workflow** -> **set up a workflow yourself**.
-3. Copy the raw code from [GITHUB_WORKFLOW.md](GITHUB_WORKFLOW.md) and paste it there.
-4. Click **Commit changes**.
+- **Website / PWA** — the primary target. Host `dist/` anywhere static (Cloudflare Pages recommended) and install it as a PWA on Android, iOS, or any desktop browser.
+- **Android APK** — built by the APK workflows and attached to GitHub Releases; the in-app **Check App Update** button picks new versions up.
+- **No desktop installer** — the project is web-first by design. On PC, use the website directly or install the PWA from Chrome/Edge.
 
-Every push to `main` will now build the project and create a unique, timestamped GitHub Release (e.g., `2026.09.25-42`) with the ready-to-host ZIP.
+---
+
+## 🔄 GitHub Actions
+
+Builds and releases are automated; the workflows live in `.github/workflows/`:
+
+| Workflow | Trigger | What it does |
+| --- | --- | --- |
+| `build.yml` — Auto: Web Build & Release | push to `main` | type-check, build, create a timestamped GitHub Release (e.g. `2026.09.25-42`) with the ready-to-host ZIP |
+| `build-apk.yml` — Auto: Android APK | push to `main` | build a debug APK and upload it into the latest release |
+| `manual-web.yml` — Manual: Web Build | `workflow_dispatch` | rebuild the web bundle and overwrite the files in the latest release |
+| `manual-apk.yml` — Manual: Android APK | `workflow_dispatch` | rebuild the APK and overwrite it in the latest release |
+| `branch-web.yml` — Manual: Branch Web Build | `workflow_dispatch` (one button, nothing to pick) | builds the newest non-main branch and saves a run artifact; never touches releases |
+| `branch-apk.yml` — Manual: Branch APK Build | `workflow_dispatch` (one button, nothing to pick) | builds the newest non-main branch and saves a run artifact; never touches releases |
+
+Branch builds exist for testing work-in-progress code without any automatic trigger: press the button and the run itself picks the newest branch other than `main` (the one the current Arena session works on), then download the ZIP/APK from the run's **Artifacts** section. Releases are only ever created or updated by the `main` pipelines or a manual dispatch.
 
 ---
 
@@ -93,17 +104,6 @@ AuraBeats is a fully installable Progressive Web App — works like a native app
 
 ### 🔄 Auto-Updates
 The app checks for updates silently in the background every time it is opened. When a new version is found, it will automatically refresh the app shell to ensure you are always on the latest version.
-
----
-
-## ☁️ Hosting
-
-### Cloudflare Pages (recommended)
-| Setting | Value |
-| --- | --- |
-| Build command | `npm run build` |
-| Build output directory | `dist` |
-| Node version | 20 |
 
 ---
 

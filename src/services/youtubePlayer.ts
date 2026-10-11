@@ -64,7 +64,13 @@ function createPlayer(resolve: () => void) {
       rel: 0,
       iv_load_policy: 3,
       enablejsapi: 1,
-      origin: window.location.origin,
+      // The player needs a real origin: the hosted site (https) and the
+      // Android app (Capacitor serves it on https://localhost) both have one.
+      // A direct file:// open would give an opaque origin, so skip the
+      // parameter there instead of sending "null".
+      ...(window.location.protocol === "https:" || window.location.protocol === "http:"
+        ? { origin: window.location.origin }
+        : {}),
     },
     events: {
       onReady: () => {
