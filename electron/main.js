@@ -7,6 +7,10 @@ const { execFile } = require("child_process");
 const GITHUB_REPO = "jakariatanjim-svg/aurabeats";
 const CURRENT_VERSION = app.getVersion();
 
+// The app is loaded from file://, where user-gesture propagation to the hidden
+// YouTube iframe is unreliable. Let JS commands start playback with sound.
+app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
+
 let mainWindow;
 
 function createWindow() {
