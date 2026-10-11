@@ -1,20 +1,19 @@
-# Test build for any non-default branch.
+# Manual test build for any branch.
 #
-# Triggers on every push to any branch except main/master, so new agent/session
-# branches are picked up automatically without hardcoding a branch name.
+# Dispatch-only on purpose: pushing commits (agent sessions, experiments)
+# must not start builds by themselves. To test a branch, open Actions ->
+# this workflow -> "Run workflow" and pick the branch in the
+# "Use workflow from" dropdown; the run then builds that branch's code.
 #
 # Artifacts only: this workflow never creates, edits or overwrites a GitHub
 # release. The production release pipelines (build*.yml, manual-*.yml) stay
 # untouched and remain the only thing that writes to releases.
-name: "Branch: Web Build (artifact)"
+name: "Manual: Branch Web Build (artifact)"
 
 on:
-  push:
-    branches-ignore: [main, master]
-    # Without this, branches-ignore alone still lets tag pushes trigger a run.
-    tags-ignore: ["**"]
+  workflow_dispatch:
 
-# A newer push to the same branch cancels the run that is still going.
+# A newer dispatch for the same branch cancels the run that is still going.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
