@@ -34,7 +34,7 @@ jobs:
         working-directory: electron
         run: |
           npm install
-          npx electron-builder --win portable -c.publish=never
+          npx electron-builder --win portable --publish never
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
