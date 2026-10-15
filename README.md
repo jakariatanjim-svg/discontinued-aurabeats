@@ -1,5 +1,7 @@
+## THIS REPOSITORY IS DISCONTINUED AND NEW REPOSITORY IS HERE : https://github.com/jakariatanjim-svg/aurabeats
+
 # AuraBeats · Streaming Engine
-*this repo is discontinued new repositor is here* : https://github.com/jakariatanjim-svg/aurabeats
+
 An ultra-modern, production-ready music streaming application that aggregates the world's largest audio catalogs into one seamless web experience. No API keys, no accounts, no subscriptions, no rate limits.
 
 [![Website](https://img.shields.io/badge/Website-aurabeats.pages.dev-7c5cff?style=for-the-badge)](https://aurabeats.pages.dev/)
